@@ -29,5 +29,8 @@ void validate(const whichcode wc, ptree &pt, po::variables_map &opt, string &fil
 					int &maxextensions, string &primarygroup);
 string getuserhome();
 string getusername();
+void drop_cap();
+void raise_cap(int cap);
+void lower_cap(int cap);
 
 #endif 

@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <grp.h>
 #include <time.h>
+#include <sys/capability.h>
 #include "ws_util.h"
 
 using boost::property_tree::ptree;
@@ -46,6 +47,78 @@ string getuserhome()
 }
 
 /*
+ * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN
+ */
+void drop_cap() 
+{
+    cap_t caps;
+	cap_value_t cap_list[2];
+
+    caps = cap_init();
+
+	cap_list[0] = CAP_DAC_OVERRIDE;
+	cap_list[1] = CAP_CHOWN;
+
+	if (cap_set_flag(caps, CAP_PERMITTED, 2, cap_list, CAP_SET) == -1) {
+		cerr << "Error: problem with capabilities." << endl;
+	}
+
+	if (cap_set_proc(caps) == -1) {
+		cerr << "Error: problem setting capabilities." << endl;
+	}
+
+	cap_free(caps);
+
+//	cap_t cap = cap_get_proc();
+//	cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+//	cap_free(cap);
+}
+
+/*
+ * remove a capability from the effective set
+ */
+void lower_cap(int cap)
+{
+	cap_t caps;
+	cap_value_t cap_list[1];
+
+	caps = cap_get_proc();
+
+	cap_list[0] = cap;
+	if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_CLEAR) == -1) {
+		cerr << "Error: problem with capabilities." << endl;
+	}
+
+	if (cap_set_proc(caps) == -1) {
+		cerr << "Error: problem setting capabilities." << endl;
+	}
+
+	cap_free(caps);
+}
+
+/*
+ * add a capability to the effective set
+ */
+void raise_cap(int cap)
+{
+	cap_t caps;
+	cap_value_t cap_list[1];
+
+	caps = cap_get_proc();
+
+	cap_list[0] = cap;
+	if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_SET) == -1) {
+		cerr << "Error: problem with capabilities." << endl;
+	}
+
+	if (cap_set_proc(caps) == -1) {
+		cerr << "Error: problem setting capabilities." << endl;
+	}
+
+	cap_free(caps);
+}
+
+/*
  * write db file and change owner
  */
 void write_dbfile(const string filename, const string wsdir, const long expiration, const int extensions, 
@@ -59,7 +132,10 @@ void write_dbfile(const string filename, const string wsdir, const long expirati
 	pt.put("acctcode", acctcode);
 	pt.put("reminder", reminder);
 	pt.put("mailaddress", mailaddress);
+	raise_cap(CAP_DAC_OVERRIDE);
 	write_json(filename, pt);
+	lower_cap(CAP_DAC_OVERRIDE);
+	raise_cap(CAP_CHOWN);
 	if(chown(filename.c_str(), dbuid, dbgid)) {
 		cerr << "Error: could not change owner of database entry" << endl;
 	}
@@ -191,7 +267,8 @@ void validate(const whichcode wc, ptree &pt, po::variables_map &opt, string &fil
 				configduration = pt.get_optional<int>("duration");
 			}
 		}
-		if ( opt["duration"].as<int>() > configduration.get() ) {
+		// if we are root, we ignore the limits
+		if ( getuid()!=0 && opt["duration"].as<int>() > configduration.get() ) {
 			duration = configduration.get();
 			cerr << "Error: Duration longer than allowed for this workspace" << endl;
 			cerr << "       setting to allowed maximum of " << duration << endl;

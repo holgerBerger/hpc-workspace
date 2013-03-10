@@ -11,10 +11,10 @@ release: all
 	strip -s ws_allocate ws_release
 
 ws_allocate: $(ALLOCOBJS)
-	$(CXX) $(CXXFLAGS) $(ALLOCOBJS) -o ../bin/ws_allocate $(BOOSTLIBS)
+	$(CXX) $(CXXFLAGS) $(ALLOCOBJS) -o ../bin/ws_allocate $(BOOSTLIBS) -lcap
 
 ws_release: $(RELEASEOBJS)
-	$(CXX) $(CXXFLAGS) $(RELEASEOBJS) -o ../bin/ws_release $(BOOSTLIBS)
+	$(CXX) $(CXXFLAGS) $(RELEASEOBJS) -o ../bin/ws_release $(BOOSTLIBS) -lcap
 
 ws_util.o: ws_util.cpp ws_util.h
 ws_allocate.o: ws_allocate.cpp ws_util.h

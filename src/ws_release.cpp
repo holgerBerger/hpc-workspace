@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
+#include <sys/capability.h>
 #include <time.h>
 
 #include <iostream>
@@ -151,6 +152,9 @@ int main(int argc, char **argv) {
 	ptree pt;
 	po::variables_map opt;
 
+	// drop capabilites
+	drop_cap();
+
 	// check commandline
 	commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
 
@@ -167,19 +171,25 @@ int main(int argc, char **argv) {
 	// does db entry exist?
 	if(fs::exists(dbfilename)) {
 		read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
+		raise_cap(CAP_DAC_OVERRIDE);
 		if(unlink(dbfilename.c_str())) {
+		    lower_cap(CAP_DAC_OVERRIDE);
 			cerr << "Error: database entry could not be deleted." << endl;
 			exit(-1);
 		}
+		lower_cap(CAP_DAC_OVERRIDE);
 		// rational: we move the workspace into deleted directory and append a timestamp to name
 		// as a new workspace could have same name and releasing the new one would lead to a name
 		// collision, so a timestamp is kind of generation label attached to a workspace
 		string targetname = find_targetname(pt, wsdir, filesystem) + 
 								"/" + username + "-" + name + "-" + lexical_cast<string>(time(NULL));
+		raise_cap(CAP_DAC_OVERRIDE);
 		if(rename(wsdir.c_str(), targetname.c_str())) {
+		    lower_cap(CAP_DAC_OVERRIDE);
 			cerr << "Error: could not move workspace!" << endl;
 			exit(-1);
 		}
+		lower_cap(CAP_DAC_OVERRIDE);
 	} else {
 		cerr << "Error: workspace does not exist!" << endl;
 		exit(-1);

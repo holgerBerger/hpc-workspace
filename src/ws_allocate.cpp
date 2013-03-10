@@ -41,6 +41,7 @@
 #include <grp.h>
 #include <sys/types.h>
 #include <time.h>
+#include <sys/capability.h>
 
 #include <iostream>
 #include <fstream>
@@ -64,8 +65,9 @@ using namespace std;
  *  parse the commandline and see if all required arguments are passed, and check the workspace name for 
  *  bad characters
  */
-void commandline(po::variables_map &opt, string &name, int &duration, 
-					string &filesystem, bool &extension, int &reminder, string &mailaddress, int argc, char**argv) {
+void commandline(po::variables_map &opt, string &name, int &duration, string &filesystem, 
+					bool &extension, int &reminder, string &mailaddress, string &user,
+					int argc, char**argv) {
 	// define all options
 
 	po::options_description cmd_options( "\nOptions" );
@@ -78,6 +80,13 @@ void commandline(po::variables_map &opt, string &name, int &duration,
 			("mailaddress,m", po::value<string>(&mailaddress), "mailaddress to send reminder to")
 			("extension,x", "extend workspace")
 	;
+
+	// got root ?
+	if(getuid() == 0) {
+		cmd_options.add_options()
+			("username,u", po::value<string>(&user), "username")
+		;
+	}
 
 	// define options without names
 	po::positional_options_description p;
@@ -163,12 +172,16 @@ int main(int argc, char **argv) {
 	string filesystem;
 	string acctcode, wsdir;
 	string mailaddress("");
-	int reminder=0;
+	string user;
+	int reminder = 0;
 	ptree pt;
 	po::variables_map opt;
 
+	// drop unneeded effective capabilties, if e.g. setuid root
+	drop_cap();
+
 	// check commandline
-	commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, argc, argv);
+	commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user, argc, argv);
 
 	// read config 
 	read_config(pt);
@@ -179,9 +192,18 @@ int main(int argc, char **argv) {
 	validate(ws_allocate, pt, opt, filesystem, duration, maxextensions, acctcode);
 
 
-	// construct db-entry name
+	// construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
 	string username = getusername();
-	string dbfilename=pt.get<string>(string("workspaces.")+filesystem+".database")+"/"+username+"-"+name;
+	string dbfilename;
+	if(extensionflag && getuid()==0 && user.length()>0) {
+		dbfilename=pt.get<string>(string("workspaces.")+filesystem+".database")+"/"+user+"-"+name;
+		if(!fs::exists(dbfilename)) {
+			cerr << "Error: workspace does not exist, can not be extended as root!" << endl;
+			exit(-1);
+		}
+	} else {
+		dbfilename=pt.get<string>(string("workspaces.")+filesystem+".database")+"/"+username+"-"+name;
+	}
 
 	// does db entry exist?
 	if(fs::exists(dbfilename)) {
@@ -189,7 +211,8 @@ int main(int argc, char **argv) {
 		// if it exists, print it, if extension is required, extend it
 		if(extensionflag) {
 			cerr << "Info: extending workspace." << endl;
-			extension--;
+			// if root does this, we do not use an extension
+			if(getuid()!=0) extension--;
 			if(extension<0) {
 				cerr << "Error: no more extensions." << endl;
 				exit(-1);
@@ -215,21 +238,30 @@ int main(int argc, char **argv) {
 
 		// make directory and change owner + permissions
 		try{
+			raise_cap(CAP_DAC_OVERRIDE);
 			fs::create_directories(wsdir);
+			lower_cap(CAP_DAC_OVERRIDE);
 		} catch (...) {
+			lower_cap(CAP_DAC_OVERRIDE);
 			cerr << "Error: could not create workspace directory!" << endl;
 			exit(-1);
 		}
+		raise_cap(CAP_CHOWN);
 		if(chown(wsdir.c_str(), getuid(), getgid())) {
+			lower_cap(CAP_CHOWN);
 			cerr << "Error: could not change owner of workspace!" << endl;
 			unlink(wsdir.c_str());
 			exit(-1);
 		}
+		lower_cap(CAP_CHOWN);
+		raise_cap(CAP_DAC_OVERRIDE);
 		if(chmod(wsdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
+			lower_cap(CAP_DAC_OVERRIDE);
 			cerr << "Error: could not change permissions of workspace!" << endl;
 			unlink(wsdir.c_str());
 			exit(-1);
 		}
+		lower_cap(CAP_DAC_OVERRIDE);
 
 		extension = maxextensions;
 	    expiration = time(NULL)+duration*24*3600;

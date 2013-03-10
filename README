@@ -19,6 +19,10 @@ WHATS NEW
 	- JSON key:value configration and database, easyer to extend, but no comments :-(, XML could
 		be used as well, but not really better to read...
 	- man pages
+	- ws_allocate has an argument -u (only visible for root) so root can extend workspaces
+	  using    ws_allocate -u owner -x name duration
+	  duration can be longer than allowed for the user, and it does not consume an extension,
+	  so it works even if remaining extensions of the workspace is 0
 
 WHATS QUESTIONABLE
 
@@ -76,8 +80,8 @@ make
 copy ws_allocate and ws_release and ws_list where wanted,
 and set capabilites with
 
-setcap "CAP_DAC_OVERRIDE=pie CAP_CHOWN=pie" ws_allocate
-setcap "CAP_DAC_OVERRIDE=pie CAP_CHOWN=pie" ws_release
+setcap "CAP_DAC_OVERRIDE=p CAP_CHOWN=p" ws_allocate
+setcap "CAP_DAC_OVERRIDE=p" ws_release
 
 install manpages.
 
