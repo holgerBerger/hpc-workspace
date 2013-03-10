@@ -1,0 +1,45 @@
+# this file illustrates and documents the workspace++ config files
+# comments are for illustration only, the real config file does NOT support
+# comments (drawback of JSON)
+# use ws_validate_config to validate a config file
+{
+	"default": "lustre",		# mandantory, the default workspace to choose
+	"duration": 10,				# the max duration in days, if not specified in workspace
+	"maxextensions": 1, 		# the number of extensions, if not specified in workspace
+	"dbuid": 9999,				# mandantory
+	"dbgid": 9999,				# mandantory
+	"admins": ["hobel"],		# list of admin users
+	"workspaces":				# now the list of the workspaces
+	{
+		"lustre":				# name of workspace as shown with ws_list -l
+		{
+			"spaces":	["/lustre1/ws", "/lustre2/ws"],					# mandantory, list of directories
+			"deleted":	["/lustre1/.removed", "/lustre2/.removed"],		# mandantory
+																		# list where deleted workspaces will be moved,
+																		# rename is used, so same filesystem as spaces,
+																		# 1:1 mapping necessary, order COUNTS
+			"database": "/lustre-db",				# mandantory, the DB directory, this is where DB files will end
+			"duration": 30,							# max duration, overwrites global value
+			"groupdefault": ["inst1","inst2"],		# users of those groups will have this workspace as default
+			"userdefault": ["user1"],				# those users will have this workspace as default
+			"user_acl": ["user1"],					# as soon as user_acl or group_acl exist, 
+													# the workspace is access restricted to those users/groups listed
+			"group_acl": ["adm"],
+			"maxextensions": 5,						# maximum extensios allowed
+			"userexceptions": 						# optional sections with overrides per users
+			{
+				"user2": 							# a username getting non default values
+				{
+					"duration": 300,				# those values overwrite the workspace and global values for this user
+					"maxextensions": 15
+				}
+			}
+		},
+		"nfs":					# second workspace, minimum example
+		{
+			"database": "/nfs-db",
+			"spaces": ["/nfs1/ws"],
+			"deleted": ["/nfs1/.trash"]
+		}
+	}
+}

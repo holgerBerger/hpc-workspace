@@ -1,0 +1,126 @@
+#!/usr/bin/env python
+
+"""
+    workspace++
+
+    ws_validate_config
+
+    python version of ws_validate_config command, for admin only
+
+	validate a config file for most common errors and beeing valid JSON
+
+    (c) Holger Berger 2013
+
+    workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
+
+    workspace++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    workspace++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with workspace++.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+
+
+import sys,os.path
+import json
+
+if len(sys.argv)>1 and sys.argv[1] in ['-h','--help']:
+	print "Usage: ws_validate_config [filename]"
+	sys.exit(0)
+
+filename = sys.argv[1] if len(sys.argv)>1 else '/etc/ws.conf'
+
+config = json.load(open(filename))
+
+print 'validating config from',filename
+
+try:
+	workspaces=config["workspaces"].keys()
+	print 'workspaces:',
+	for i in workspaces: print i,
+	print
+except KeyError:
+	print 'ERROR: no workspaces defined!'
+	sys.exit(1)
+
+
+try:
+	print 'default workspace:',config["default"]
+except KeyError:
+	print 'ERROR: no default workspace defined, please add <"default": "name"> clause to toplevel'
+	sys.exit(1)
+
+if config["default"] not in workspaces:
+	print 'ERROR: default workspace is not defined as workspace in the file'
+	sys.exit(1)
+
+
+try:
+	print 'workspace db uid:',config["dbuid"]
+except KeyError:
+	print 'ERROR: no DB uid defined, please add <"dbuid": uid> clause to toplevel'
+	sys.exit(1)
+
+try:
+	print 'workspace db gid:',config["dbgid"]
+except KeyError:
+	print 'ERROR: no DB gid defined, please add <"dbgid": gid> clause to toplevel'
+	sys.exit(1)
+
+try:
+	print 'workspace default duration:',config["duration"]
+except KeyError:
+	print 'ERROR: no default workspace duration defined, please add <"duration": days> clause to toplevel'
+	sys.exit(1)
+
+try:
+	print 'workspace default extensions:',config["maxextensions"]
+except KeyError:
+	print 'ERROR: no default number of allowed extensions defined, please add <"maxextensions": number> clause to toplevel'
+	sys.exit(1)
+
+
+
+for ws in workspaces:
+	print "workspace:",ws
+	try:
+		print ' workspace database directory:',config["workspaces"][ws]["database"]
+	except KeyError:
+		print ' ERROR: no database location defined, please add <"database": "dir"> clause to workspace',ws
+		sys.exit(1)
+	if not os.path.exists(config["workspaces"][ws]["database"]):
+		print ' WARNING: database directory <%s> does not exist!' % config["workspaces"][ws]["database"]
+		
+
+	try:
+		print ' workspace directories:'," ".join(config["workspaces"][ws]["spaces"])
+	except KeyError:
+		print ' ERROR: no workspace locations defined, please add <"spaces": list> clause to workspace',ws
+		sys.exit(1)
+	for sp in config["workspaces"][ws]["spaces"]:
+		if not os.path.exists(sp):
+			print ' WARNING: workspace directory <%s> does not exist!' % sp
+	
+	try:
+		print ' deleted directories:'," ".join(config["workspaces"][ws]["deleted"])
+	except KeyError:
+		print ' ERROR: no workspace deleted locations defined, please add <"deleted": list> clause to workspace',ws
+		sys.exit(1)
+	for sp in config["workspaces"][ws]["deleted"]:
+		if not os.path.exists(sp):
+			print ' WARNING: "deleted" directory <%s> does not exist!' % sp
+
+	if len(config["workspaces"][ws]["deleted"]) != len(config["workspaces"][ws]["spaces"]):
+		print ' WARNING: number of spaces and deleted directories do not match!'
+
+	for d in config["workspaces"][ws]["deleted"]:
+		if d in config["workspaces"][ws]["spaces"]:
+			print ' WARNING: "deleted" directory <%s> is a workspace directory!' % d

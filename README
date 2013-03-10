@@ -1,0 +1,82 @@
+very short introduction to workspace++ 
+
+WHATS NEW
+
+- incompatible file formats for DB and config
+- unification of config, user exceptions and all config options moved into one
+  config file
+- rewrite of ws_release and ws_allocate in C++, no use of setuid anymore, but capability support needed
+  never was comfortable with the python in C hack, this is cleaner, less attack vectors.
+- added/changed functionality
+	- ws_release always moves the data away when called (new semantics! users affected!)
+	- more admin options with ws_list, like seeing expired workspaces
+	- more output control in ws_list
+	- support for email reminders in ws_allocate/ws_cleaner
+	- JSON key:value configration and database, easyer to extend, but no comments :-(, XML could
+		be used as well, but not really better to read...
+	- man pages
+
+WHATS QUESTIONABLE
+
+- should a JSON file be used for user config file in users home? anything else except email 
+  a user might want to configure?
+- any additional fields needed in config files?
+- any additional options/features needed/wanted in commands?
+- no capability management atm, all the time same power
+
+PLANNED
+
+- striping support in ws_allocate (lustre parameters, probably we want to drop some 
+  capabilities before we do that, needs study how to do that)
+- cleaner with support for reminder emails
+
+PREREQUISITS
+
+c++ compiler (no c++0x needed) (g++ and clang++ tested)
+boost
+boost_filesystem
+boost_regex
+boost_program_options
+python2.6
+
+
+SUPPLIED
+
+ws_allocate 		(C++)
+ws_release 			(C++)
+ws_find				(python)
+ws_validate_config 	(python)
+
+MISSING
+
+ws_register (trivial)
+ws_find		(trivial)
+ws_cleaner  (bit of work)
+
+BUGS
+
+path for ws.conf file is CWD, will be changed to /etc later.
+
+HOW TO INSTALL
+
+write a config file, see ws.conf_full_sample, validate it 
+with ws_validate_config myconfig.conf
+
+copy it to /etc/ws.conf
+may be having /etc/ws.conf being a link is a good idea,
+so different versions can be kept.
+
+compile the tools with
+make
+
+copy ws_allocate and ws_release and ws_list where wanted,
+and set capabilites with
+
+setcap "CAP_DAC_OVERRIDE=pie CAP_CHOWN=pie" ws_allocate
+setcap "CAP_DAC_OVERRIDE=pie CAP_CHOWN=pie" ws_release
+
+install manpages.
+
+try.
+have fun.
+complain.

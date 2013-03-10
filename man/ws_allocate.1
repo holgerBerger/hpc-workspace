@@ -1,0 +1,100 @@
+.TH ws_allocate 1 "March 2013" "USER COMMANDS"
+
+.SH NAME
+ws_allocate \- create a workspace directory and return its path
+
+.SH SYNOPSIS
+.B ws_allocate
+[\-h] [\-x] [\-F FILESYSTEM] [\-r DAYS] [\-m MAILADDRESS] NAME DURATION
+
+.SH DESCRIPTION
+Create a 
+.B workspace 
+for the calling user with name NAME which will exist for DURATION days.
+The command will always return the full name of the created directory on stdout, and will print
+some information to stderr.
+A 
+.B workspace 
+has a limited lifetime, which can be restricted by the administrator.
+The DURATION might be cut to that maximum, a warning will be printed in that case.
+
+A 
+.B workspace 
+can be extended if allowed by the administrator, who might limit the number
+of extensions.
+
+A reminder email can be send to address MAILADDRESS (or address from ~/.ws_user.conf)
+DAYS before the 
+.B
+workspace 
+expires. This will done probably during a nightly cleanup run, do not expect it to come
+exactly in time but rather the night after the warning period is met.
+
+The idea of the 
+.B workspace 
+is to allow the administrator to keep control of filespace in working filesystems,
+and to avoid the situations that data of past and finished projects/jobs is idling for
+ever on disks. A user can create and dispose arbitrary number of workspaces, they are cheap,
+and can be created e.g. for each job.
+
+From the system side, 
+.B workspaces 
+will be deleted after beeing expired. A friendly user can release workspaces before the expiration
+date using
+.B ws_release
+which will mark the 
+.B workspace 
+for future deletion.
+
+Deletion is probably a task done once a night and not immediately.
+
+If a
+.B workspace
+was forgotten and expired, it might make sense to contact the administrator,
+as he probaly can restore a workspace for some time, if disk space is not low.
+
+.PP
+
+.SH OPTIONS
+.TP
+\-h 
+display usage help text
+.TP
+\-x
+extend an existing workspace until today + DURATION days.
+The number of extensions can be limited.
+.TP
+\-F
+select the filesystem to create the workspace in, there is always a default for this.
+See 
+.B ws_list
+\-l 
+for a list of available filesystems.
+.TP
+\-m
+mailaddress to send reminder mail to.
+.TP
+\-r DAYS
+reminder email will be send DAYS days before the 
+.B
+workspace 
+will expire. This could be send in the night after the exact point in time, during a cleanup.
+
+
+
+.SH EXAMPLES
+.TP
+create a workspace for 10 days:
+.B ws_allocate
+myworkspace 10
+
+.SH FILES
+.B
+~/.ws_user.conf 
+can contain a email address to send reminders to, if no \-m option is used.
+
+.SH AUTHOR
+Written by Holger Berger
+
+.SH SEE ALSO
+ws_release, ws_list
