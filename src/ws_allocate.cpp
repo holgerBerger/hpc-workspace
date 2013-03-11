@@ -188,7 +188,9 @@ int main(int argc, char **argv) {
 
 	// read config 
 	YAML::Node config = YAML::LoadFile("ws.conf");
+	raise_cap(CAP_DAC_OVERRIDE);
 	YAML::Node userconfig = YAML::LoadFile("ws_private.conf");
+	lower_cap(CAP_DAC_OVERRIDE);
 	db_uid = config["dbuid"].as<int>();
 	db_gid = config["dbgid"].as<int>();
 

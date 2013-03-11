@@ -141,7 +141,9 @@ int main(int argc, char **argv) {
 
 	// read config 
 	YAML::Node config = YAML::LoadFile("ws.conf");
+	raise_cap(CAP_DAC_OVERRIDE);
 	YAML::Node userconfig = YAML::LoadFile("ws_private.conf");
+	lower_cap(CAP_DAC_OVERRIDE);
 
 	// valide the input  (opt contains name, duration and filesystem as well)
 	validate(ws_release, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
