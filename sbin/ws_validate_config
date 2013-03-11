@@ -30,7 +30,7 @@
 
 
 import sys,os.path
-import json
+import yaml
 
 if len(sys.argv)>1 and sys.argv[1] in ['-h','--help']:
 	print "Usage: ws_validate_config [filename]"
@@ -38,7 +38,7 @@ if len(sys.argv)>1 and sys.argv[1] in ['-h','--help']:
 
 filename = sys.argv[1] if len(sys.argv)>1 else '/etc/ws.conf'
 
-config = json.load(open(filename))
+config = yaml.load(open(filename))
 
 print 'validating config from',filename
 
@@ -106,21 +106,11 @@ for ws in workspaces:
 		print ' ERROR: no workspace locations defined, please add <"spaces": list> clause to workspace',ws
 		sys.exit(1)
 	for sp in config["workspaces"][ws]["spaces"]:
+		if not config["workspaces"][ws]["deleted"]:
+			print ' ERROR: no target for deletion defined in workspace', ws
 		if not os.path.exists(sp):
 			print ' WARNING: workspace directory <%s> does not exist!' % sp
+		if not os.path.exists(os.path.join(sp,config["workspaces"][ws]["deleted"])):
+			print (' WARNING: deleted workspace directory <%s> does not exist!' %
+						os.path.join(sp,config["workspaces"][ws]["deleted"]))
 	
-	try:
-		print ' deleted directories:'," ".join(config["workspaces"][ws]["deleted"])
-	except KeyError:
-		print ' ERROR: no workspace deleted locations defined, please add <"deleted": list> clause to workspace',ws
-		sys.exit(1)
-	for sp in config["workspaces"][ws]["deleted"]:
-		if not os.path.exists(sp):
-			print ' WARNING: "deleted" directory <%s> does not exist!' % sp
-
-	if len(config["workspaces"][ws]["deleted"]) != len(config["workspaces"][ws]["spaces"]):
-		print ' WARNING: number of spaces and deleted directories do not match!'
-
-	for d in config["workspaces"][ws]["deleted"]:
-		if d in config["workspaces"][ws]["spaces"]:
-			print ' WARNING: "deleted" directory <%s> is a workspace directory!' % d

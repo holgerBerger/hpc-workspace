@@ -1,27 +1,23 @@
 #define _XOPEN_SOURCE
 #define _BSD_SOURCE
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
 #include <string>
+#include <vector>
+#include <iostream>
+#include <fstream>
+
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <grp.h>
 #include <time.h>
 #include <sys/capability.h>
+
 #include "ws_util.h"
 
-using boost::property_tree::ptree;
 using namespace std;
 
 const string configname="ws.conf";
 
-/*
- * read the config file
- */
-void read_config(ptree &pt) {
-	read_json(configname, pt);
-}
 
 /*
  * get user name
@@ -49,29 +45,57 @@ string getuserhome()
 /*
  * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN
  */
-void drop_cap() 
+void drop_cap(cap_value_t cap_arg) 
+{
+    cap_t caps;
+	cap_value_t cap_list[1];
+
+	cap_list[0] = cap_arg;
+
+    caps = cap_init();
+
+	// cap_list[0] = CAP_DAC_OVERRIDE;
+	// cap_list[1] = CAP_CHOWN;
+
+	if (cap_set_flag(caps, CAP_PERMITTED, 1, cap_list, CAP_SET) == -1) {
+		cerr << "Error: problem with capabilities." << endl;
+	}
+
+	if (cap_set_proc(caps) == -1) {
+		cerr << "Error: problem dropping capabilities." << endl;
+		cap_t cap = cap_get_proc();
+		cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+		cap_free(cap);
+	}
+
+	cap_free(caps);
+}
+
+void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2) 
 {
     cap_t caps;
 	cap_value_t cap_list[2];
 
+	cap_list[0] = cap_arg1;
+	cap_list[1] = cap_arg2;
+
     caps = cap_init();
 
-	cap_list[0] = CAP_DAC_OVERRIDE;
-	cap_list[1] = CAP_CHOWN;
+	// cap_list[0] = CAP_DAC_OVERRIDE;
+	// cap_list[1] = CAP_CHOWN;
 
 	if (cap_set_flag(caps, CAP_PERMITTED, 2, cap_list, CAP_SET) == -1) {
 		cerr << "Error: problem with capabilities." << endl;
 	}
 
 	if (cap_set_proc(caps) == -1) {
-		cerr << "Error: problem setting capabilities." << endl;
+		cerr << "Error: problem dropping capabilities." << endl;
+		cap_t cap = cap_get_proc();
+		cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+		cap_free(cap);
 	}
 
 	cap_free(caps);
-
-//	cap_t cap = cap_get_proc();
-//	cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
-//	cap_free(cap);
 }
 
 /*
@@ -90,7 +114,10 @@ void lower_cap(int cap)
 	}
 
 	if (cap_set_proc(caps) == -1) {
-		cerr << "Error: problem setting capabilities." << endl;
+		cerr << "Error: problem lowering capabilities." << endl;
+		cap_t cap = cap_get_proc();
+		cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+		cap_free(cap);
 	}
 
 	cap_free(caps);
@@ -112,7 +139,10 @@ void raise_cap(int cap)
 	}
 
 	if (cap_set_proc(caps) == -1) {
-		cerr << "Error: problem setting capabilities." << endl;
+		cerr << "Error: problem raising capabilities." << endl;
+		cap_t cap = cap_get_proc();
+		cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+		cap_free(cap);
 	}
 
 	cap_free(caps);
@@ -125,20 +155,24 @@ void write_dbfile(const string filename, const string wsdir, const long expirati
 					const string acctcode, const int dbuid, const int dbgid, 
 					const int reminder, const string mailaddress ) 
 {
-	ptree pt;
-	pt.put("workspace", wsdir);
-	pt.put("expiration", expiration);
-	pt.put("extensions", extensions);
-	pt.put("acctcode", acctcode);
-	pt.put("reminder", reminder);
-	pt.put("mailaddress", mailaddress);
+	YAML::Node entry;
+	entry["workspace"] = wsdir;
+	entry["expiration"] = expiration;
+	entry["extensions"] = extensions;
+	entry["acctcode"] = acctcode;
+	entry["reminder"] = reminder;
+	entry["mailaddress"] = mailaddress;
 	raise_cap(CAP_DAC_OVERRIDE);
-	write_json(filename, pt);
+	ofstream fout(filename.c_str());
+	fout << entry;
+	fout.close();
 	lower_cap(CAP_DAC_OVERRIDE);
 	raise_cap(CAP_CHOWN);
 	if(chown(filename.c_str(), dbuid, dbgid)) {
+		lower_cap(CAP_CHOWN);
 		cerr << "Error: could not change owner of database entry" << endl;
 	}
+	lower_cap(CAP_CHOWN);
 }
 
 /*
@@ -147,14 +181,13 @@ void write_dbfile(const string filename, const string wsdir, const long expirati
 void read_dbfile(string filename, string &wsdir, long &expiration, int &extensions, string &acctcode,
 						int reminder, string mailaddress) 
 {
-	ptree pt;
-	read_json(filename, pt);
-	wsdir = pt.get<string>("workspace");
-	expiration = pt.get<long>("expiration");
-	extensions = pt.get<int>("extensions");
-	acctcode = pt.get<string>("acctcode");
-	reminder = pt.get<int>("reminder");
-	mailaddress = pt.get<string>("mailaddress");
+	YAML::Node entry = YAML::LoadFile(filename);
+	wsdir = entry["workspace"].as<string>();
+	expiration = entry["expiration"].as<long>();
+	extensions = entry["extensions"].as<int>();
+	acctcode = entry["acctcode"].as<string>();
+	reminder = entry["reminder"].as<int>();
+	mailaddress = entry["mailaddress"].as<string>();
 }
 
 
@@ -162,8 +195,8 @@ void read_dbfile(string filename, string &wsdir, long &expiration, int &extensio
  *  validate the commandline versus the configuration file, to see if the user 
  *  is allowed to do what he asks for.
  */
-void validate(const whichcode wc, ptree &pt, po::variables_map &opt, string &filesystem, int &duration, 
-				int &maxextensions, string &primarygroup) 
+void validate(const whichcode wc, YAML::Node &config, YAML::Node &userconfig, 
+				po::variables_map &opt, string &filesystem, int &duration, int &maxextensions, string &primarygroup) 
 {
 
 	// get user name, group names etc
@@ -194,16 +227,14 @@ void validate(const whichcode wc, ptree &pt, po::variables_map &opt, string &fil
 
 		// read ACL lists
 		try{
-			BOOST_FOREACH(ptree::value_type &v, 
-					pt.get_child(string("workspaces.")+opt["filesystem"].as<string>()+".user_acl")) {
-				user_acl.push_back(v.second.data());
-			}
+			BOOST_FOREACH(string v, 
+				config["workspaces"][opt["filesystem"].as<string>()]["user_acl"].as<vector<string> >()) 
+				user_acl.push_back(v);
 		} catch (...) {};
 		try{
-			BOOST_FOREACH(ptree::value_type &v, 
-					pt.get_child(string("workspaces.")+opt["filesystem"].as<string>()+".group_acl")) {
-				group_acl.push_back(v.second.data());
-			}
+			BOOST_FOREACH(string v, 
+					config["workspaces"][opt["filesystem"].as<string>()]["group_acl"].as<vector<string> >()) 
+				group_acl.push_back(v);
 		} catch (...) {};
 
 		// check ACLs
@@ -226,16 +257,14 @@ void validate(const whichcode wc, ptree &pt, po::variables_map &opt, string &fil
 		// no filesystem specified, figure out which to use
 		map<string, string>groups_defaults;
 		map<string, string>user_defaults;
-		BOOST_FOREACH(ptree::value_type &v, pt.get_child(string("workspaces"))) {
+		BOOST_FOREACH(const YAML::Node &v, config["workspaces"]) {
 			try{
-				BOOST_FOREACH(ptree::value_type &u, 
-						pt.get_child(string("workspaces.")+v.first.data()+".groupdefault")) 
-					groups_defaults[u.second.data()]=v.first.data();
+				BOOST_FOREACH(string u, config["workspaces."][v.as<string>()]["groupdefault"].as<vector<string> >()) 
+					groups_defaults[u]=v.as<string>();
 			} catch (...) {};
 			try{
-				BOOST_FOREACH(ptree::value_type &u, 
-						pt.get_child(string("workspaces.")+v.first.data()+".userdefault")) 
-					user_defaults[u.second.data()]=v.first.data();
+				BOOST_FOREACH(string u, config["workspaces."][v.as<string>()]["userdefault"].as<vector<string> >()) 
+					user_defaults[u]=v.as<string>();
 			} catch (...) {};
 		}	
 		if( user_defaults.count(username) > 0 ) {
@@ -253,37 +282,39 @@ void validate(const whichcode wc, ptree &pt, po::variables_map &opt, string &fil
 			}
 		}
 		// fallback, if no per user or group default, we use the config default
-		filesystem=pt.get<string>("default");
+		filesystem=config["default"].as<string>();
 		found:;
 	}
 
 	if(wc==ws_allocate) {
 		// check durations - userexception in workspace/workspace/global
-		boost::optional<int> configduration;
-		configduration = pt.get_optional<int>(string("workspaces.")+filesystem+".userexceptions."+username+".duration");
-		if(!configduration) {
-			configduration = pt.get_optional<int>(string("workspaces.")+filesystem+".duration");
-			if(!configduration) {
-				configduration = pt.get_optional<int>("duration");
+		int configduration;
+		if(userconfig["workspaces"][filesystem]["userexceptions"][username]["duration"]) {
+			configduration = userconfig["workspaces"][filesystem]["userexceptions"][username]["duration"].as<int>();
+		} else {
+			if(config["workspaces"][filesystem]["duration"]) {
+				configduration = config["workspaces"][filesystem]["duration"].as<int>();
+			} else {
+				configduration = config["duration"].as<int>();
 			}
 		}
+
 		// if we are root, we ignore the limits
-		if ( getuid()!=0 && opt["duration"].as<int>() > configduration.get() ) {
-			duration = configduration.get();
+		if ( getuid()!=0 && opt["duration"].as<int>() > configduration ) {
+			duration = configduration;
 			cerr << "Error: Duration longer than allowed for this workspace" << endl;
 			cerr << "       setting to allowed maximum of " << duration << endl;
 		}
 
 		// get extensions from workspace or default  - userexception in workspace/workspace/global
-		boost::optional<int> maxextensions_opt;
-		maxextensions_opt = pt.get_optional<int>(string("workspaces.")+filesystem+".userexceptions."+username+".maxextensions");
-		if(!maxextensions_opt) {
-			maxextensions_opt = pt.get_optional<int>(string("workspaces.")+filesystem+".maxextensions");
-			if(!maxextensions_opt) {
-				maxextensions_opt = pt.get_optional<int>("maxextensions");
+		if(userconfig["workspaces"][filesystem]["userexceptions"][username]["maxextensions"]) {
+			maxextensions = userconfig["workspaces"][filesystem]["userexceptions"][username]["maxextensions"].as<int>();
+		} else {
+			if(config["workspaces"][filesystem]["maxextensions"]) {
+				maxextensions = config["workspaces"][filesystem]["maxextensions"].as<int>();
+			} else {
+				maxextensions = config["maxextensions"].as<int>();
 			}
 		}
-		maxextensions=maxextensions_opt.get();
 	}
-
 }

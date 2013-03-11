@@ -35,7 +35,7 @@
 
 """
 
-import json
+import yaml
 import os, os.path, pwd, grp, sys
 import glob, time
 from optparse import OptionParser
@@ -76,7 +76,7 @@ group = grp.getgrgid(gid)[0]
 groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
 
 # load config file
-config = json.load(open('ws.conf'))
+config = yaml.load(open('yaml_ws.conf'))
 
 # check admin state
 admin = False
@@ -143,20 +143,6 @@ if options.filesystemlist:
 		print i
 	sys.exit(0)
 
-# special case, in case of expired, we list from deleted directory,
-# not from database! exit after done
-if admin and options.expired:
-	for fs in legal:
-		for deldir in config['workspaces'][fs]['deleted']:
-			if options.user:
-				pattern = os.path.join(deldir,options.user+'-*')
-			else:
-				pattern = os.path.join(deldir,'*-*')
-			for ws in glob.glob(pattern):
-				print "id:", os.path.basename(ws)[:os.path.basename(ws).rfind('-')]
-				print 4*' ', 'workspace directory :',ws
-				print 4*' ', 'expiration time     :',time.ctime(int(ws[ws.rfind('-')+1:]))
-	sys.exit(0)
 
 
 # list workspaces, the normal case
@@ -164,10 +150,17 @@ sort = options.sort_remaining or options.sort_creation or options.sort_name
 entrylist = []
 for fs in legal:
 	if admin:
-		if options.user:
-			pattern = os.path.join(config['workspaces'][fs]['database'],options.user+'-*')
+		if not options.expired:
+			if options.user:
+				pattern = os.path.join(config['workspaces'][fs]['database'],options.user+'-*')
+			else:
+				pattern = os.path.join(config['workspaces'][fs]['database'],'*-*')
 		else:
-			pattern = os.path.join(config['workspaces'][fs]['database'],'*-*')
+			if options.user:
+				pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],
+																								options.user+'-*')
+			else:
+				pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],'*-*')
 	else:
 		pattern = os.path.join(config['workspaces'][fs]['database'],user+'-*')
 	for	ws in glob.glob(pattern):
@@ -176,7 +169,7 @@ for fs in legal:
 		else:
 			entry = struct()
 			entry.name = ws
-			content = json.load(open(ws))
+			content = yaml.load(open(ws))
 			entry.creation = os.path.getctime(ws)
 			entry.expiration = int(content['expiration'])
 			entry.extensions = content['extensions']

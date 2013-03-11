@@ -16,8 +16,7 @@ WHATS NEW
 	- more admin options with ws_list, like seeing expired workspaces
 	- more output control in ws_list
 	- support for email reminders in ws_allocate/ws_cleaner
-	- JSON key:value configration and database, easyer to extend, but no comments :-(, XML could
-		be used as well, but not really better to read...
+	- YAML key:value configration and database, easyer to extend
 	- man pages
 	- ws_allocate has an argument -u (only visible for root) so root can extend workspaces
 	  using    ws_allocate -u owner -x name duration
@@ -26,7 +25,7 @@ WHATS NEW
 
 WHATS QUESTIONABLE
 
-- should a JSON file be used for user config file in users home? anything else except email 
+- should a YAML file be used for user config file in users home? anything else except email 
   a user might want to configure?
 - any additional fields needed in config files?
 - any additional options/features needed/wanted in commands?
@@ -46,6 +45,7 @@ boost_filesystem
 boost_regex
 boost_program_options
 python2.6
+pyyaml
 
 
 SUPPLIED

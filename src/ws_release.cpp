@@ -116,24 +116,6 @@ void commandline(po::variables_map &opt, string &name, int &duration,
 	}
 }
 
-/*
- * logic to find the corresponding delete directory for a workspace
- * in the config, the workspaces and delete directory are supposed to
- * have the same order!
- * that code should be hidden in a dark corner...
- */
-string find_targetname(const ptree &pt, const string wsdir, const string filesystem) {
-	ptree::const_iterator dit = pt.get_child(string("workspaces.")+filesystem+".deleted").begin();
-	for(ptree::const_iterator wsit = pt.get_child(string("workspaces.")+filesystem+".spaces").begin();
-			wsit != pt.get_child(string("workspaces.")+filesystem+".spaces").end(); ++wsit, ++dit) {
-		if(wsdir.compare(0, wsit->second.data().length(), wsit->second.data())==0) {
-			return dit->second.data();
-		}
-	}
-	cerr << "Error: no deleted space found for the workspace " << wsdir << endl;
-	cerr << "Error: That should not happen, tell the administrator!" << endl;
-	return string("");
-}
 
 /*
  *  main logic here
@@ -149,47 +131,56 @@ int main(int argc, char **argv) {
 	string acctcode, wsdir;
 	int reminder=0;
 	string mailaddress;
-	ptree pt;
 	po::variables_map opt;
 
 	// drop capabilites
-	drop_cap();
+	drop_cap(CAP_DAC_OVERRIDE);
 
 	// check commandline
 	commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
 
 	// read config 
-	read_config(pt);
+	YAML::Node config = YAML::LoadFile("ws.conf");
+	YAML::Node userconfig = YAML::LoadFile("ws_private.conf");
 
 	// valide the input  (opt contains name, duration and filesystem as well)
-	validate(ws_release, pt, opt, filesystem, duration, maxextensions, acctcode);
+	validate(ws_release, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
 
 	// construct db-entry name
 	string username = getusername();
-	string dbfilename=pt.get<string>(string("workspaces.")+filesystem+".database")+"/"+username+"-"+name;
+	string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
 
 	// does db entry exist?
+	cout << "file:" << dbfilename << endl;
 	if(fs::exists(dbfilename)) {
 		read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
+
 		raise_cap(CAP_DAC_OVERRIDE);
-		if(unlink(dbfilename.c_str())) {
+		string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" + 
+								config["workspaces"][filesystem]["deleted"].as<string>() +
+								"/" + username + "-" + name + "-" + lexical_cast<string>(time(NULL));
+		if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
 		    lower_cap(CAP_DAC_OVERRIDE);
 			cerr << "Error: database entry could not be deleted." << endl;
 			exit(-1);
 		}
 		lower_cap(CAP_DAC_OVERRIDE);
+
 		// rational: we move the workspace into deleted directory and append a timestamp to name
 		// as a new workspace could have same name and releasing the new one would lead to a name
 		// collision, so a timestamp is kind of generation label attached to a workspace
-		string targetname = find_targetname(pt, wsdir, filesystem) + 
+		string wstargetname = fs::path(wsdir).parent_path().string() + "/" + 
+								config["workspaces"][filesystem]["deleted"].as<string>() +
 								"/" + username + "-" + name + "-" + lexical_cast<string>(time(NULL));
+
 		raise_cap(CAP_DAC_OVERRIDE);
-		if(rename(wsdir.c_str(), targetname.c_str())) {
+		if(rename(wsdir.c_str(), wstargetname.c_str())) {
 		    lower_cap(CAP_DAC_OVERRIDE);
-			cerr << "Error: could not move workspace!" << endl;
+			cerr << "Error: could not remove workspace!" << endl;
 			exit(-1);
 		}
 		lower_cap(CAP_DAC_OVERRIDE);
+
 	} else {
 		cerr << "Error: workspace does not exist!" << endl;
 		exit(-1);

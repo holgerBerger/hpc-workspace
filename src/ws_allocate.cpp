@@ -40,12 +40,16 @@
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <sys/capability.h>
 
 #include <iostream>
 #include <fstream>
 #include <string>
+
+#include <yaml-cpp/yaml.h>
+
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 #include <boost/foreach.hpp>
@@ -60,6 +64,7 @@
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 using namespace std;
+
 
 /* 
  *  parse the commandline and see if all required arguments are passed, and check the workspace name for 
@@ -172,37 +177,36 @@ int main(int argc, char **argv) {
 	string filesystem;
 	string acctcode, wsdir;
 	string mailaddress("");
-	string user;
+	string user_option;
 	int reminder = 0;
-	ptree pt;
 	po::variables_map opt;
 
-	// drop unneeded effective capabilties, if e.g. setuid root
-	drop_cap();
+	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN);
 
 	// check commandline
-	commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user, argc, argv);
+	commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, argc, argv);
 
 	// read config 
-	read_config(pt);
-	db_uid = pt.get<int>("dbuid");
-	db_gid = pt.get<int>("dbgid");
+	YAML::Node config = YAML::LoadFile("ws.conf");
+	YAML::Node userconfig = YAML::LoadFile("ws_private.conf");
+	db_uid = config["dbuid"].as<int>();
+	db_gid = config["dbgid"].as<int>();
 
 	// valide the input  (opt contains name, duration and filesystem as well)
-	validate(ws_allocate, pt, opt, filesystem, duration, maxextensions, acctcode);
+	validate(ws_allocate, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
 
 
 	// construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
 	string username = getusername();
 	string dbfilename;
-	if(extensionflag && getuid()==0 && user.length()>0) {
-		dbfilename=pt.get<string>(string("workspaces.")+filesystem+".database")+"/"+user+"-"+name;
+	if(extensionflag && getuid()==0 && user_option.length()>0) {
+		dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
 		if(!fs::exists(dbfilename)) {
 			cerr << "Error: workspace does not exist, can not be extended as root!" << endl;
 			exit(-1);
 		}
 	} else {
-		dbfilename=pt.get<string>(string("workspaces.")+filesystem+".database")+"/"+username+"-"+name;
+		dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+username+"-"+name;
 	}
 
 	// does db entry exist?
@@ -224,14 +228,10 @@ int main(int argc, char **argv) {
 		}
 	} else {
 		// if it does not exist, create it
-		vector<string> spaces;
 		cerr << "Info: creating workspace." << endl;
-
 		// read the possible spaces for the filesystem
-		BOOST_FOREACH(ptree::value_type &v, pt.get_child(string("workspaces.")+filesystem+".spaces")) {
-			spaces.push_back(v.second.data());
-		}
-	
+		vector<string> spaces = config["workspaces"][filesystem]["spaces"].as<vector<string> >();
+
 		// add some random
 		srand(time(NULL));
 		wsdir = spaces[rand()%spaces.size()]+"/"+username+"-"+name;
@@ -243,9 +243,10 @@ int main(int argc, char **argv) {
 			lower_cap(CAP_DAC_OVERRIDE);
 		} catch (...) {
 			lower_cap(CAP_DAC_OVERRIDE);
-			cerr << "Error: could not create workspace directory!" << endl;
+			cerr << "Error: could not create workspace directory!"  << endl;
 			exit(-1);
 		}
+
 		raise_cap(CAP_CHOWN);
 		if(chown(wsdir.c_str(), getuid(), getgid())) {
 			lower_cap(CAP_CHOWN);
@@ -254,6 +255,7 @@ int main(int argc, char **argv) {
 			exit(-1);
 		}
 		lower_cap(CAP_CHOWN);
+
 		raise_cap(CAP_DAC_OVERRIDE);
 		if(chmod(wsdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
 			lower_cap(CAP_DAC_OVERRIDE);
