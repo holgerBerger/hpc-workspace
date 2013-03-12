@@ -7,11 +7,11 @@
  *	c++ version of workspace utility
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
  *  This version is not DB and configuration compatible with the older version, the DB and 
- *	configuration was changed to JSON files.
+ *	configuration was changed to YAML files.
  *  This version works without setuid bit, but capabilities need to be used.
  * 
  *  differences to old workspace version
- *	- usage if JSON file format
+ *	- usage of YAML file format
  *	- not using setuid, but needs capabilities
  *	- always moves released workspace away (this change is affecting the user!)
  *
