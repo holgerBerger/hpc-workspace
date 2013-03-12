@@ -5,14 +5,14 @@
 
 	ws_list
 
-	python version of ws_list command, no privilges necessary
+	python version of ws_list command, no privileges necessary
 
 	list workspaces for all or selected users sorted or unsorted
 	with different output formats.
-	Reads new JSON configuration files and new JSON workspace database.
+	Reads new YAML configuration files and new YAML workspace database.
 
 	differences to old workspace version
-	- usage if JSON file format
+	- usage if YAML file format
 	- more options for administrator (configured and root)
 		+ list expired/moved workspaces
 
@@ -76,7 +76,7 @@ group = grp.getgrgid(gid)[0]
 groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
 
 # load config file
-config = yaml.load(open('yaml_ws.conf'))
+config = yaml.load(open('ws.conf'))
 
 # check admin state
 admin = False

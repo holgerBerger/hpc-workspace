@@ -84,14 +84,8 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
 			("reminder,r", po::value<int>(&reminder), "reminder to be sent n days before expiration")
 			("mailaddress,m", po::value<string>(&mailaddress), "mailaddress to send reminder to")
 			("extension,x", "extend workspace")
-	;
-
-	// got root ?
-	if(getuid() == 0) {
-		cmd_options.add_options()
 			("username,u", po::value<string>(&user), "username")
-		;
-	}
+	;
 
 	// define options without names
 	po::positional_options_description p;
@@ -180,6 +174,7 @@ int main(int argc, char **argv) {
 	string user_option;
 	int reminder = 0;
 	po::variables_map opt;
+    YAML::Node config, userconfig;
 
 	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN);
 
@@ -187,9 +182,20 @@ int main(int argc, char **argv) {
 	commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, argc, argv);
 
 	// read config 
-	YAML::Node config = YAML::LoadFile("ws.conf");
+    try {
+	    config = YAML::LoadFile("ws.conf");
+    } catch (YAML::BadFile) {
+        cerr << "Error: no config file!" << endl;
+        exit(-1);
+    }
+
+    // read private config
 	raise_cap(CAP_DAC_OVERRIDE);
-	YAML::Node userconfig = YAML::LoadFile("ws_private.conf");
+    try {
+	    userconfig = YAML::LoadFile("ws_private.conf");
+    } catch (YAML::BadFile) {
+        // we do not care
+    }
 	lower_cap(CAP_DAC_OVERRIDE);
 	db_uid = config["dbuid"].as<int>();
 	db_gid = config["dbgid"].as<int>();
@@ -201,10 +207,10 @@ int main(int argc, char **argv) {
 	// construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
 	string username = getusername();
 	string dbfilename;
-	if(extensionflag && getuid()==0 && user_option.length()>0) {
+	if(extensionflag && user_option.length()>0) {
 		dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
 		if(!fs::exists(dbfilename)) {
-			cerr << "Error: workspace does not exist, can not be extended as root!" << endl;
+			cerr << "Error: workspace does not exist, can not be extended!" << endl;
 			exit(-1);
 		}
 	} else {
@@ -216,6 +222,14 @@ int main(int argc, char **argv) {
 		read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
 		// if it exists, print it, if extension is required, extend it
 		if(extensionflag) {
+            // we allow a user to specify -u -x together, and to extend a workspace if the has rights on the workspace
+            if(user_option.length()>0 && (user_option != username) && (getuid() != 0)) {
+			    cerr << "Info: you are not owner of the workspace." << endl;
+                if(access(wsdir.c_str(), R_OK|W_OK|X_OK)!=0) {
+			        cerr << "Info: and you have no permissions to access the workspace, workspace will not be extended." << endl;
+                    exit(-1);
+                }
+            }
 			cerr << "Info: extending workspace." << endl;
 			// if root does this, we do not use an extension
 			if(getuid()!=0) extension--;

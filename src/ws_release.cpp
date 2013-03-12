@@ -132,6 +132,7 @@ int main(int argc, char **argv) {
 	int reminder=0;
 	string mailaddress;
 	po::variables_map opt;
+    YAML::Node config, userconfig;
 
 	// drop capabilites
 	drop_cap(CAP_DAC_OVERRIDE);
@@ -140,9 +141,20 @@ int main(int argc, char **argv) {
 	commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
 
 	// read config 
-	YAML::Node config = YAML::LoadFile("ws.conf");
+    try {
+	    config = YAML::LoadFile("ws.conf");
+    } catch (YAML::BadFile) {
+        cerr << "Error: no config file!" << endl;
+        exit(-1);
+    }
+
+    // read private config
 	raise_cap(CAP_DAC_OVERRIDE);
-	YAML::Node userconfig = YAML::LoadFile("ws_private.conf");
+    try {
+	    userconfig = YAML::LoadFile("ws_private.conf");
+    } catch (YAML::BadFile) {
+        // we do not care
+    }
 	lower_cap(CAP_DAC_OVERRIDE);
 
 	// valide the input  (opt contains name, duration and filesystem as well)
@@ -157,10 +169,13 @@ int main(int argc, char **argv) {
 	if(fs::exists(dbfilename)) {
 		read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
 
+        string timestamp = lexical_cast<string>(time(NULL)); 
+
 		raise_cap(CAP_DAC_OVERRIDE);
 		string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" + 
 								config["workspaces"][filesystem]["deleted"].as<string>() +
-								"/" + username + "-" + name + "-" + lexical_cast<string>(time(NULL));
+								"/" + username + "-" + name + "-" + timestamp;
+		// cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
 		if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
 		    lower_cap(CAP_DAC_OVERRIDE);
 			cerr << "Error: database entry could not be deleted." << endl;
@@ -173,7 +188,7 @@ int main(int argc, char **argv) {
 		// collision, so a timestamp is kind of generation label attached to a workspace
 		string wstargetname = fs::path(wsdir).parent_path().string() + "/" + 
 								config["workspaces"][filesystem]["deleted"].as<string>() +
-								"/" + username + "-" + name + "-" + lexical_cast<string>(time(NULL));
+								"/" + username + "-" + name + "-" + timestamp;
 
 		raise_cap(CAP_DAC_OVERRIDE);
 		if(rename(wsdir.c_str(), wstargetname.c_str())) {

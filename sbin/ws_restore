@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+
+"""
+	workspace++
+
+	ws_restore
+
+	python version of ws_restore command, only for root
+
+	restores expired workspaces 
+	Reads new YAML configuration files and new YAML workspace database.
+
+	(c) Holger Berger 2013
+
+	workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
+
+    workspace++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    workspace++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with workspace++.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+
+import yaml
+import os, os.path, pwd, grp, sys
+import glob, time
+from optparse import OptionParser
+
+
+if os.getuid()!=0:
+    print "Error: you are not root."
+    sys.exit(-1)
+
+# load config file
+config = yaml.load(open('ws.conf'))
+
+if len(sys.argv)==1:
+    print "Usage: ws_restore <workspace>"
+    sys.exit(0)
+
+workspaceid = sys.argv[1]
+
+for fs in config["workspaces"]:
+    dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
+    dbdir = config["workspaces"][fs]["database"]
+    dbentry = os.path.join(dbdeldir, workspaceid )
+    if os.path.exists(dbentry):
+        if os.path.exists( os.path.join( dbdir , workspaceid[:workspaceid.rfind('-')]) ):
+            print "Error: workspace with same name %s exists, resolve it by hand!"
+            sys.exit(-1)
+        else:
+            entry = yaml.load(open(dbentry))
+            wsentry = os.path.join( os.path.dirname(entry["workspace"]), config["workspaces"][fs]["deleted"] , workspaceid )
+            if os.path.exists( wsentry ):
+                os.rename(dbentry,os.path.join( dbdir , workspaceid[:workspaceid.rfind('-')]))
+                os.rename(wsentry, entry["workspace"])
+                print "Info: workspace found and restored"
+                exit(0)
+            else:
+                print "Error: workspace not found!"            
+                exit(-1)
+
+print "Error: workspace not found"
