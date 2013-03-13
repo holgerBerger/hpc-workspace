@@ -7,7 +7,7 @@
 
     python version of ws_validate_config command, for admin only
 
-    validate a config file for most common errors and beeing valid JSON
+    validate a config file for most common errors and beeing valid YAML
 
     (c) Holger Berger 2013
 
