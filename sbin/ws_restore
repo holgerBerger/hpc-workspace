@@ -1,18 +1,18 @@
 #!/usr/bin/env python2
 
 """
-	workspace++
+    workspace++
 
-	ws_restore
+    ws_restore
 
-	python version of ws_restore command, only for root
+    python version of ws_restore command, only for root
 
-	restores expired workspaces 
-	Reads new YAML configuration files and new YAML workspace database.
+    restores expired workspaces 
+    Reads new YAML configuration files and new YAML workspace database.
 
-	(c) Holger Berger 2013
+    (c) Holger Berger 2013
 
-	workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
+    workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
 
     workspace++ is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,14 +36,14 @@ from optparse import OptionParser
 
 
 if os.getuid()!=0:
-    print "Error: you are not root."
+    print >> sys.stderr, "Error: you are not root."
     sys.exit(-1)
 
 # load config file
 config = yaml.load(open('ws.conf'))
 
 if len(sys.argv)==1:
-    print "Usage: ws_restore <workspace>"
+    print >> sys.stderr, "Usage: ws_restore <workspace>"
     sys.exit(0)
 
 workspaceid = sys.argv[1]
@@ -54,7 +54,7 @@ for fs in config["workspaces"]:
     dbentry = os.path.join(dbdeldir, workspaceid )
     if os.path.exists(dbentry):
         if os.path.exists( os.path.join( dbdir , workspaceid[:workspaceid.rfind('-')]) ):
-            print "Error: workspace with same name %s exists, resolve it by hand!"
+            print >> sys.stderr, "Error: workspace with same name %s exists, resolve it by hand!"
             sys.exit(-1)
         else:
             entry = yaml.load(open(dbentry))
@@ -62,10 +62,10 @@ for fs in config["workspaces"]:
             if os.path.exists( wsentry ):
                 os.rename(dbentry,os.path.join( dbdir , workspaceid[:workspaceid.rfind('-')]))
                 os.rename(wsentry, entry["workspace"])
-                print "Info: workspace found and restored"
+                print >> sys.stderr, "Info: workspace found and restored"
                 exit(0)
             else:
-                print "Error: workspace not found!"            
+                print >> sys.stderr, "Error: workspace not found!"            
                 exit(-1)
 
-print "Error: workspace not found"
+print >> sys.stderr, "Error: workspace not found"

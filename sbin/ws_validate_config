@@ -7,7 +7,7 @@
 
     python version of ws_validate_config command, for admin only
 
-	validate a config file for most common errors and beeing valid JSON
+    validate a config file for most common errors and beeing valid JSON
 
     (c) Holger Berger 2013
 
@@ -33,8 +33,8 @@ import sys,os.path
 import yaml
 
 if len(sys.argv)>1 and sys.argv[1] in ['-h','--help']:
-	print "Usage: ws_validate_config [filename]"
-	sys.exit(0)
+    print "Usage: ws_validate_config [filename]"
+    sys.exit(0)
 
 filename = sys.argv[1] if len(sys.argv)>1 else '/etc/ws.conf'
 
@@ -43,74 +43,74 @@ config = yaml.load(open(filename))
 print 'validating config from',filename
 
 try:
-	workspaces=config["workspaces"].keys()
-	print 'workspaces:',
-	for i in workspaces: print i,
-	print
+    workspaces=config["workspaces"].keys()
+    print 'workspaces:',
+    for i in workspaces: print i,
+    print
 except KeyError:
-	print 'ERROR: no workspaces defined!'
-	sys.exit(1)
+    print 'ERROR: no workspaces defined!'
+    sys.exit(1)
 
 
 try:
-	print 'default workspace:',config["default"]
+    print 'default workspace:',config["default"]
 except KeyError:
-	print 'ERROR: no default workspace defined, please add <"default": "name"> clause to toplevel'
-	sys.exit(1)
+    print 'ERROR: no default workspace defined, please add <"default": "name"> clause to toplevel'
+    sys.exit(1)
 
 if config["default"] not in workspaces:
-	print 'ERROR: default workspace is not defined as workspace in the file'
-	sys.exit(1)
+    print 'ERROR: default workspace is not defined as workspace in the file'
+    sys.exit(1)
 
 
 try:
-	print 'workspace db uid:',config["dbuid"]
+    print 'workspace db uid:',config["dbuid"]
 except KeyError:
-	print 'ERROR: no DB uid defined, please add <"dbuid": uid> clause to toplevel'
-	sys.exit(1)
+    print 'ERROR: no DB uid defined, please add <"dbuid": uid> clause to toplevel'
+    sys.exit(1)
 
 try:
-	print 'workspace db gid:',config["dbgid"]
+    print 'workspace db gid:',config["dbgid"]
 except KeyError:
-	print 'ERROR: no DB gid defined, please add <"dbgid": gid> clause to toplevel'
-	sys.exit(1)
+    print 'ERROR: no DB gid defined, please add <"dbgid": gid> clause to toplevel'
+    sys.exit(1)
 
 try:
-	print 'workspace default duration:',config["duration"]
+    print 'workspace default duration:',config["duration"]
 except KeyError:
-	print 'ERROR: no default workspace duration defined, please add <"duration": days> clause to toplevel'
-	sys.exit(1)
+    print 'ERROR: no default workspace duration defined, please add <"duration": days> clause to toplevel'
+    sys.exit(1)
 
 try:
-	print 'workspace default extensions:',config["maxextensions"]
+    print 'workspace default extensions:',config["maxextensions"]
 except KeyError:
-	print 'ERROR: no default number of allowed extensions defined, please add <"maxextensions": number> clause to toplevel'
-	sys.exit(1)
+    print 'ERROR: no default number of allowed extensions defined, please add <"maxextensions": number> clause to toplevel'
+    sys.exit(1)
 
 
 
 for ws in workspaces:
-	print "workspace:",ws
-	try:
-		print ' workspace database directory:',config["workspaces"][ws]["database"]
-	except KeyError:
-		print ' ERROR: no database location defined, please add <"database": "dir"> clause to workspace',ws
-		sys.exit(1)
-	if not os.path.exists(config["workspaces"][ws]["database"]):
-		print ' WARNING: database directory <%s> does not exist!' % config["workspaces"][ws]["database"]
-		
+    print "workspace:",ws
+    try:
+        print ' workspace database directory:',config["workspaces"][ws]["database"]
+    except KeyError:
+        print ' ERROR: no database location defined, please add <"database": "dir"> clause to workspace',ws
+        sys.exit(1)
+    if not os.path.exists(config["workspaces"][ws]["database"]):
+        print ' WARNING: database directory <%s> does not exist!' % config["workspaces"][ws]["database"]
+        
 
-	try:
-		print ' workspace directories:'," ".join(config["workspaces"][ws]["spaces"])
-	except KeyError:
-		print ' ERROR: no workspace locations defined, please add <"spaces": list> clause to workspace',ws
-		sys.exit(1)
-	for sp in config["workspaces"][ws]["spaces"]:
-		if not config["workspaces"][ws]["deleted"]:
-			print ' ERROR: no target for deletion defined in workspace', ws
-		if not os.path.exists(sp):
-			print ' WARNING: workspace directory <%s> does not exist!' % sp
-		if not os.path.exists(os.path.join(sp,config["workspaces"][ws]["deleted"])):
-			print (' WARNING: deleted workspace directory <%s> does not exist!' %
-						os.path.join(sp,config["workspaces"][ws]["deleted"]))
-	
+    try:
+        print ' workspace directories:'," ".join(config["workspaces"][ws]["spaces"])
+    except KeyError:
+        print ' ERROR: no workspace locations defined, please add <"spaces": list> clause to workspace',ws
+        sys.exit(1)
+    for sp in config["workspaces"][ws]["spaces"]:
+        if not config["workspaces"][ws]["deleted"]:
+            print ' ERROR: no target for deletion defined in workspace', ws
+        if not os.path.exists(sp):
+            print ' WARNING: workspace directory <%s> does not exist!' % sp
+        if not os.path.exists(os.path.join(sp,config["workspaces"][ws]["deleted"])):
+            print (' WARNING: deleted workspace directory <%s> does not exist!' %
+                        os.path.join(sp,config["workspaces"][ws]["deleted"]))
+    

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]
+then
+    echo "Usage: ws_extend workspace days"
+    exit
+fi
+
+ws_allocate -x $1 $2

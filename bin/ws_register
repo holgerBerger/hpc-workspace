@@ -59,11 +59,10 @@ usage="Usage: ws_restore [options] directory"
 # option configuration
 parser = OptionParser(usage=usage)
 parser.add_option('-F', '--filesystem', dest='filesystem', help='filesystem to search workspaces in')
-parser.add_option('-a', '--all', action="store_true", dest='all', default=False, help='search in all workspaces')
 (options, args) = parser.parse_args()
 
 if len(args)==0:
-    print usage
+    print >> sys.stderr, usage
     sys.exit(-1)
 
 dirname = args[0]
@@ -74,7 +73,7 @@ if(options.filesystem):
     if options.filesystem in config['workspaces']:
         filesystems = [options.filesystem]
     else:
-        print "Error: no such filesystem."
+        print >> sys.stderr, "Error: no such filesystem."
         sys.exit(-1)
 else:
     filesystems = config['workspaces'].keys()

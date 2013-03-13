@@ -1,13 +1,13 @@
 
 /*
- *	workspace++
+ *    workspace++
  *
  *  ws_allocate
  *
- *	c++ version of workspace utility
+ *    c++ version of workspace utility
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
  *  This version is not DB and configuration compatible with the older version, the DB and 
- *	configuration was changed to YAML files.
+ *    configuration was changed to YAML files.
  *  This version works without setuid bit, but capabilities need to be used.
  * 
  *  differences to old workspace version
@@ -71,88 +71,88 @@ using namespace std;
  *  bad characters
  */
 void commandline(po::variables_map &opt, string &name, int &duration, string &filesystem, 
-					bool &extension, int &reminder, string &mailaddress, string &user,
-					int argc, char**argv) {
-	// define all options
+                    bool &extension, int &reminder, string &mailaddress, string &user,
+                    int argc, char**argv) {
+    // define all options
 
-	po::options_description cmd_options( "\nOptions" );
-	cmd_options.add_options()
-			("help,h", "produce help message")
-			("duration,d", po::value<int>(&duration)->default_value(1), "duration in days")
-			("name,n", po::value<string>(&name), "workspace name")
-			("filesystem,F", po::value<string>(&filesystem), "filesystem")
-			("reminder,r", po::value<int>(&reminder), "reminder to be sent n days before expiration")
-			("mailaddress,m", po::value<string>(&mailaddress), "mailaddress to send reminder to")
-			("extension,x", "extend workspace")
-			("username,u", po::value<string>(&user), "username")
-	;
+    po::options_description cmd_options( "\nOptions" );
+    cmd_options.add_options()
+            ("help,h", "produce help message")
+            ("duration,d", po::value<int>(&duration)->default_value(1), "duration in days")
+            ("name,n", po::value<string>(&name), "workspace name")
+            ("filesystem,F", po::value<string>(&filesystem), "filesystem")
+            ("reminder,r", po::value<int>(&reminder), "reminder to be sent n days before expiration")
+            ("mailaddress,m", po::value<string>(&mailaddress), "mailaddress to send reminder to")
+            ("extension,x", "extend workspace")
+            ("username,u", po::value<string>(&user), "username")
+    ;
 
-	// define options without names
-	po::positional_options_description p;
-	p.add("name", 1).add("duration",2);
+    // define options without names
+    po::positional_options_description p;
+    p.add("name", 1).add("duration",2);
 
-	// parse commandline
-	try{
-		po::store(po::command_line_parser(argc, argv).options(cmd_options).positional(p).run(), opt);
-		po::notify(opt);
-	} catch (...) {
-		cout << "Usage: " << argv[0] << ": [options] workspace_name duration" << endl;
-		cout << cmd_options << "\n";
-		exit(1);
-	}
+    // parse commandline
+    try{
+        po::store(po::command_line_parser(argc, argv).options(cmd_options).positional(p).run(), opt);
+        po::notify(opt);
+    } catch (...) {
+        cout << "Usage: " << argv[0] << ": [options] workspace_name duration" << endl;
+        cout << cmd_options << "\n";
+        exit(1);
+    }
 
-	// see whats up
+    // see whats up
 
-	if (opt.count("help")) {
-		cout << "Usage: " << argv[0] << ": [options] workspace_name duration" << endl;
-	    cout << cmd_options << "\n";
-	    exit(1);
-	}
+    if (opt.count("help")) {
+        cout << "Usage: " << argv[0] << ": [options] workspace_name duration" << endl;
+        cout << cmd_options << "\n";
+        exit(1);
+    }
 
-	if(opt.count("extension")) {
-		extension = true;
-	} else {
-		extension = false;
-	}
+    if(opt.count("extension")) {
+        extension = true;
+    } else {
+        extension = false;
+    }
 
-	if (opt.count("name"))
-	{
-	    //cout << " name: " << name << "\n";
-	} else {
-		cout << argv[0] << ": [options] workspace_name duration" << endl;
-	    cout << cmd_options << "\n";
-		exit(1);
-	}
+    if (opt.count("name"))
+    {
+        //cout << " name: " << name << "\n";
+    } else {
+        cout << argv[0] << ": [options] workspace_name duration" << endl;
+        cout << cmd_options << "\n";
+        exit(1);
+    }
 
-	// reminder check, if we have a reminder number, we need either a mailaddress argument or config file
-	// with mailaddress in user home
-	if(reminder!=0) {
-		if (reminder > duration) {
-			cerr << "Info: reminder in the past, ignored." << endl;
-			reminder = 0;
-			goto noreminder;
-		}
-		if (!opt.count("mailaddress")) {
-			ifstream infile;
-			infile.open((getuserhome()+"/.ws_user.conf").c_str());
-			getline(infile, mailaddress);
-			if(mailaddress.length()>0) {
-				cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;
-			} else {
-				cerr << "Info: could not read email from users config ~/.ws_user.conf." << endl;
-				cerr << "Info: reminder will be ignored" << endl;
-				reminder = 0;
-			}
-		}
-	}
-	noreminder:
+    // reminder check, if we have a reminder number, we need either a mailaddress argument or config file
+    // with mailaddress in user home
+    if(reminder!=0) {
+        if (reminder > duration) {
+            cerr << "Info: reminder in the past, ignored." << endl;
+            reminder = 0;
+            goto noreminder;
+        }
+        if (!opt.count("mailaddress")) {
+            ifstream infile;
+            infile.open((getuserhome()+"/.ws_user.conf").c_str());
+            getline(infile, mailaddress);
+            if(mailaddress.length()>0) {
+                cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;
+            } else {
+                cerr << "Info: could not read email from users config ~/.ws_user.conf." << endl;
+                cerr << "Info: reminder will be ignored" << endl;
+                reminder = 0;
+            }
+        }
+    }
+    noreminder:
 
-	// validate workspace name against nasty characters	
-	static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
-	if (!regex_match(name, e)) {
-			cerr << "Error: Illegal workspace name, use characters and numbers, -,. and - only!" << endl;
-			exit(1);
-	}
+    // validate workspace name against nasty characters    
+    static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
+    if (!regex_match(name, e)) {
+            cerr << "Error: Illegal workspace name, use characters and numbers, -,. and - only!" << endl;
+            exit(1);
+    }
 }
 
 
@@ -162,131 +162,131 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
  */
 
 int main(int argc, char **argv) {
-	int duration, maxextensions;
-	int db_uid, db_gid;
-	long expiration;
-	int extension;
-	bool extensionflag;
-	string name;
-	string filesystem;
-	string acctcode, wsdir;
-	string mailaddress("");
-	string user_option;
-	int reminder = 0;
-	po::variables_map opt;
+    int duration, maxextensions;
+    int db_uid, db_gid;
+    long expiration;
+    int extension;
+    bool extensionflag;
+    string name;
+    string filesystem;
+    string acctcode, wsdir;
+    string mailaddress("");
+    string user_option;
+    int reminder = 0;
+    po::variables_map opt;
     YAML::Node config, userconfig;
 
-	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN);
+    drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN);
 
-	// check commandline
-	commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, argc, argv);
+    // check commandline
+    commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, argc, argv);
 
-	// read config 
+    // read config 
     try {
-	    config = YAML::LoadFile("ws.conf");
+        config = YAML::LoadFile("ws.conf");
     } catch (YAML::BadFile) {
         cerr << "Error: no config file!" << endl;
         exit(-1);
     }
 
     // read private config
-	raise_cap(CAP_DAC_OVERRIDE);
+    raise_cap(CAP_DAC_OVERRIDE);
     try {
-	    userconfig = YAML::LoadFile("ws_private.conf");
+        userconfig = YAML::LoadFile("ws_private.conf");
     } catch (YAML::BadFile) {
         // we do not care
     }
-	lower_cap(CAP_DAC_OVERRIDE);
-	db_uid = config["dbuid"].as<int>();
-	db_gid = config["dbgid"].as<int>();
+    lower_cap(CAP_DAC_OVERRIDE);
+    db_uid = config["dbuid"].as<int>();
+    db_gid = config["dbgid"].as<int>();
 
-	// valide the input  (opt contains name, duration and filesystem as well)
-	validate(ws_allocate, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
+    // valide the input  (opt contains name, duration and filesystem as well)
+    validate(ws_allocate, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
 
 
-	// construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
-	string username = getusername();
-	string dbfilename;
-	if(extensionflag && user_option.length()>0) {
-		dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
-		if(!fs::exists(dbfilename)) {
-			cerr << "Error: workspace does not exist, can not be extended!" << endl;
-			exit(-1);
-		}
-	} else {
-		dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+username+"-"+name;
-	}
+    // construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
+    string username = getusername();
+    string dbfilename;
+    if(extensionflag && user_option.length()>0) {
+        dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
+        if(!fs::exists(dbfilename)) {
+            cerr << "Error: workspace does not exist, can not be extended!" << endl;
+            exit(-1);
+        }
+    } else {
+        dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+username+"-"+name;
+    }
 
-	// does db entry exist?
-	if(fs::exists(dbfilename)) {
-		read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
-		// if it exists, print it, if extension is required, extend it
-		if(extensionflag) {
+    // does db entry exist?
+    if(fs::exists(dbfilename)) {
+        read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
+        // if it exists, print it, if extension is required, extend it
+        if(extensionflag) {
             // we allow a user to specify -u -x together, and to extend a workspace if the has rights on the workspace
             if(user_option.length()>0 && (user_option != username) && (getuid() != 0)) {
-			    cerr << "Info: you are not owner of the workspace." << endl;
+                cerr << "Info: you are not owner of the workspace." << endl;
                 if(access(wsdir.c_str(), R_OK|W_OK|X_OK)!=0) {
-			        cerr << "Info: and you have no permissions to access the workspace, workspace will not be extended." << endl;
+                    cerr << "Info: and you have no permissions to access the workspace, workspace will not be extended." << endl;
                     exit(-1);
                 }
             }
-			cerr << "Info: extending workspace." << endl;
-			// if root does this, we do not use an extension
-			if(getuid()!=0) extension--;
-			if(extension<0) {
-				cerr << "Error: no more extensions." << endl;
-				exit(-1);
-			}
-	    	expiration = time(NULL)+duration*24*3600;
-			write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
-		} else {
-			cerr << "Info: reusing workspace." << endl;
-		}
-	} else {
-		// if it does not exist, create it
-		cerr << "Info: creating workspace." << endl;
-		// read the possible spaces for the filesystem
-		vector<string> spaces = config["workspaces"][filesystem]["spaces"].as<vector<string> >();
+            cerr << "Info: extending workspace." << endl;
+            // if root does this, we do not use an extension
+            if(getuid()!=0) extension--;
+            if(extension<0) {
+                cerr << "Error: no more extensions." << endl;
+                exit(-1);
+            }
+            expiration = time(NULL)+duration*24*3600;
+            write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+        } else {
+            cerr << "Info: reusing workspace." << endl;
+        }
+    } else {
+        // if it does not exist, create it
+        cerr << "Info: creating workspace." << endl;
+        // read the possible spaces for the filesystem
+        vector<string> spaces = config["workspaces"][filesystem]["spaces"].as<vector<string> >();
 
-		// add some random
-		srand(time(NULL));
-		wsdir = spaces[rand()%spaces.size()]+"/"+username+"-"+name;
+        // add some random
+        srand(time(NULL));
+        wsdir = spaces[rand()%spaces.size()]+"/"+username+"-"+name;
 
-		// make directory and change owner + permissions
-		try{
-			raise_cap(CAP_DAC_OVERRIDE);
-			fs::create_directories(wsdir);
-			lower_cap(CAP_DAC_OVERRIDE);
-		} catch (...) {
-			lower_cap(CAP_DAC_OVERRIDE);
-			cerr << "Error: could not create workspace directory!"  << endl;
-			exit(-1);
-		}
+        // make directory and change owner + permissions
+        try{
+            raise_cap(CAP_DAC_OVERRIDE);
+            fs::create_directories(wsdir);
+            lower_cap(CAP_DAC_OVERRIDE);
+        } catch (...) {
+            lower_cap(CAP_DAC_OVERRIDE);
+            cerr << "Error: could not create workspace directory!"  << endl;
+            exit(-1);
+        }
 
-		raise_cap(CAP_CHOWN);
-		if(chown(wsdir.c_str(), getuid(), getgid())) {
-			lower_cap(CAP_CHOWN);
-			cerr << "Error: could not change owner of workspace!" << endl;
-			unlink(wsdir.c_str());
-			exit(-1);
-		}
-		lower_cap(CAP_CHOWN);
+        raise_cap(CAP_CHOWN);
+        if(chown(wsdir.c_str(), getuid(), getgid())) {
+            lower_cap(CAP_CHOWN);
+            cerr << "Error: could not change owner of workspace!" << endl;
+            unlink(wsdir.c_str());
+            exit(-1);
+        }
+        lower_cap(CAP_CHOWN);
 
-		raise_cap(CAP_DAC_OVERRIDE);
-		if(chmod(wsdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
-			lower_cap(CAP_DAC_OVERRIDE);
-			cerr << "Error: could not change permissions of workspace!" << endl;
-			unlink(wsdir.c_str());
-			exit(-1);
-		}
-		lower_cap(CAP_DAC_OVERRIDE);
+        raise_cap(CAP_DAC_OVERRIDE);
+        if(chmod(wsdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
+            lower_cap(CAP_DAC_OVERRIDE);
+            cerr << "Error: could not change permissions of workspace!" << endl;
+            unlink(wsdir.c_str());
+            exit(-1);
+        }
+        lower_cap(CAP_DAC_OVERRIDE);
 
-		extension = maxextensions;
-	    expiration = time(NULL)+duration*24*3600;
-		write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
-	}
-	cout << wsdir << endl;
-	cerr << "remaining extensions  : " << extension << endl;
-	cerr << "remaining time in days: " << (expiration-time(NULL))/(24*3600) << endl;
+        extension = maxextensions;
+        expiration = time(NULL)+duration*24*3600;
+        write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+    }
+    cout << wsdir << endl;
+    cerr << "remaining extensions  : " << extension << endl;
+    cerr << "remaining time in days: " << (expiration-time(NULL))/(24*3600) << endl;
 
 }

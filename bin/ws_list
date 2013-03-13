@@ -1,24 +1,24 @@
 #!/usr/bin/env python2
 
 """
-	workspace++
+    workspace++
 
-	ws_list
+    ws_list
 
-	python version of ws_list command, no privileges necessary
+    python version of ws_list command, no privileges necessary
 
-	list workspaces for all or selected users sorted or unsorted
-	with different output formats.
-	Reads new YAML configuration files and new YAML workspace database.
+    list workspaces for all or selected users sorted or unsorted
+    with different output formats.
+    Reads new YAML configuration files and new YAML workspace database.
 
-	differences to old workspace version
-	- usage if YAML file format
-	- more options for administrator (configured and root)
-		+ list expired/moved workspaces
+    differences to old workspace version
+    - usage if YAML file format
+    - more options for administrator (configured and root)
+        + list expired/moved workspaces
 
-	(c) Holger Berger 2013
+    (c) Holger Berger 2013
 
-	workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
+    workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
 
     workspace++ is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,26 +44,26 @@ class struct: pass
 
 # print a entry
 def printentry(entry, admin, terse, verbose):
-	if verbose: terse = False
-	if admin:
-		print "id:", os.path.basename(entry.name)
-	else:
-		print "id:", os.path.basename(entry.name)[os.path.basename(entry.name).find('-')+1:]
-	print 4*' ','workspace directory  :', entry.workspace	
-	print 4*' ','remaining time       :',
-	if time.time() > entry.expiration:
-		print 'expired'
-	else:
-		remaining = entry.expiration-time.time()
-		print '%d days %d hours' % (remaining/(24*3600),(remaining%(24*3600))/3600)
-	if not terse:
-		print 4*' ','creation time        :', time.ctime(entry.creation)
-		print 4*' ','expiration date      :', time.ctime(entry.expiration)
-	print 4*' ','available extensions :', entry.extensions
-	if verbose:
-		print 4*' ','acctcode             :', entry.acctcode
-		print 4*' ','reminder             :', time.ctime(entry.expiration-entry.reminder*(24*3600))
-		print 4*' ','mailaddress          :', entry.mailaddress
+    if verbose: terse = False
+    if admin:
+        print "id:", os.path.basename(entry.name)
+    else:
+        print "id:", os.path.basename(entry.name)[os.path.basename(entry.name).find('-')+1:]
+    print 4*' ','workspace directory  :', entry.workspace    
+    print 4*' ','remaining time       :',
+    if time.time() > entry.expiration:
+        print 'expired'
+    else:
+        remaining = entry.expiration-time.time()
+        print '%d days %d hours' % (remaining/(24*3600),(remaining%(24*3600))/3600)
+    if not terse:
+        print 4*' ','creation time        :', time.ctime(entry.creation)
+        print 4*' ','expiration date      :', time.ctime(entry.expiration)
+    print 4*' ','available extensions :', entry.extensions
+    if verbose:
+        print 4*' ','acctcode             :', entry.acctcode
+        print 4*' ','reminder             :', time.ctime(entry.expiration-entry.reminder*(24*3600))
+        print 4*' ','mailaddress          :', entry.mailaddress
 
 # we have to find out if the calling user is admin before we can process commandline,
 # so we have to determine user and read config first, and parse commandline last
@@ -81,13 +81,13 @@ config = yaml.load(open('ws.conf'))
 # check admin state
 admin = False
 if 'admins' in config:
-	if user in config['admins']:
-		admin = True
+    if user in config['admins']:
+        admin = True
 
 # make root always admin, seeing admin options and admin output
 # FIXME: eid or uid or both?
 if os.geteuid()==0 or os.getuid()==0:
-	admin = True
+    admin = True
 
 # option configuration
 parser = OptionParser()
@@ -95,9 +95,9 @@ parser.add_option('-F', '--filesystem', dest='filesystem', help='filesystem to l
 parser.add_option('-l', action="store_true", dest='filesystemlist', default=False, help='list available filesystems')
 parser.add_option('-s', action="store_true", dest='short', default=False, help='only show names of workspaces')
 if admin:
-	parser.add_option('-u', action="store", dest='user', help='only show workspaces of selected user')
-	parser.add_option('-e', action="store_true", dest='expired', default=False, 
-			help='show expired workspaces, can be combined with -F and -u to reduce output, no sorting supported')
+    parser.add_option('-u', action="store", dest='user', help='only show workspaces of selected user')
+    parser.add_option('-e', action="store_true", dest='expired', default=False, 
+            help='show expired workspaces, can be combined with -F and -u to reduce output, no sorting supported')
 parser.add_option('-N', action="store_true", dest='sort_name', default=False, help='sort by name')
 parser.add_option('-C', action="store_true", dest='sort_creation', default=False, help='sort by creation')
 parser.add_option('-R', action="store_true", dest='sort_remaining', default=False, help='sort by remaining time')
@@ -108,40 +108,40 @@ parser.add_option('-v', action="store_true", dest='verbose', default=False, help
 
 # all filesystems or a selected one?
 if(options.filesystem): 
-	if options.filesystem in config['workspaces']:
-		filesystems = [options.filesystem]
-	else:
-		print "Error: no such filesystem."
-		sys.exit(-1)
+    if options.filesystem in config['workspaces']:
+        filesystems = [options.filesystem]
+    else:
+        print >> sys.stderr, "Error: no such filesystem."
+        sys.exit(-1)
 else:
-	filesystems = config['workspaces'].keys()
+    filesystems = config['workspaces'].keys()
 
 # reduce list to allowed filesystems
 legal=[]
 for f in filesystems:
-	userok=True
-	if 'user_acl' in config['workspaces'][f] or 'group_acl' in config['workspaces'][f]:
-		userok=False
-	if 'group_acl' in config['workspaces'][f]:
-		for g in groups:
-			if g in config['workspaces'][f]['group_acl']:
-				userok=True
-				break
-		if group in config['workspaces'][f]['group_acl']:
-			userok=True
-	if 'user_acl' in config['workspaces'][f]:
-		if user in config['workspaces'][f]['user_acl']:
-			userok=True
- 	# admin can see workspaces from anywhere, but can also restrict
-	if userok or admin:
-		legal.append(f)
+    userok=True
+    if 'user_acl' in config['workspaces'][f] or 'group_acl' in config['workspaces'][f]:
+        userok=False
+    if 'group_acl' in config['workspaces'][f]:
+        for g in groups:
+            if g in config['workspaces'][f]['group_acl']:
+                userok=True
+                break
+        if group in config['workspaces'][f]['group_acl']:
+            userok=True
+    if 'user_acl' in config['workspaces'][f]:
+        if user in config['workspaces'][f]['user_acl']:
+            userok=True
+     # admin can see workspaces from anywhere, but can also restrict
+    if userok or admin:
+        legal.append(f)
 
 # list workspaces (only allowed ones), exit after done
 if options.filesystemlist:
-	print 'available filesystems:'
-	for i in legal:
-		print i
-	sys.exit(0)
+    print 'available filesystems:'
+    for i in legal:
+        print i
+    sys.exit(0)
 
 
 
@@ -149,46 +149,46 @@ if options.filesystemlist:
 sort = options.sort_remaining or options.sort_creation or options.sort_name
 entrylist = []
 for fs in legal:
-	if admin:
-		if not options.expired:
-			if options.user:
-				pattern = os.path.join(config['workspaces'][fs]['database'],options.user+'-*')
-			else:
-				pattern = os.path.join(config['workspaces'][fs]['database'],'*-*')
-		else:
-			if options.user:
-				pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],
-																								options.user+'-*')
-			else:
-				pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],'*-*')
-	else:
-		pattern = os.path.join(config['workspaces'][fs]['database'],user+'-*')
-	for	ws in glob.glob(pattern):
-		if options.short:
-			print os.path.basename(ws)[os.path.basename(ws).find('-')+1:]
-		else:
-			entry = struct()
-			entry.name = ws
-			content = yaml.load(open(ws))
-			entry.creation = os.path.getctime(ws)
-			entry.expiration = int(content['expiration'])
-			entry.extensions = content['extensions']
-			entry.acctcode = content['acctcode']
-			entry.workspace = content['workspace']
-			entry.reminder = int(content['reminder'])
-			entry.mailaddress = content['mailaddress']
-			if sort:
-				# store for sorting
-				entrylist.append(entry)	
-			else: 
-				# this is the quick way, unsorted output if fastest, data printed as it comes in
-				printentry(entry, admin, options.terse, options.verbose)
+    if admin:
+        if not options.expired:
+            if options.user:
+                pattern = os.path.join(config['workspaces'][fs]['database'],options.user+'-*')
+            else:
+                pattern = os.path.join(config['workspaces'][fs]['database'],'*-*')
+        else:
+            if options.user:
+                pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],
+                                                                                                options.user+'-*')
+            else:
+                pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],'*-*')
+    else:
+        pattern = os.path.join(config['workspaces'][fs]['database'],user+'-*')
+    for    ws in glob.glob(pattern):
+        if options.short:
+            print os.path.basename(ws)[os.path.basename(ws).find('-')+1:]
+        else:
+            entry = struct()
+            entry.name = ws
+            content = yaml.load(open(ws))
+            entry.creation = os.path.getctime(ws)
+            entry.expiration = int(content['expiration'])
+            entry.extensions = content['extensions']
+            entry.acctcode = content['acctcode']
+            entry.workspace = content['workspace']
+            entry.reminder = int(content['reminder'])
+            entry.mailaddress = content['mailaddress']
+            if sort:
+                # store for sorting
+                entrylist.append(entry)    
+            else: 
+                # this is the quick way, unsorted output if fastest, data printed as it comes in
+                printentry(entry, admin, options.terse, options.verbose)
 
 # list sorted
 if sort:
-	if options.sort_name: sortedentrylist = sorted(entrylist,key=lambda x: x.name, reverse=options.sort_revert)
-	if options.sort_creation: sortedentrylist = sorted(entrylist,key=lambda x: x.creation, reverse=options.sort_revert)
-	if options.sort_remaining: sortedentrylist = sorted(entrylist,key=lambda x: x.expiration, reverse=options.sort_revert)
+    if options.sort_name: sortedentrylist = sorted(entrylist,key=lambda x: x.name, reverse=options.sort_revert)
+    if options.sort_creation: sortedentrylist = sorted(entrylist,key=lambda x: x.creation, reverse=options.sort_revert)
+    if options.sort_remaining: sortedentrylist = sorted(entrylist,key=lambda x: x.expiration, reverse=options.sort_revert)
 
-	for entry in sortedentrylist:
-		printentry(entry, admin, options.terse, options.verbose)
+    for entry in sortedentrylist:
+        printentry(entry, admin, options.terse, options.verbose)

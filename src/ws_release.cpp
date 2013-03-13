@@ -1,19 +1,19 @@
 
 /*
- *	workspace++
+ *    workspace++
  *
  *  ws_release
  *
- *	c++ version of workspace utility
+ *    c++ version of workspace utility
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
  *  This version is not DB and configuration compatible with the older version, the DB and 
- *	configuration was changed to YAML files.
+ *    configuration was changed to YAML files.
  *  This version works without setuid bit, but capabilities need to be used.
  * 
  *  differences to old workspace version
- *	- usage of YAML file format
- *	- not using setuid, but needs capabilities
- *	- always moves released workspace away (this change is affecting the user!)
+ *    - usage of YAML file format
+ *    - not using setuid, but needs capabilities
+ *    - always moves released workspace away (this change is affecting the user!)
  *
  *  (c) Holger Berger 2013
  * 
@@ -67,53 +67,53 @@ using boost::lexical_cast;
  *  bad characters
  */
 void commandline(po::variables_map &opt, string &name, int &duration, 
-					string &filesystem, bool &extension,  int argc, char**argv) {
-	// define all options
+                    string &filesystem, bool &extension,  int argc, char**argv) {
+    // define all options
 
-	po::options_description cmd_options( "\nOptions" );
-	cmd_options.add_options()
-			("help,h", "produce help message")
-			("name,n", po::value<string>(&name), "workspace name")
-			("filesystem,F", po::value<string>(&filesystem), "filesystem")
-	;
+    po::options_description cmd_options( "\nOptions" );
+    cmd_options.add_options()
+            ("help,h", "produce help message")
+            ("name,n", po::value<string>(&name), "workspace name")
+            ("filesystem,F", po::value<string>(&filesystem), "filesystem")
+    ;
 
-	// define options without names
-	po::positional_options_description p;
-	p.add("name", 1);
+    // define options without names
+    po::positional_options_description p;
+    p.add("name", 1);
 
-	// parse commandline
-	try{
-		po::store(po::command_line_parser(argc, argv).options(cmd_options).positional(p).run(), opt);
-		po::notify(opt);
-	} catch (...) {
-		cout << "Usage:" << argv[0] << ": [options] workspace_name" << endl;
-	    cout << cmd_options << "\n";
-	    exit(1);
-	}
+    // parse commandline
+    try{
+        po::store(po::command_line_parser(argc, argv).options(cmd_options).positional(p).run(), opt);
+        po::notify(opt);
+    } catch (...) {
+        cout << "Usage:" << argv[0] << ": [options] workspace_name" << endl;
+        cout << cmd_options << "\n";
+        exit(1);
+    }
 
-	// see whats up
+    // see whats up
 
-	if (opt.count("help")) {
-		cout << "Usage:" << argv[0] << ": [options] workspace_name" << endl;
-	    cout << cmd_options << "\n";
-	    exit(1);
-	}
+    if (opt.count("help")) {
+        cout << "Usage:" << argv[0] << ": [options] workspace_name" << endl;
+        cout << cmd_options << "\n";
+        exit(1);
+    }
 
-	if (opt.count("name"))
-	{
-	    //cout << " name: " << name << "\n";
-	} else {
-		cout << argv[0] << ": [options] workspace_name" << endl;
-	    cout << cmd_options << "\n";
-		exit(1);
-	}
+    if (opt.count("name"))
+    {
+        //cout << " name: " << name << "\n";
+    } else {
+        cout << argv[0] << ": [options] workspace_name" << endl;
+        cout << cmd_options << "\n";
+        exit(1);
+    }
 
-	// validate workspace name against nasty characters	
-	static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
-	if (!regex_match(name, e)) {
-			cerr << "Error: Illegal workspace name, use characters and numbers, -,. and - only!" << endl;
-			exit(1);
-	}
+    // validate workspace name against nasty characters    
+    static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
+    if (!regex_match(name, e)) {
+            cerr << "Error: Illegal workspace name, use characters and numbers, -,. and - only!" << endl;
+            exit(1);
+    }
 }
 
 
@@ -122,84 +122,84 @@ void commandline(po::variables_map &opt, string &name, int &duration,
  */
 
 int main(int argc, char **argv) {
-	int duration, maxextensions;
-	long expiration;
-	int extension;
-	bool extensionflag;
-	string name;
-	string filesystem;
-	string acctcode, wsdir;
-	int reminder=0;
-	string mailaddress;
-	po::variables_map opt;
+    int duration, maxextensions;
+    long expiration;
+    int extension;
+    bool extensionflag;
+    string name;
+    string filesystem;
+    string acctcode, wsdir;
+    int reminder=0;
+    string mailaddress;
+    po::variables_map opt;
     YAML::Node config, userconfig;
 
-	// drop capabilites
-	drop_cap(CAP_DAC_OVERRIDE);
+    // drop capabilites
+    drop_cap(CAP_DAC_OVERRIDE);
 
-	// check commandline
-	commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
+    // check commandline
+    commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
 
-	// read config 
+    // read config 
     try {
-	    config = YAML::LoadFile("ws.conf");
+        config = YAML::LoadFile("ws.conf");
     } catch (YAML::BadFile) {
         cerr << "Error: no config file!" << endl;
         exit(-1);
     }
 
     // read private config
-	raise_cap(CAP_DAC_OVERRIDE);
+    raise_cap(CAP_DAC_OVERRIDE);
     try {
-	    userconfig = YAML::LoadFile("ws_private.conf");
+        userconfig = YAML::LoadFile("ws_private.conf");
     } catch (YAML::BadFile) {
         // we do not care
     }
-	lower_cap(CAP_DAC_OVERRIDE);
+    lower_cap(CAP_DAC_OVERRIDE);
 
-	// valide the input  (opt contains name, duration and filesystem as well)
-	validate(ws_release, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
+    // valide the input  (opt contains name, duration and filesystem as well)
+    validate(ws_release, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
 
-	// construct db-entry name
-	string username = getusername();
-	string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
+    // construct db-entry name
+    string username = getusername();
+    string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
 
-	// does db entry exist?
-	cout << "file:" << dbfilename << endl;
-	if(fs::exists(dbfilename)) {
-		read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
+    // does db entry exist?
+    cout << "file:" << dbfilename << endl;
+    if(fs::exists(dbfilename)) {
+        read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
 
         string timestamp = lexical_cast<string>(time(NULL)); 
 
-		raise_cap(CAP_DAC_OVERRIDE);
-		string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" + 
-								config["workspaces"][filesystem]["deleted"].as<string>() +
-								"/" + username + "-" + name + "-" + timestamp;
-		// cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
-		if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
-		    lower_cap(CAP_DAC_OVERRIDE);
-			cerr << "Error: database entry could not be deleted." << endl;
-			exit(-1);
-		}
-		lower_cap(CAP_DAC_OVERRIDE);
+        raise_cap(CAP_DAC_OVERRIDE);
+        string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" + 
+                                config["workspaces"][filesystem]["deleted"].as<string>() +
+                                "/" + username + "-" + name + "-" + timestamp;
+        // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
+        if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
+            lower_cap(CAP_DAC_OVERRIDE);
+            cerr << "Error: database entry could not be deleted." << endl;
+            exit(-1);
+        }
+        lower_cap(CAP_DAC_OVERRIDE);
 
-		// rational: we move the workspace into deleted directory and append a timestamp to name
-		// as a new workspace could have same name and releasing the new one would lead to a name
-		// collision, so a timestamp is kind of generation label attached to a workspace
-		string wstargetname = fs::path(wsdir).parent_path().string() + "/" + 
-								config["workspaces"][filesystem]["deleted"].as<string>() +
-								"/" + username + "-" + name + "-" + timestamp;
+        // rational: we move the workspace into deleted directory and append a timestamp to name
+        // as a new workspace could have same name and releasing the new one would lead to a name
+        // collision, so a timestamp is kind of generation label attached to a workspace
+        string wstargetname = fs::path(wsdir).parent_path().string() + "/" + 
+                                config["workspaces"][filesystem]["deleted"].as<string>() +
+                                "/" + username + "-" + name + "-" + timestamp;
 
-		raise_cap(CAP_DAC_OVERRIDE);
-		if(rename(wsdir.c_str(), wstargetname.c_str())) {
-		    lower_cap(CAP_DAC_OVERRIDE);
-			cerr << "Error: could not remove workspace!" << endl;
-			exit(-1);
-		}
-		lower_cap(CAP_DAC_OVERRIDE);
+        raise_cap(CAP_DAC_OVERRIDE);
+        if(rename(wsdir.c_str(), wstargetname.c_str())) {
+            lower_cap(CAP_DAC_OVERRIDE);
+            cerr << "Error: could not remove workspace!" << endl;
+            exit(-1);
+        }
+        lower_cap(CAP_DAC_OVERRIDE);
 
-	} else {
-		cerr << "Error: workspace does not exist!" << endl;
-		exit(-1);
-	}
+    } else {
+        cerr << "Error: workspace does not exist!" << endl;
+        exit(-1);
+    }
 }
