@@ -1,0 +1,118 @@
+#!/usr/bin/env python2
+
+"""
+    workspace++
+
+    ws_find
+
+    python version of ws_find command, no privileges necessary
+
+    print workspace path for a given workspace name
+
+    differences to old workspace version
+    - usage if YAML file format
+    - more options for administrator (configured and root)
+            + list expired/moved workspaces
+
+    (c) Holger Berger 2013
+
+    workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
+
+    workspace++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    workspace++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with workspace++.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+
+
+import yaml
+import os, os.path, pwd, grp, sys
+import glob, time
+from optparse import OptionParser
+
+
+# who are we?
+uid = os.getuid()
+gid = os.getgid()
+user = pwd.getpwuid(uid)[0]
+group = grp.getgrgid(gid)[0]
+groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
+
+
+# load config file
+config = yaml.load(open('ws.conf'))
+
+
+usage="Usage: ws_find [options] [workspacename]"
+
+# option configuration
+parser = OptionParser(usage=usage)
+parser.add_option('-F', '--filesystem', dest='filesystem', help='filesystem to search workspace in')
+parser.add_option('-l', '--list', action="store_true", dest='list', default=False, help='list valid filesystem names')
+(options, args) = parser.parse_args()
+
+
+
+# all filesystems or a selected one?
+if(options.filesystem): 
+    if options.filesystem in config['workspaces']:
+        filesystems = [options.filesystem]
+    else:
+        print "Error: no such filesystem."
+        sys.exit(-1)
+else:
+    filesystems = config['workspaces'].keys()
+
+# reduce list to allowed filesystems
+legal=[]
+for f in filesystems:
+    userok=True
+    if 'user_acl' in config['workspaces'][f] or 'group_acl' in config['workspaces'][f]:
+        userok=False
+    if 'group_acl' in config['workspaces'][f]:
+        for g in groups:
+            if g in config['workspaces'][f]['group_acl']:
+                userok=True
+                break
+            if group in config['workspaces'][f]['group_acl']:
+                userok=True
+    if 'user_acl' in config['workspaces'][f]:
+            if user in config['workspaces'][f]['user_acl']:
+                userok=True
+    # admin can see workspaces from anywhere, but can also restrict
+    if userok:
+        legal.append(f)
+
+# list workspaces (only allowed ones), exit after done
+if options.list:
+    print 'available filesystems:'
+    for i in legal:
+        print i
+    sys.exit(0)
+
+if len(args)==0:
+    print >>sys.stderr, usage
+    sys.exit(-1)
+
+wsname = args[0]
+
+# main loop
+
+for fs in legal:
+    dbfilename='%s/%s-%s' % (config["workspaces"][fs]['database'], user, wsname)
+    try:
+        f=yaml.load(open(dbfilename)) 
+    except IOError:
+        print >> sys.stderr, "Error: no such workspace"
+        sys.exit(-1)
+    wsdir=f['workspace']
+    print wsdir
