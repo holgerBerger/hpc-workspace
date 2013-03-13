@@ -7,8 +7,8 @@ very short introduction to workspace++
 WHATS NEW
 
 - incompatible file formats for DB and config
-- unification of config, user exceptions and all config options moved into one
-  config file
+- unification of config, all config options moved into one config file,
+  user exceptions are kept in a extra file which must not be readable for user commands
 - rewrite of ws_release and ws_allocate in C++, no use of setuid anymore, but capability support needed
   never was comfortable with the python in C hack, this is cleaner, less attack vectors.
 - added/changed functionality
@@ -18,10 +18,11 @@ WHATS NEW
 	- support for email reminders in ws_allocate/ws_cleaner
 	- YAML key:value configration and database, easyer to extend
 	- man pages
-	- ws_allocate has an argument -u (only visible for root) so root can extend workspaces
+	- ws_allocate has an argument -u  so root can extend workspaces
 	  using    ws_allocate -u owner -x name duration
 	  duration can be longer than allowed for the user, and it does not consume an extension,
 	  so it works even if remaining extensions of the workspace is 0
+	  Users can do this is as well if they can access the workspace!
 
 WHATS QUESTIONABLE
 
@@ -29,7 +30,6 @@ WHATS QUESTIONABLE
   a user might want to configure?
 - any additional fields needed in config files?
 - any additional options/features needed/wanted in commands?
-- no capability management atm, all the time same power
 
 PLANNED
 
@@ -44,6 +44,7 @@ boost
 boost_filesystem
 boost_regex
 boost_program_options
+yaml-cpp
 python2.6
 pyyaml
 
@@ -52,8 +53,9 @@ SUPPLIED
 
 ws_allocate 		(C++)
 ws_release 			(C++)
-ws_find				(python)
+ws_list				(python)
 ws_validate_config 	(python)
+ws_restore			(python)
 
 MISSING
 

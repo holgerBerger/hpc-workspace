@@ -7,6 +7,7 @@ let &cpo=s:cpo_save
 unlet s:cpo_save
 set autoindent
 set backspace=indent,eol,start
+set expandtab
 set exrc
 set fileencodings=ucs-bom,utf-8,default,latin1
 set helplang=en
