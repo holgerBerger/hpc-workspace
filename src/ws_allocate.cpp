@@ -59,6 +59,10 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
+#ifdef LUACALLOUTS
+#include <lua5.1/lua.hpp>
+#endif
+
 #include "ws_util.h"
 
 namespace fs = boost::filesystem;
@@ -176,6 +180,8 @@ int main(int argc, char **argv) {
     po::variables_map opt;
     YAML::Node config, userconfig;
 
+
+    // lower capabilities to minimum
     drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN);
 
     // check commandline
@@ -203,6 +209,20 @@ int main(int argc, char **argv) {
     // valide the input  (opt contains name, duration and filesystem as well)
     validate(ws_allocate, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
 
+#ifdef LUACALLOUTS
+    // see if we have a prefix callout
+    string prefixcallout;
+    lua_State* L;
+    if(config["workspaces"][filesystem]["prefix_callout"]) {
+        prefixcallout = config["workspaces"][filesystem]["prefix_callout"].as<string>();
+        L = lua_open();
+        luaL_openlibs(L);
+        if(luaL_dofile(L, prefixcallout.c_str())) {
+            cerr << "Error: prefix callout script does not exist!" << endl;
+            prefixcallout = "";
+        }
+    }
+#endif
 
     // construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
     string username = getusername();
@@ -247,10 +267,24 @@ int main(int argc, char **argv) {
         cerr << "Info: creating workspace." << endl;
         // read the possible spaces for the filesystem
         vector<string> spaces = config["workspaces"][filesystem]["spaces"].as<vector<string> >();
+        string prefix = "";
+
+        // the lua function "prefix" gets called as prefix(filesystem, username)
+#ifdef LUACALLOUTS
+        if(prefixcallout!="") {
+            lua_getglobal(L, "prefix");
+            lua_pushstring(L, filesystem.c_str() );
+            lua_pushstring(L, username.c_str() );
+            lua_call(L, 2, 1);
+            prefix = string("/")+lua_tostring(L, -1);
+            cerr << "Info: prefix=" << prefix << endl;
+            lua_pop(L,1);
+        }
+#endif 
 
         // add some random
         srand(time(NULL));
-        wsdir = spaces[rand()%spaces.size()]+"/"+username+"-"+name;
+        wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
 
         // make directory and change owner + permissions
         try{
