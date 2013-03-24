@@ -35,6 +35,24 @@ import os,sys
 import glob
 import time
 
+
+# send a reminder email
+def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
+    text = """
+        Your workspace %s on system %s will expire at %s.
+    """ % (wsname, clustername, time.ctime(expiration))
+    msg = MIMEText.MIMEText(text)
+    recipients = [ mailaddress ]
+    sender = "wsadmin"
+    msg['From'] = "wsadmin"
+    msg['To'] = mailaddress
+    msg['Subject'] = 'Workspace %s will expire on %s' % (wsname, time.ctime(expiration))
+
+    s = smtplib.SMTP(host=smtphost)
+    s.sendmail(sender, recipients, msg.as_string())
+    s.quit()
+
+
 # slow recursive deleter, to avoid high meta pressure on servers
 def deldir(dir):
     global count
@@ -69,6 +87,8 @@ if os.getuid()!=0:
 config = yaml.load(open('ws.conf'))
 
 
+smtphost = config['smtphost']
+clustername = config['clustername']
 
 # expire the workspaces by moving them into deleted spaces, dbentry + workspace itself
 for fs in config["workspaces"]:
@@ -78,6 +98,7 @@ for fs in config["workspaces"]:
     for dbentryfilename in glob.glob(os.path.join(dbdir,"*-*")):
         dbentry = yaml.load(open(dbentryfilename))
         expiration = int(dbentry['expiration'])
+        reminder = int(dbentry['reminder'])
         if time.time() > expiration:
             print "expiring", dbentryfilename
             timestamp=str(int(time.time()))
@@ -87,6 +108,9 @@ for fs in config["workspaces"]:
                             workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
         else:
             print "keeping", dbentryfilename
+            if time.time() > (expiration - (reminder*(24*3600))):
+                print "mail needed"
+                send_reminder(smtphost, clustername, dbentryfilename.split('-')[2],expiration,dbentry['mailaddress'])
 
 
 

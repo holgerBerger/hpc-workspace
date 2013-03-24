@@ -51,6 +51,19 @@ except KeyError:
     print 'ERROR: no workspaces defined!'
     sys.exit(1)
 
+try:
+    clustername = config['clustername']
+    print 'clustername:', clustername
+except KeyError:
+    print 'No clustername defined!'
+    sys.exit(1)
+
+try:
+    smtphost = config['smtphost']
+    print 'smtphost:', smtphost
+except KeyError:
+    print 'No smtphost defined!'
+    sys.exit(1)
 
 try:
     print 'default workspace:',config["default"]
@@ -114,3 +127,9 @@ for ws in workspaces:
             print (' WARNING: deleted workspace directory <%s> does not exist!' %
                         os.path.join(sp,config["workspaces"][ws]["deleted"]))
     
+    try:
+        print ' workspace keeptime:',config["workspaces"][ws]["keeptime"]
+    except KeyError:
+        print ' ERROR: no workspace keeptime set!'
+        sys.exit(1)
+

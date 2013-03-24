@@ -60,7 +60,7 @@
 #include <boost/filesystem.hpp>
 
 #ifdef LUACALLOUTS
-#include <lua5.1/lua.hpp>
+#include <lua.hpp>
 #endif
 
 #include "ws_util.h"

@@ -1,6 +1,8 @@
 # this file illustrates and documents the workspace++ config files
 # this is a YAML file
 # use ws_validate_config to validate a config file
+clustername: aName  # mandantory, a name to identify the system
+smtphost: localhost  # mandantory, a host accepting smtp connections to send emails
 default: lustre		# mandantory, the default workspace to choose
 duration: 10				# the max duration in days, if not specified in workspace
 maxextensions: 1 		# the number of extensions, if not specified in workspace
@@ -9,6 +11,7 @@ dbgid: 9999				# mandantory
 admins: [hobel]		# list of admin users
 workspaces				# now the list of the workspaces
 	lustre				# name of workspace as shown with ws_list -l
+        keeptime: 1    # mandantory, time in days to keep workspaces after they expired
 		spaces:	[/lustre1/ws, /lustre2/ws]					# mandantory, list of directories
 		deleted: .removed									# mandantory, will be appended to spaces and database 
 															# to move deleted files to
@@ -21,6 +24,7 @@ workspaces				# now the list of the workspaces
 		group_acl: [adm]
 		maxextensions: 5					# maximum extensios allowed
 	nfs:				# second workspace, minimum example
+        keeptime: 1    # mandantory, time in days to keep workspaces after they expired
 		database: /nfs-db
 		spaces: [/nfs1/ws]
 		deleted: .trash
