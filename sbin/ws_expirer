@@ -1,0 +1,108 @@
+#!/usr/bin/env python2
+
+"""
+    workspace++
+
+    ws_expirer
+
+    python version of ws_expirer command, only for root
+
+    to be called from a cronjob to expire workspaces, does delete the data as well
+    Reads new YAML configuration files and new YAML workspace database.
+
+    (c) Holger Berger 2013
+
+    workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
+    and Adrian Reber
+
+    workspace++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    workspace++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with workspace++.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+
+import yaml
+import os,sys
+import glob
+import time
+
+# slow recursive deleter, to avoid high meta pressure on servers
+def deldir(dir):
+    global count
+    print "deldir",dir
+    for obj in os.listdir(dir):
+        fullname=os.path.join(dir,obj)
+        if os.path.isdir(fullname) and not os.path.islink(fullname):
+            deldir(fullname)
+            time.sleep(0.1)
+            os.rmdir(fullname)
+            time.sleep(0.1)
+        else:
+            if os.path.isfile(fullname):
+                size=os.path.getsize(fullname)
+            else:
+                size=0.001
+            os.unlink(fullname)
+            time.sleep(max(0.001,size*0.00000000001))
+            count+=1
+            if count%10==0:
+                time.sleep(0.1)
+            if count%100==0:
+                time.sleep(0.2)
+                count=0
+
+
+if os.getuid()!=0:
+    print >> sys.stderr, "Error: you are not root."
+    sys.exit(-1)
+
+# load config file
+config = yaml.load(open('ws.conf'))
+
+
+
+# expire the workspaces by moving them into deleted spaces, dbentry + workspace itself
+for fs in config["workspaces"]:
+    dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
+    workspacedelprefix = config["workspaces"][fs]["deleted"]
+    dbdir = config["workspaces"][fs]["database"]
+    for dbentryfilename in glob.glob(os.path.join(dbdir,"*-*")):
+        dbentry = yaml.load(open(dbentryfilename))
+        expiration = int(dbentry['expiration'])
+        if time.time() > expiration:
+            print "expiring", dbentryfilename
+            timestamp=str(int(time.time()))
+            os.rename(dbentryfilename, os.path.join(dbdeldir, os.path.basename(dbentryfilename))+"-"+timestamp)
+            workspace = dbentry['workspace']
+            os.rename(workspace, os.path.join(os.path.dirname(workspace),
+                            workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
+        else:
+            print "keeping", dbentryfilename
+
+
+
+# delete the already expired workspaces which are over keeptime days old
+for fs in config["workspaces"]:
+    dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
+    keeptime = config["workspaces"][fs]["keeptime"]
+    workspacedelprefix = config["workspaces"][fs]["deleted"]
+    for dbentryfilename in glob.glob(os.path.join(dbdeldir,"*-*-*")):
+        dbentry = yaml.load(open(dbentryfilename))
+        expiration = int(dbentry['expiration'])
+        if time.time() > expiration + keeptime*24*3600:
+            print "deleting", dbentryfilename
+            os.unlink(dbentryfilename)
+            workspace = dbentry['workspace']
+            deldir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
+            os.rmdir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
+        else:
+            print "kept restorable",dbentryfilename
