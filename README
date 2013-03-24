@@ -68,7 +68,10 @@ ws_expirer          (python)
 
 BUGS
 
-path for ws.conf file is CWD, will be changed to /etc later.
+- path for ws.conf file is CWD, will be changed to /etc later.
+- when LUA callout to prefix workspaces is used, the prefix directories do
+    not get proper owner and permissions (what is propper anyhow???)
+
 
 HOW TO INSTALL
 
