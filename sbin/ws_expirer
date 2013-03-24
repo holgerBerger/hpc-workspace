@@ -34,6 +34,9 @@ import yaml
 import os,sys
 import glob
 import time
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 # send a reminder email
@@ -41,12 +44,35 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
     text = """
         Your workspace %s on system %s will expire at %s.
     """ % (wsname, clustername, time.ctime(expiration))
-    msg = MIMEText.MIMEText(text)
+    msg = MIMEMultipart()
     recipients = [ mailaddress ]
     sender = "wsadmin"
     msg['From'] = "wsadmin"
     msg['To'] = mailaddress
     msg['Subject'] = 'Workspace %s will expire on %s' % (wsname, time.ctime(expiration))
+    msg.preamble = text
+
+    msg.attach(MIMEText(text))
+
+    now=time.strftime('%Y%m%dT%H%M%S', time.localtime())
+    then=time.strftime('%Y%m%dT%H%M%S', time.localtime(expiration))
+    ical="""
+BEGIN:VCALENDAR
+PRODID:-//HLRS Cluster Team//Workspace V2.1//EN
+VERSION:2.0
+BEGIN:VEVENT
+UID:%d
+DESCRIPTION:Workspace %s will be deleted on system %s
+DTEND:%s
+DTSTAMP:%s
+DTSTART:%s
+SUMMARY:Workspace %s expires
+CLASS:PRIVATE
+END:VEVENT
+END:VCALENDAR
+    """ % (time.time(), wsname, clustername,then, now, then, wsname)
+    att = MIMEText(ical,"calender")
+    msg.attach(att)
 
     s = smtplib.SMTP(host=smtphost)
     s.sendmail(sender, recipients, msg.as_string())
