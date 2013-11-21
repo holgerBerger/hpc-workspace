@@ -180,6 +180,8 @@ int main(int argc, char **argv) {
     po::variables_map opt;
     YAML::Node config, userconfig;
 
+    // set a umask so users can access db files
+    umask(0002);
 
     // lower capabilities to minimum
     drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN);
