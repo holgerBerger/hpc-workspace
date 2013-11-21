@@ -214,7 +214,7 @@ void validate(const whichcode wc, YAML::Node &config, YAML::Node &userconfig,
     }
     for(int i=0; i<nrgroups; i++) {
         grp=getgrgid(gids[i]);
-        groupnames.push_back(string(grp->gr_name));    
+        if(grp) groupnames.push_back(string(grp->gr_name));    
     }
     grp=getgrgid(getegid());
     primarygroup=string(grp->gr_name);
