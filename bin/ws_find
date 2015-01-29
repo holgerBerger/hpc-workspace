@@ -49,7 +49,7 @@ groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
 
 
 # load config file
-config = yaml.load(open('ws.conf'))
+config = yaml.load(open('/etc/ws.conf'))
 
 
 usage="Usage: ws_find [options] [workspacename]"

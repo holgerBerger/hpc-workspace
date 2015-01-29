@@ -76,7 +76,7 @@ group = grp.getgrgid(gid)[0]
 groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
 
 # load config file
-config = yaml.load(open('ws.conf'))
+config = yaml.load(open('/etc/ws.conf'))
 
 # check admin state
 admin = False
