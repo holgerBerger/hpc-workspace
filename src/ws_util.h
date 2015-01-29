@@ -8,6 +8,9 @@
 #include <vector>
 
 #include <sys/capability.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 #include <yaml-cpp/yaml.h>
 
@@ -30,9 +33,9 @@ void validate(const whichcode wc, YAML::Node &config, YAML::Node &userconfig, po
 					string &filesystem, int &duration, int &maxextensions, string &primarygroup);
 string getuserhome();
 string getusername();
-void drop_cap(cap_value_t cap_arg);
-void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2);
+void drop_cap(cap_value_t cap_arg, int dbuid);
+void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid);
 void raise_cap(int cap);
-void lower_cap(int cap);
+void lower_cap(int cap, int dbuid);
 
 #endif 

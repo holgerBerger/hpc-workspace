@@ -10,13 +10,14 @@
 #include <unistd.h>
 #include <grp.h>
 #include <time.h>
+
 #include <sys/capability.h>
 
 #include "ws_util.h"
 
 using namespace std;
 
-const string configname="ws.conf";
+const string configname="/etc/ws.conf";
 
 
 /*
@@ -45,8 +46,9 @@ string getuserhome()
 /*
  * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN
  */
-void drop_cap(cap_value_t cap_arg) 
+void drop_cap(cap_value_t cap_arg, int dbuid) 
 {
+#ifndef SETUID
     cap_t caps;
     cap_value_t cap_list[1];
 
@@ -69,10 +71,15 @@ void drop_cap(cap_value_t cap_arg)
     }
 
     cap_free(caps);
+#else
+    // seteuid(0);
+    seteuid(dbuid);
+#endif
 }
 
-void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2) 
+void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid) 
 {
+#ifndef SETUID
     cap_t caps;
     cap_value_t cap_list[2];
 
@@ -96,13 +103,19 @@ void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2)
     }
 
     cap_free(caps);
+#else
+    // seteuid(0);
+    seteuid(dbuid);
+#endif
+
 }
 
 /*
  * remove a capability from the effective set
  */
-void lower_cap(int cap)
+void lower_cap(int cap, int dbuid)
 {
+#ifndef SETUID
     cap_t caps;
     cap_value_t cap_list[1];
 
@@ -121,6 +134,10 @@ void lower_cap(int cap)
     }
 
     cap_free(caps);
+#else
+    // seteuid(0);
+    seteuid(dbuid);
+#endif
 }
 
 /*
@@ -128,6 +145,7 @@ void lower_cap(int cap)
  */
 void raise_cap(int cap)
 {
+#ifndef SETUID
     cap_t caps;
     cap_value_t cap_list[1];
 
@@ -146,6 +164,9 @@ void raise_cap(int cap)
     }
 
     cap_free(caps);
+#else
+    seteuid(0);
+#endif
 }
 
 /*
@@ -166,13 +187,13 @@ void write_dbfile(const string filename, const string wsdir, const long expirati
     ofstream fout(filename.c_str());
     fout << entry;
     fout.close();
-    lower_cap(CAP_DAC_OVERRIDE);
+    lower_cap(CAP_DAC_OVERRIDE, dbuid);
     raise_cap(CAP_CHOWN);
     if(chown(filename.c_str(), dbuid, dbgid)) {
-        lower_cap(CAP_CHOWN);
+        lower_cap(CAP_CHOWN, dbuid);
         cerr << "Error: could not change owner of database entry" << endl;
     }
-    lower_cap(CAP_CHOWN);
+    lower_cap(CAP_CHOWN, dbuid);
 }
 
 /*

@@ -42,7 +42,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
-#include <sys/capability.h>
+// #include <sys/capability.h>
 
 #include <iostream>
 #include <fstream>
@@ -183,19 +183,19 @@ int main(int argc, char **argv) {
     // set a umask so users can access db files
     umask(0002);
 
-    // lower capabilities to minimum
-    drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN);
-
     // check commandline
     commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, argc, argv);
 
     // read config 
     try {
-        config = YAML::LoadFile("ws.conf");
+        config = YAML::LoadFile("/etc/ws.conf");
     } catch (YAML::BadFile) {
         cerr << "Error: no config file!" << endl;
         exit(-1);
     }
+
+    // lower capabilities to minimum
+    drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, config["dbuid"].as<int>());
 
     // read private config
     raise_cap(CAP_DAC_OVERRIDE);
@@ -204,7 +204,7 @@ int main(int argc, char **argv) {
     } catch (YAML::BadFile) {
         // we do not care
     }
-    lower_cap(CAP_DAC_OVERRIDE);
+    lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
     db_uid = config["dbuid"].as<int>();
     db_gid = config["dbgid"].as<int>();
 
@@ -292,30 +292,30 @@ int main(int argc, char **argv) {
         try{
             raise_cap(CAP_DAC_OVERRIDE);
             fs::create_directories(wsdir);
-            lower_cap(CAP_DAC_OVERRIDE);
+            lower_cap(CAP_DAC_OVERRIDE, db_uid);
         } catch (...) {
-            lower_cap(CAP_DAC_OVERRIDE);
+            lower_cap(CAP_DAC_OVERRIDE, db_uid);
             cerr << "Error: could not create workspace directory!"  << endl;
             exit(-1);
         }
 
         raise_cap(CAP_CHOWN);
         if(chown(wsdir.c_str(), getuid(), getgid())) {
-            lower_cap(CAP_CHOWN);
+            lower_cap(CAP_CHOWN, db_uid);
             cerr << "Error: could not change owner of workspace!" << endl;
             unlink(wsdir.c_str());
             exit(-1);
         }
-        lower_cap(CAP_CHOWN);
+        lower_cap(CAP_CHOWN, db_uid);
 
         raise_cap(CAP_DAC_OVERRIDE);
         if(chmod(wsdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
-            lower_cap(CAP_DAC_OVERRIDE);
+            lower_cap(CAP_DAC_OVERRIDE, db_uid);
             cerr << "Error: could not change permissions of workspace!" << endl;
             unlink(wsdir.c_str());
             exit(-1);
         }
-        lower_cap(CAP_DAC_OVERRIDE);
+        lower_cap(CAP_DAC_OVERRIDE, db_uid);
 
         extension = maxextensions;
         expiration = time(NULL)+duration*24*3600;

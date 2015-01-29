@@ -40,7 +40,7 @@
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
-#include <sys/capability.h>
+// #include <sys/capability.h>
 #include <time.h>
 
 #include <iostream>
@@ -56,6 +56,7 @@
 #include <boost/filesystem.hpp>
 
 #include "ws_util.h"
+int mv(const char * source, const char *target);
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -134,19 +135,19 @@ int main(int argc, char **argv) {
     po::variables_map opt;
     YAML::Node config, userconfig;
 
-    // drop capabilites
-    drop_cap(CAP_DAC_OVERRIDE);
-
     // check commandline
     commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
 
     // read config 
     try {
-        config = YAML::LoadFile("ws.conf");
+        config = YAML::LoadFile("/etc/ws.conf");
     } catch (YAML::BadFile) {
         cerr << "Error: no config file!" << endl;
         exit(-1);
     }
+
+    // drop capabilites
+    drop_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
 
     // read private config
     raise_cap(CAP_DAC_OVERRIDE);
@@ -155,7 +156,7 @@ int main(int argc, char **argv) {
     } catch (YAML::BadFile) {
         // we do not care
     }
-    lower_cap(CAP_DAC_OVERRIDE);
+    lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
 
     // valide the input  (opt contains name, duration and filesystem as well)
     validate(ws_release, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
@@ -165,41 +166,70 @@ int main(int argc, char **argv) {
     string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
 
     // does db entry exist?
-    cout << "file:" << dbfilename << endl;
+    // cout << "file: " << dbfilename << endl;
     if(fs::exists(dbfilename)) {
         read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
 
         string timestamp = lexical_cast<string>(time(NULL)); 
 
-        raise_cap(CAP_DAC_OVERRIDE);
         string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" + 
                                 config["workspaces"][filesystem]["deleted"].as<string>() +
                                 "/" + username + "-" + name + "-" + timestamp;
         // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
+        raise_cap(CAP_DAC_OVERRIDE);
         if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
-            lower_cap(CAP_DAC_OVERRIDE);
+            // cerr << "rename " << dbfilename.c_str() << " -> " << dbtargetname.c_str() << " failed" << endl;
+            lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
             cerr << "Error: database entry could not be deleted." << endl;
             exit(-1);
         }
-        lower_cap(CAP_DAC_OVERRIDE);
+        lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
 
         // rational: we move the workspace into deleted directory and append a timestamp to name
         // as a new workspace could have same name and releasing the new one would lead to a name
         // collision, so a timestamp is kind of generation label attached to a workspace
+
         string wstargetname = fs::path(wsdir).parent_path().string() + "/" + 
                                 config["workspaces"][filesystem]["deleted"].as<string>() +
                                 "/" + username + "-" + name + "-" + timestamp;
 
+        // cout << wsdir.c_str() << " - " << wstargetname.c_str() << endl;
         raise_cap(CAP_DAC_OVERRIDE);
         if(rename(wsdir.c_str(), wstargetname.c_str())) {
-            lower_cap(CAP_DAC_OVERRIDE);
-            cerr << "Error: could not remove workspace!" << endl;
-            exit(-1);
+            // cerr << "rename " << wsdir.c_str() << " -> " << wstargetname.c_str() << " failed " << geteuid() << " " << getuid() << endl;
+            
+            // fallback to mv for filesystems where rename() of directories returns EXDEV 
+            int r = mv(wsdir.c_str(), wstargetname.c_str());
+            if(r!=0) {
+                lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+                cerr << "Error: could not remove workspace!" << endl;
+                exit(-1);
+            }
         }
-        lower_cap(CAP_DAC_OVERRIDE);
+        lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
 
     } else {
         cerr << "Error: workspace does not exist!" << endl;
         exit(-1);
     }
+}
+
+/*
+ * fallback for rename in case of EXDEV
+ * we do not use system() as we are in setuid
+ * and it would fail.
+ */
+int mv(const char * source, const char *target) {
+    pid_t pid;
+    int status;
+    pid = fork();
+    if (pid==0) {
+        execl("/bin/mv", "mv", source, target, NULL);
+    } else if (pid<0) {
+        //
+    } else {
+        waitpid(pid, &status, 0);
+        return WEXITSTATUS(status);
+    }
+    return 0;
 }
