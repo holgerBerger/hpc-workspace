@@ -110,7 +110,7 @@ if os.getuid()!=0:
     sys.exit(-1)
 
 # load config file
-config = yaml.load(open('ws.conf'))
+config = yaml.load(open('/etc/ws.conf'))
 
 
 smtphost = config['smtphost']
