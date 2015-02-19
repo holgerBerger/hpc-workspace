@@ -10,7 +10,7 @@
     to be called from a cronjob to expire workspaces, does delete the data as well
     Reads new YAML configuration files and new YAML workspace database.
 
-    (c) Holger Berger 2013
+    (c) Holger Berger 2013, 2014, 2015
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
     and Adrian Reber

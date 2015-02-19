@@ -9,7 +9,8 @@ WHATS NEW
 - incompatible file formats for DB and config
 - unification of config, all config options moved into one config file,
   user exceptions are kept in a extra file which must not be readable for user commands
-- rewrite of ws_release and ws_allocate in C++, no use of setuid anymore, but capability support needed
+- rewrite of ws_release and ws_allocate in C++, setuid optional, capability can be used if 
+  supported by filesysten.
   never was comfortable with the python in C hack, this is cleaner, less attack vectors.
 - added/changed functionality
     - ws_release always moves the data away when called (new semantics! users affected!)
@@ -25,7 +26,7 @@ WHATS NEW
       Users can do this is as well if they can access the workspace!
     - ws_allocate can prefix a workspace per user using a LUA callout.
         example: spaces: /lustre/ws
-        with a callout cound create
+        with a callout could create
         workspace: /lustre/ws/academic/username-workspacename
         when the callout returns 'academic' for 'username'
         ATTENTION: no code to modify permissions and ownerships of the subdirectory,
@@ -68,7 +69,6 @@ ws_expirer          (python)
 
 BUGS
 
-- path for ws.conf file is CWD, will be changed to /etc later.
 - when LUA callout to prefix workspaces is used, the prefix directories do
     not get proper owner and permissions (what is propper anyhow???)
 

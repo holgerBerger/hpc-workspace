@@ -8,14 +8,13 @@
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
  *  This version is not DB and configuration compatible with the older version, the DB and 
  *    configuration was changed to YAML files.
- *  This version works without setuid bit, but capabilities need to be used.
  * 
  *  differences to old workspace version
- *  - usage of YAML file format
- *  - not using setuid, but needs capabilities
- *  - supports configuration of reminder emails
+ *    - usage of YAML file format
+ *    - using setuid or capabilities (needs support by filesystem!)
+ *    - supports configuration of reminder emails
  *
- *  (c) Holger Berger 2013
+ *  (c) Holger Berger 2013,2014,2015
  * 
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
@@ -42,7 +41,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
-// #include <sys/capability.h>
+#include <sys/capability.h>
 
 #include <iostream>
 #include <fstream>

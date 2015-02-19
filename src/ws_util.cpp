@@ -44,7 +44,7 @@ string getuserhome()
 }
 
 /*
- * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN
+ * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN 
  */
 void drop_cap(cap_value_t cap_arg, int dbuid) 
 {

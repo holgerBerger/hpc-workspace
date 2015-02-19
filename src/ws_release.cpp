@@ -8,14 +8,13 @@
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
  *  This version is not DB and configuration compatible with the older version, the DB and 
  *    configuration was changed to YAML files.
- *  This version works without setuid bit, but capabilities need to be used.
  * 
  *  differences to old workspace version
  *    - usage of YAML file format
- *    - not using setuid, but needs capabilities
+ *    - using setuid or capabilities (needs support by filesystem!)
  *    - always moves released workspace away (this change is affecting the user!)
  *
- *  (c) Holger Berger 2013
+ *  (c) Holger Berger 2013, 2014, 2015
  * 
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
@@ -40,7 +39,7 @@
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
-// #include <sys/capability.h>
+#include <sys/capability.h>
 #include <time.h>
 
 #include <iostream>
@@ -217,7 +216,7 @@ int main(int argc, char **argv) {
 /*
  * fallback for rename in case of EXDEV
  * we do not use system() as we are in setuid
- * and it would fail.
+ * and it would fail, and it sucks anyhow,
  */
 int mv(const char * source, const char *target) {
     pid_t pid;
