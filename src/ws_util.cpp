@@ -19,6 +19,7 @@ using namespace std;
 
 const string configname="/etc/ws.conf";
 
+// FIXME: THIS SHOULD ALL GO AWAY INTO ws.cpp and wsdb.cpp
 
 /*
  * get user name
@@ -216,6 +217,7 @@ void read_dbfile(string filename, string &wsdir, long &expiration, int &extensio
  *  validate the commandline versus the configuration file, to see if the user 
  *  is allowed to do what he asks for.
  */
+// FIXME: THIS IS REDUNDANT WITH WS.CPP, SHOULD BE REMOVED AFTER MIGRATION TO NEW CODE
 void validate(const whichcode wc, YAML::Node &config, YAML::Node &userconfig, 
                 po::variables_map &opt, string &filesystem, int &duration, int &maxextensions, string &primarygroup) 
 {
