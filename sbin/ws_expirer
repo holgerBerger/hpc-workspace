@@ -130,6 +130,7 @@ for fs in config["workspaces"]:
             timestamp=str(int(time.time()))
             os.rename(dbentryfilename, os.path.join(dbdeldir, os.path.basename(dbentryfilename))+"-"+timestamp)
             workspace = dbentry['workspace']
+            # FIXME this could fail on scatefs, should fallback to 'mv'
             os.rename(workspace, os.path.join(os.path.dirname(workspace),
                             workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
         else:
@@ -140,7 +141,7 @@ for fs in config["workspaces"]:
 
 
 
-# delete the already expired workspaces which are over keeptime days old
+# delete the already expired workspaces which are over "keeptime" days old
 for fs in config["workspaces"]:
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     keeptime = config["workspaces"][fs]["keeptime"]
