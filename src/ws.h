@@ -11,6 +11,12 @@
 // BOOST
 #include <boost/program_options.hpp>
 
+#ifndef SETUID
+#include <sys/capability.h>
+#else
+typedef int cap_value_t;
+#endif
+
 namespace po = boost::program_options;
 
 using namespace std;
@@ -40,7 +46,20 @@ private:
     void validate(const whichclient wc, YAML::Node &config, YAML::Node &userconfig,
                 po::variables_map &opt, string &filesystem, int &duration, int &maxextensions, string &primarygroup);
 
-public:
+
+    int mv(const char * source, const char *target);
+
+    
+public:    
+  
+    // helpers
+    static string getuserhome();
+    static string getusername();
+    static void drop_cap(cap_value_t cap_arg, int dbuid);
+    static void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid);
+    static void raise_cap(int cap);
+    static void lower_cap(int cap, int dbuid);
+    
     // constructor reads config and userconfig
     Workspace(const whichclient clientcode, const po::variables_map opt, const int _duration, string filesystem);
 

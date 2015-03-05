@@ -40,7 +40,6 @@
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 
-#include "ws_util.h"
 #include "ws.h"
 
 namespace po = boost::program_options;
@@ -115,7 +114,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
         }
         if (!opt.count("mailaddress")) {
             ifstream infile;
-            infile.open((getuserhome()+"/.ws_user.conf").c_str());
+            infile.open((Workspace::getuserhome()+"/.ws_user.conf").c_str());
             getline(infile, mailaddress);
             if(mailaddress.length()>0) {
                 cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;

@@ -46,14 +46,14 @@ ADD_EXECUTABLE(ws_release ${workspace_SOURCE_DIR}/src/ws_release.cpp
 ADD_EXECUTABLE(ws_allocate_n ${workspace_SOURCE_DIR}/src/ws_allocate_n.cpp 
 							 ${workspace_SOURCE_DIR}/src/ws.cpp 
 							 ${workspace_SOURCE_DIR}/src/ws.h
-							 ${workspace_SOURCE_DIR}/src/ws_util.cpp 
-							 ${workspace_SOURCE_DIR}/src/ws_util.h)
+							 ${workspace_SOURCE_DIR}/src/wsdb.cpp 
+							 ${workspace_SOURCE_DIR}/src/wsdb.h)
 
 ADD_EXECUTABLE(ws_release_n ${workspace_SOURCE_DIR}/src/ws_release_n.cpp 
 							 ${workspace_SOURCE_DIR}/src/ws.cpp 
 							 ${workspace_SOURCE_DIR}/src/ws.h
-							 ${workspace_SOURCE_DIR}/src/ws_util.cpp 
-							 ${workspace_SOURCE_DIR}/src/ws_util.h)
+							 ${workspace_SOURCE_DIR}/src/wsdb.cpp 
+							 ${workspace_SOURCE_DIR}/src/wsdb.h)
 
 TARGET_LINK_LIBRARIES( ws_allocate ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp)
 TARGET_LINK_LIBRARIES( ws_release ${Boost_LIBRARIES} ${CAP} yaml-cpp)

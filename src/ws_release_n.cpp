@@ -1,4 +1,3 @@
-
 /*
  *    workspace++
  *
@@ -38,7 +37,6 @@
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 
-#include "ws_util.h"
 #include "ws.h"
 
 namespace po = boost::program_options;

@@ -1,5 +1,5 @@
 
-#include "ws.h"
+
 
 // POSIX stuff
 // #define _XOPEN_SOURCE
@@ -9,9 +9,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <pwd.h>
+#include <sys/wait.h>
+
 
 #ifndef SETUID
 #include <sys/capability.h>
+#else
+typedef int cap_value_t;
+const int CAP_DAC_OVERRIDE = 0;
+const int CAP_CHOWN = 1;
 #endif
 
 // C++ stuff
@@ -24,6 +31,8 @@
 // BOOST
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/foreach.hpp>
+
 #define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
@@ -33,7 +42,9 @@
 #include <lua.hpp>
 #endif
 
-#include "ws_util.h"
+#include "ws.h"
+#include "wsdb.h"
+//#include "ws_util.h"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -122,7 +133,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
     // does db entry exist?
     if(fs::exists(dbfilename)) {
-        read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
+        WsDB::read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
         // if it exists, print it, if extension is required, extend it
         if(extensionflag) {
             // we allow a user to specify -u -x together, and to extend a workspace if the has rights on the workspace
@@ -141,7 +152,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
                 exit(-1);
             }
             expiration = time(NULL)+duration*24*3600;
-            write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+            WsDB::write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
         } else {
             cerr << "Info: reusing workspace." << endl;
         }
@@ -200,7 +211,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
         extension = maxextensions;
         expiration = time(NULL)+duration*24*3600;
-        write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+        WsDB::write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
     }
     cout << wsdir << endl;
     cerr << "remaining extensions  : " << extension << endl;
@@ -224,7 +235,7 @@ void Workspace::release(string name) {
     // does db entry exist?
     // cout << "file: " << dbfilename << endl;
     if(fs::exists(dbfilename)) {
-        read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
+        WsDB::read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
 
         string timestamp = lexical_cast<string>(time(NULL)); 
 
@@ -399,3 +410,172 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
     }
 }
 
+/*
+ * fallback for rename in case of EXDEV
+ * we do not use system() as we are in setuid
+ * and it would fail, and it sucks anyhow,
+ */
+int Workspace::mv(const char * source, const char *target) {
+    pid_t pid;
+    int status;
+    pid = fork();
+    if (pid==0) {
+        execl("/bin/mv", "mv", source, target, NULL);
+    } else if (pid<0) {
+        //
+    } else {
+        waitpid(pid, &status, 0);
+        return WEXITSTATUS(status);
+    }
+    return 0;
+}
+
+
+/*
+ * get user name
+ * we have this to avoud cuserid
+ */
+string Workspace::getusername() 
+{
+    struct passwd *pw;
+
+    pw = getpwuid(getuid());
+    return string(pw->pw_name);
+}
+
+/*
+ * get home of current user, we have this to avoid $HOME
+ */
+string Workspace::getuserhome()
+{
+    struct passwd *pw;
+
+    pw = getpwuid(getuid());
+    return string(pw->pw_dir);
+}
+
+/*
+ * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN 
+ */
+void Workspace::drop_cap(cap_value_t cap_arg, int dbuid) 
+{
+#ifndef SETUID
+    cap_t caps;
+    cap_value_t cap_list[1];
+
+    cap_list[0] = cap_arg;
+
+    caps = cap_init();
+
+    // cap_list[0] = CAP_DAC_OVERRIDE;
+    // cap_list[1] = CAP_CHOWN;
+
+    if (cap_set_flag(caps, CAP_PERMITTED, 1, cap_list, CAP_SET) == -1) {
+        cerr << "Error: problem with capabilities." << endl;
+    }
+
+    if (cap_set_proc(caps) == -1) {
+        cerr << "Error: problem dropping capabilities." << endl;
+        cap_t cap = cap_get_proc();
+        cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+        cap_free(cap);
+    }
+
+    cap_free(caps);
+#else
+    // seteuid(0);
+    seteuid(dbuid);
+#endif
+}
+
+void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid) 
+{
+#ifndef SETUID
+    cap_t caps;
+    cap_value_t cap_list[2];
+
+    cap_list[0] = cap_arg1;
+    cap_list[1] = cap_arg2;
+
+    caps = cap_init();
+
+    // cap_list[0] = CAP_DAC_OVERRIDE;
+    // cap_list[1] = CAP_CHOWN;
+
+    if (cap_set_flag(caps, CAP_PERMITTED, 2, cap_list, CAP_SET) == -1) {
+        cerr << "Error: problem with capabilities." << endl;
+    }
+
+    if (cap_set_proc(caps) == -1) {
+        cerr << "Error: problem dropping capabilities." << endl;
+        cap_t cap = cap_get_proc();
+        cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+        cap_free(cap);
+    }
+
+    cap_free(caps);
+#else
+    // seteuid(0);
+    seteuid(dbuid);
+#endif
+
+}
+
+/*
+ * remove a capability from the effective set
+ */
+void Workspace::lower_cap(int cap, int dbuid)
+{
+#ifndef SETUID
+    cap_t caps;
+    cap_value_t cap_list[1];
+
+    caps = cap_get_proc();
+
+    cap_list[0] = cap;
+    if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_CLEAR) == -1) {
+        cerr << "Error: problem with capabilities." << endl;
+    }
+
+    if (cap_set_proc(caps) == -1) {
+        cerr << "Error: problem lowering capabilities." << endl;
+        cap_t cap = cap_get_proc();
+        cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+        cap_free(cap);
+    }
+
+    cap_free(caps);
+#else
+    // seteuid(0);
+    seteuid(dbuid);
+#endif
+}
+
+/*
+ * add a capability to the effective set
+ */
+void Workspace::raise_cap(int cap)
+{
+#ifndef SETUID
+    cap_t caps;
+    cap_value_t cap_list[1];
+
+    caps = cap_get_proc();
+
+    cap_list[0] = cap;
+    if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_SET) == -1) {
+        cerr << "Error: problem with capabilities." << endl;
+    }
+
+    if (cap_set_proc(caps) == -1) {
+        cerr << "Error: problem raising capabilities." << endl;
+        cap_t cap = cap_get_proc();
+        cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+        cap_free(cap);
+    }
+
+    cap_free(caps);
+#else
+    seteuid(0);
+#endif
+}
