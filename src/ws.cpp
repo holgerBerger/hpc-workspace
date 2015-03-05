@@ -23,6 +23,7 @@
 
 // BOOST
 #include <boost/regex.hpp>
+#include <boost/lexical_cast.hpp>
 #define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
@@ -36,11 +37,15 @@
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
+using boost::lexical_cast;
 
 using namespace std;
 
 
-Workspace::Workspace(const whichclient clientcode, const int _duration) : duration(_duration) {
+Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt, const int _duration, 
+		     string _filesystem) 
+	    : opt(_opt), duration(_duration), filesystem(_filesystem) 
+{
 
     // set a umask so users can access db files
     umask(0002);
@@ -72,7 +77,7 @@ Workspace::Workspace(const whichclient clientcode, const int _duration) : durati
     // lower again, nothing needed
     lower_cap(CAP_DAC_OVERRIDE, db_uid);
 
-    string username = getusername();
+    username = getusername();
     
     // valide the input  (opt contains name, duration and filesystem as well)
     validate(clientcode, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
@@ -82,13 +87,11 @@ Workspace::Workspace(const whichclient clientcode, const int _duration) : durati
  *  create a workspace and its DB entry
  *
  */
-
-bool Workspace::allocate(string name, bool extensionflag, string user_option) {
+void Workspace::allocate(const string name, const bool extensionflag, const int reminder, const string mailaddress, string user_option) {
     string wsdir;
     long expiration;
     int extension;
-    string acctcode, mailaddress;
-    int reminder = 0;
+    string acctcode;
 
 #ifdef LUACALLOUTS
     // see if we have a prefix callout
@@ -165,7 +168,7 @@ bool Workspace::allocate(string name, bool extensionflag, string user_option) {
         // add some random
         srand(time(NULL));
         wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
-
+	
         // make directory and change owner + permissions
         try{
             raise_cap(CAP_DAC_OVERRIDE);
@@ -202,13 +205,77 @@ bool Workspace::allocate(string name, bool extensionflag, string user_option) {
     cout << wsdir << endl;
     cerr << "remaining extensions  : " << extension << endl;
     cerr << "remaining time in days: " << (expiration-time(NULL))/(24*3600) << endl;
+
 }
+
+/*
+ * release a workspace by moving workspace and DB entry into trash
+ * 
+ */
+void Workspace::release(string name) {
+    string wsdir;
+    long expiration;
+    int extension;
+    string acctcode, mailaddress;
+    int reminder = 0;
+    
+    string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
+
+    // does db entry exist?
+    // cout << "file: " << dbfilename << endl;
+    if(fs::exists(dbfilename)) {
+        read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
+
+        string timestamp = lexical_cast<string>(time(NULL)); 
+
+        string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" + 
+                                config["workspaces"][filesystem]["deleted"].as<string>() +
+                                "/" + username + "-" + name + "-" + timestamp;
+        // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
+        raise_cap(CAP_DAC_OVERRIDE);
+        if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
+            // cerr << "rename " << dbfilename.c_str() << " -> " << dbtargetname.c_str() << " failed" << endl;
+            lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+            cerr << "Error: database entry could not be deleted." << endl;
+            exit(-1);
+        }
+        lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+
+        // rational: we move the workspace into deleted directory and append a timestamp to name
+        // as a new workspace could have same name and releasing the new one would lead to a name
+        // collision, so the timestamp is kind of generation label attached to a workspace
+
+        string wstargetname = fs::path(wsdir).parent_path().string() + "/" + 
+                                config["workspaces"][filesystem]["deleted"].as<string>() +
+                                "/" + username + "-" + name + "-" + timestamp;
+
+        // cout << wsdir.c_str() << " - " << wstargetname.c_str() << endl;
+        raise_cap(CAP_DAC_OVERRIDE);
+        if(rename(wsdir.c_str(), wstargetname.c_str())) {
+            // cerr << "rename " << wsdir.c_str() << " -> " << wstargetname.c_str() << " failed " << geteuid() << " " << getuid() << endl;
+            
+            // fallback to mv for filesystems where rename() of directories returns EXDEV 
+            int r = mv(wsdir.c_str(), wstargetname.c_str());
+            if(r!=0) {
+                lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+                cerr << "Error: could not remove workspace!" << endl;
+                exit(-1);
+            }
+        }
+        lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+
+    } else {
+        cerr << "Error: workspace does not exist!" << endl;
+        exit(-1);
+    }  
+
+}
+
 
 /*
  *  validate the commandline versus the configuration file, to see if the user
  *  is allowed to do what he asks for.
  */
-
 void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &userconfig,
                 po::variables_map &opt, string &filesystem, int &duration, int &maxextensions, string &primarygroup)
 {

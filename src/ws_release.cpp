@@ -55,7 +55,7 @@
 #include <boost/filesystem.hpp>
 
 #include "ws_util.h"
-int mv(const char * source, const char *target);
+
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -213,22 +213,4 @@ int main(int argc, char **argv) {
     }
 }
 
-/*
- * fallback for rename in case of EXDEV
- * we do not use system() as we are in setuid
- * and it would fail, and it sucks anyhow,
- */
-int mv(const char * source, const char *target) {
-    pid_t pid;
-    int status;
-    pid = fork();
-    if (pid==0) {
-        execl("/bin/mv", "mv", source, target, NULL);
-    } else if (pid<0) {
-        //
-    } else {
-        waitpid(pid, &status, 0);
-        return WEXITSTATUS(status);
-    }
-    return 0;
-}
+

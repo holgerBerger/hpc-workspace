@@ -37,5 +37,6 @@ void drop_cap(cap_value_t cap_arg, int dbuid);
 void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid);
 void raise_cap(int cap);
 void lower_cap(int cap, int dbuid);
+int mv(const char * source, const char *target);
 
 #endif 

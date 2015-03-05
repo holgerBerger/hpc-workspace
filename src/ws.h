@@ -34,20 +34,21 @@ private:
     YAML::Node config, userconfig;
     int db_uid, db_gid; 
     po::variables_map opt;
+    int maxextensions, duration;
     string filesystem, acctcode, username;
-    int duration, maxextensions;
+    
     void validate(const whichclient wc, YAML::Node &config, YAML::Node &userconfig,
                 po::variables_map &opt, string &filesystem, int &duration, int &maxextensions, string &primarygroup);
 
 public:
     // constructor reads config and userconfig
-    Workspace(const whichclient clientcode, const int _duration);
+    Workspace(const whichclient clientcode, const po::variables_map opt, const int _duration, string filesystem);
 
     // allocate a new workspace, create workspace and DB entry
-    bool allocate(string name, bool extensionsflag, string user_option);
+    void allocate(const string name, const bool extensionsflag, const int reminder, const string mailaddress, string user_option);
 
     // release an existing workspace, move workspace and DB entry
-    bool release();
+    void release(string name);
 
     // extend an existing workspace
     bool extend();

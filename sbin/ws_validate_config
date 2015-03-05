@@ -111,6 +111,8 @@ for ws in workspaces:
         sys.exit(1)
     if not os.path.exists(config["workspaces"][ws]["database"]):
         print ' WARNING: database directory <%s> does not exist!' % config["workspaces"][ws]["database"]
+    if not os.path.exists(os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"])):
+        print ' WARNING: deleted database directory <%s> does not exist!' % os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"])
         
 
     try:
