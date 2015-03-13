@@ -1,4 +1,3 @@
-
 /*
  *    workspace++
  *
@@ -33,34 +32,16 @@
  *
  */
 
-
-#define _XOPEN_SOURCE
-#define _BSD_SOURCE
-#include <unistd.h>
-#include <grp.h>
-#include <sys/types.h>
-#include <sys/capability.h>
-#include <time.h>
-
 #include <iostream>
 #include <string>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
-#include <boost/foreach.hpp>
-#include <boost/optional.hpp>
-#include <boost/lexical_cast.hpp>
 
-#define BOOST_FILESYSTEM_VERSION 3 
-#define BOOST_FILESYSTEM_NO_DEPRECATED
-#include <boost/filesystem.hpp>
+#include "ws.h"
 
-#include "ws_util.h"
-
-
-namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 using namespace std;
-using boost::lexical_cast;
+
 
 /* 
  *  parse the commandline and see if all required arguments are passed, and check the workspace name for 
@@ -122,14 +103,11 @@ void commandline(po::variables_map &opt, string &name, int &duration,
  */
 
 int main(int argc, char **argv) {
-    int duration, maxextensions;
-    long expiration;
-    int extension;
+    int duration;
     bool extensionflag;
     string name;
     string filesystem;
     string acctcode, wsdir;
-    int reminder=0;
     string mailaddress;
     po::variables_map opt;
     YAML::Node config, userconfig;
@@ -137,80 +115,12 @@ int main(int argc, char **argv) {
     // check commandline
     commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
 
-    // read config 
-    try {
-        config = YAML::LoadFile("/etc/ws.conf");
-    } catch (YAML::BadFile) {
-        cerr << "Error: no config file!" << endl;
-        exit(-1);
-    }
-
-    // drop capabilites
-    drop_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-
-    // read private config
-    raise_cap(CAP_DAC_OVERRIDE);
-    try {
-        userconfig = YAML::LoadFile("ws_private.conf");
-    } catch (YAML::BadFile) {
-        // we do not care
-    }
-    lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-
-    // valide the input  (opt contains name, duration and filesystem as well)
-    validate(ws_release, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
-
-    // construct db-entry name
-    string username = getusername();
-    string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
-
-    // does db entry exist?
-    // cout << "file: " << dbfilename << endl;
-    if(fs::exists(dbfilename)) {
-        read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
-
-        string timestamp = lexical_cast<string>(time(NULL)); 
-
-        string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" + 
-                                config["workspaces"][filesystem]["deleted"].as<string>() +
-                                "/" + username + "-" + name + "-" + timestamp;
-        // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
-        raise_cap(CAP_DAC_OVERRIDE);
-        if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
-            // cerr << "rename " << dbfilename.c_str() << " -> " << dbtargetname.c_str() << " failed" << endl;
-            lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-            cerr << "Error: database entry could not be deleted." << endl;
-            exit(-1);
-        }
-        lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-
-        // rational: we move the workspace into deleted directory and append a timestamp to name
-        // as a new workspace could have same name and releasing the new one would lead to a name
-        // collision, so a timestamp is kind of generation label attached to a workspace
-
-        string wstargetname = fs::path(wsdir).parent_path().string() + "/" + 
-                                config["workspaces"][filesystem]["deleted"].as<string>() +
-                                "/" + username + "-" + name + "-" + timestamp;
-
-        // cout << wsdir.c_str() << " - " << wstargetname.c_str() << endl;
-        raise_cap(CAP_DAC_OVERRIDE);
-        if(rename(wsdir.c_str(), wstargetname.c_str())) {
-            // cerr << "rename " << wsdir.c_str() << " -> " << wstargetname.c_str() << " failed " << geteuid() << " " << getuid() << endl;
-            
-            // fallback to mv for filesystems where rename() of directories returns EXDEV 
-            int r = mv(wsdir.c_str(), wstargetname.c_str());
-            if(r!=0) {
-                lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-                cerr << "Error: could not remove workspace!" << endl;
-                exit(-1);
-            }
-        }
-        lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-
-    } else {
-        cerr << "Error: workspace does not exist!" << endl;
-        exit(-1);
-    }
+    // get workspace object
+    Workspace ws(WS_Release, opt, duration, filesystem);
+    
+    // allocate workspace
+    ws.release(name);
+    
 }
 
 
