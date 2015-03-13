@@ -6,16 +6,16 @@
  *
  *    c++ version of workspace utility
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
- *  This version is not DB and configuration compatible with the older version, the DB and 
+ *  This version is not DB and configuration compatible with the older version, the DB and
  *    configuration was changed to YAML files.
- * 
+ *
  *  differences to old workspace version
  *    - usage of YAML file format
  *    - using setuid or capabilities (needs support by filesystem!)
  *    - always moves released workspace away (this change is affecting the user!)
  *
  *  (c) Holger Berger 2013, 2014, 2015
- * 
+ *
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
  *  workspace++ is free software: you can redistribute it and/or modify
@@ -35,17 +35,17 @@
 
 
 #include <string>
-#include <boost/concept_check.hpp>
+
 
 using namespace std;
 
 /*
  * new WsDB classe
  * represents a workspace database entry
- * 
+ *
  * client does either create a new entry with constructor with arguments,
  * or wants to read it and just gives name to query other information.
- * 
+ *
  */
 
 
@@ -61,28 +61,34 @@ private:
     int dbgid;
     int reminder;
     string mailaddress;
-  
+
     void write_dbfile();
     void read_dbfile();
-   
-    
+
+
 public:
     // constructor to query a DB entry, this reads the database entry
     WsDB(const string filename);
-  
+
     // constructor to create a new DB entry
     WsDB(const string filename, const string wsdir, const long expiration, const int extensions,
-                             const string acctcode, const int dbuid, const int dbgid,
-                             const int reminder, const string mailaddress);
-  
+         const string acctcode, const int dbuid, const int dbgid,
+         const int reminder, const string mailaddress);
+
     void use_extension(const long expiration);
-    
 
-    long int getexpiration() { return expiration; }
 
-    int getextension() { return extensions; }
+    long int getexpiration() {
+        return expiration;
+    }
 
-    string getwsdir() { return wsdir; }
+    int getextension() {
+        return extensions;
+    }
+
+    string getwsdir() {
+        return wsdir;
+    }
 };
 
 #endif

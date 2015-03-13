@@ -3,16 +3,16 @@
  *
  *    c++ version of workspace utility
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
- *  This version is not DB and configuration compatible with the older version, the DB and 
+ *  This version is not DB and configuration compatible with the older version, the DB and
  *    configuration was changed to YAML files.
- * 
+ *
  *  differences to old workspace version
  *    - usage of YAML file format
  *    - using setuid or capabilities (needs support by filesystem!)
  *    - always moves released workspace away (this change is affecting the user!)
  *
  *  (c) Holger Berger 2013, 2014, 2015
- * 
+ *
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
  *  workspace++ is free software: you can redistribute it and/or modify
@@ -83,9 +83,9 @@ using namespace std;
 /*
  * read global and user config and validate parameters
  */
-Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt, const int _duration, 
-		     string _filesystem) 
-	    : opt(_opt), duration(_duration), filesystem(_filesystem) 
+Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt, const int _duration,
+                     string _filesystem)
+    : opt(_opt), duration(_duration), filesystem(_filesystem)
 {
 
     // set a umask so users can access db files
@@ -119,7 +119,7 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     lower_cap(CAP_DAC_OVERRIDE, db_uid);
 
     username = getusername();
-    
+
     // valide the input  (opt contains name, duration and filesystem as well)
     validate(clientcode, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
 }
@@ -160,10 +160,10 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
     // does db entry exist?
     if(fs::exists(dbfilename)) {
-	WsDB dbentry(dbfilename);
-	wsdir = dbentry.getwsdir();
-	extension = dbentry.getextension();
-	expiration = dbentry.getexpiration();
+        WsDB dbentry(dbfilename);
+        wsdir = dbentry.getwsdir();
+        extension = dbentry.getextension();
+        expiration = dbentry.getexpiration();
         // if it exists, print it, if extension is required, extend it
         if(extensionflag) {
             // we allow a user to specify -u -x together, and to extend a workspace if the has rights on the workspace
@@ -173,11 +173,11 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
                     cerr << "Info: and you have no permissions to access the workspace, workspace will not be extended." << endl;
                     exit(-1);
                 }
-            }        
+            }
             cerr << "Info: extending workspace." << endl;
             long expiration = time(NULL)+duration*24*3600;
-	    dbentry.use_extension(expiration);
-	    extension = dbentry.getextension();
+            dbentry.use_extension(expiration);
+            extension = dbentry.getextension();
         } else {
             cerr << "Info: reusing workspace." << endl;
         }
@@ -199,14 +199,14 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
             cerr << "Info: prefix=" << prefix << endl;
             lua_pop(L,1);
         }
-#endif 
+#endif
 
         // add some randomness
         srand(time(NULL));
         wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
-	
+
         // make directory and change owner + permissions
-        try{
+        try {
             raise_cap(CAP_DAC_OVERRIDE);
             fs::create_directories(wsdir);
             lower_cap(CAP_DAC_OVERRIDE, db_uid);
@@ -236,7 +236,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
         extension = maxextensions;
         expiration = time(NULL)+duration*24*3600;
-	WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+        WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
     }
     cout << wsdir << endl;
     cerr << "remaining extensions  : " << extension << endl;
@@ -246,24 +246,24 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
 /*
  * release a workspace by moving workspace and DB entry into trash
- * 
+ *
  */
 void Workspace::release(string name) {
     string wsdir;
-    
+
     string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
 
     // does db entry exist?
     // cout << "file: " << dbfilename << endl;
     if(fs::exists(dbfilename)) {
-	WsDB dbentry(dbfilename);
-	wsdir = dbentry.getwsdir();
+        WsDB dbentry(dbfilename);
+        wsdir = dbentry.getwsdir();
 
-        string timestamp = lexical_cast<string>(time(NULL)); 
+        string timestamp = lexical_cast<string>(time(NULL));
 
-        string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" + 
-                                config["workspaces"][filesystem]["deleted"].as<string>() +
-                                "/" + username + "-" + name + "-" + timestamp;
+        string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" +
+                              config["workspaces"][filesystem]["deleted"].as<string>() +
+                              "/" + username + "-" + name + "-" + timestamp;
         // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
         raise_cap(CAP_DAC_OVERRIDE);
         if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
@@ -278,16 +278,16 @@ void Workspace::release(string name) {
         // as a new workspace could have same name and releasing the new one would lead to a name
         // collision, so the timestamp is kind of generation label attached to a workspace
 
-        string wstargetname = fs::path(wsdir).parent_path().string() + "/" + 
-                                config["workspaces"][filesystem]["deleted"].as<string>() +
-                                "/" + username + "-" + name + "-" + timestamp;
+        string wstargetname = fs::path(wsdir).parent_path().string() + "/" +
+                              config["workspaces"][filesystem]["deleted"].as<string>() +
+                              "/" + username + "-" + name + "-" + timestamp;
 
         // cout << wsdir.c_str() << " - " << wstargetname.c_str() << endl;
         raise_cap(CAP_DAC_OVERRIDE);
         if(rename(wsdir.c_str(), wstargetname.c_str())) {
             // cerr << "rename " << wsdir.c_str() << " -> " << wstargetname.c_str() << " failed " << geteuid() << " " << getuid() << endl;
-            
-            // fallback to mv for filesystems where rename() of directories returns EXDEV 
+
+            // fallback to mv for filesystems where rename() of directories returns EXDEV
             int r = mv(wsdir.c_str(), wstargetname.c_str());
             if(r!=0) {
                 lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
@@ -300,7 +300,7 @@ void Workspace::release(string name) {
     } else {
         cerr << "Error: workspace does not exist!" << endl;
         exit(-1);
-    }  
+    }
 
 }
 
@@ -310,7 +310,7 @@ void Workspace::release(string name) {
  *  is allowed to do what he asks for.
  */
 void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &userconfig,
-                po::variables_map &opt, string &filesystem, int &duration, int &maxextensions, string &primarygroup)
+                         po::variables_map &opt, string &filesystem, int &duration, int &maxextensions, string &primarygroup)
 {
 
     // get user name, group names etc
@@ -327,7 +327,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
     }
     for(int i=0; i<nrgroups; i++) {
         grp=getgrgid(gids[i]);
-        if(grp) groupnames.push_back(string(grp->gr_name));    
+        if(grp) groupnames.push_back(string(grp->gr_name));
     }
     grp=getgrgid(getegid());
     primarygroup=string(grp->gr_name);
@@ -339,15 +339,15 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         vector<string>group_acl;
 
         // read ACL lists
-        try{
+        try {
             BOOST_FOREACH(string v,
-                config["workspaces"][opt["filesystem"].as<string>()]["user_acl"].as<vector<string> >())
-                user_acl.push_back(v);
+                          config["workspaces"][opt["filesystem"].as<string>()]["user_acl"].as<vector<string> >())
+            user_acl.push_back(v);
         } catch (...) {};
-        try{
+        try {
             BOOST_FOREACH(string v,
-                    config["workspaces"][opt["filesystem"].as<string>()]["group_acl"].as<vector<string> >())
-                group_acl.push_back(v);
+                          config["workspaces"][opt["filesystem"].as<string>()]["group_acl"].as<vector<string> >())
+            group_acl.push_back(v);
         } catch (...) {};
 
         // check ACLs
@@ -366,20 +366,20 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
             cerr << "Error: You are not allowed to use the specified workspace!" << endl;
             exit(4);
         }
-    } else {  
+    } else {
         // no filesystem specified, figure out which to use
         map<string, string>groups_defaults;
         map<string, string>user_defaults;
         BOOST_FOREACH(const YAML::Node &v, config["workspaces"]) {
-            try{
+            try {
                 BOOST_FOREACH(string u, config["workspaces."][v.as<string>()]["groupdefault"].as<vector<string> >())
-                    groups_defaults[u]=v.as<string>();
+                groups_defaults[u]=v.as<string>();
             } catch (...) {};
-            try{
+            try {
                 BOOST_FOREACH(string u, config["workspaces."][v.as<string>()]["userdefault"].as<vector<string> >())
-                    user_defaults[u]=v.as<string>();
+                user_defaults[u]=v.as<string>();
             } catch (...) {};
-        }    
+        }
         if( user_defaults.count(username) > 0 ) {
             filesystem=user_defaults[username];
             goto found;
@@ -396,7 +396,8 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         }
         // fallback, if no per user or group default, we use the config default
         filesystem=config["default"].as<string>();
-        found:;
+found:
+        ;
     }
 
     if(wc==WS_Allocate) {
@@ -457,7 +458,7 @@ int Workspace::mv(const char * source, const char *target) {
  * get user name
  * we have this to avoud cuserid
  */
-string Workspace::getusername() 
+string Workspace::getusername()
 {
     struct passwd *pw;
 
@@ -477,9 +478,9 @@ string Workspace::getuserhome()
 }
 
 /*
- * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN 
+ * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN
  */
-void Workspace::drop_cap(cap_value_t cap_arg, int dbuid) 
+void Workspace::drop_cap(cap_value_t cap_arg, int dbuid)
 {
 #ifndef SETUID
     cap_t caps;
@@ -510,7 +511,7 @@ void Workspace::drop_cap(cap_value_t cap_arg, int dbuid)
 #endif
 }
 
-void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid) 
+void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid)
 {
 #ifndef SETUID
     cap_t caps;

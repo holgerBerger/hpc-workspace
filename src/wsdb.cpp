@@ -3,16 +3,16 @@
  *
  *    c++ version of workspace utility
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
- *  This version is not DB and configuration compatible with the older version, the DB and 
+ *  This version is not DB and configuration compatible with the older version, the DB and
  *    configuration was changed to YAML files.
- * 
+ *
  *  differences to old workspace version
  *    - usage of YAML file format
  *    - using setuid or capabilities (needs support by filesystem!)
  *    - always moves released workspace away (this change is affecting the user!)
  *
  *  (c) Holger Berger 2013, 2014, 2015
- * 
+ *
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
  *  workspace++ is free software: you can redistribute it and/or modify
@@ -30,15 +30,18 @@
  *
  */
 
+// C++
 #include <string>
 #include <fstream>
 
+// Posix
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <grp.h>
 #include <time.h>
 
+// YAML
 #include <yaml-cpp/yaml.h>
 
 #ifndef SETUID
@@ -55,18 +58,17 @@ const int CAP_CHOWN = 1;
 using namespace std;
 
 
-
 /*
  * write new db entry
  */
-WsDB::WsDB(const string _filename, const string _wsdir, const long int _expiration, 
-	   const int _extensions, const string _acctcode, const int _dbuid, 
-	   const int _dbgid, const int _reminder, const string _mailaddress) :
-	   
-	   dbfilename(_filename), wsdir(_wsdir), expiration(_expiration), extensions(_extensions),
-	   acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress)
+WsDB::WsDB(const string _filename, const string _wsdir, const long int _expiration,
+           const int _extensions, const string _acctcode, const int _dbuid,
+           const int _dbgid, const int _reminder, const string _mailaddress)
+    :
+    dbfilename(_filename), wsdir(_wsdir), expiration(_expiration), extensions(_extensions),
+    acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress)
 {
-      write_dbfile(); 
+    write_dbfile();
 }
 
 /*
@@ -74,7 +76,7 @@ WsDB::WsDB(const string _filename, const string _wsdir, const long int _expirati
  */
 WsDB::WsDB(const string _filename) : dbfilename(_filename)
 {
-      read_dbfile();
+    read_dbfile();
 }
 
 /*

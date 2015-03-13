@@ -49,5 +49,5 @@ ADD_EXECUTABLE(ws_release ${workspace_SOURCE_DIR}/src/ws_release.cpp
 							 ${workspace_SOURCE_DIR}/src/wsdb.h)
 
 TARGET_LINK_LIBRARIES( ws_allocate ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp)
-TARGET_LINK_LIBRARIES( ws_release ${Boost_LIBRARIES} ${CAP} yaml-cpp)
+TARGET_LINK_LIBRARIES( ws_release ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp)
 

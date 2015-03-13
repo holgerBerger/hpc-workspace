@@ -6,16 +6,16 @@
  *
  *    c++ version of workspace utility
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
- *  This version is not DB and configuration compatible with the older version, the DB and 
+ *  This version is not DB and configuration compatible with the older version, the DB and
  *    configuration was changed to YAML files.
- * 
+ *
  *  differences to old workspace version
  *    - usage of YAML file format
  *    - using setuid or capabilities (needs support by filesystem!)
  *    - always moves released workspace away (this change is affecting the user!)
  *
  *  (c) Holger Berger 2013, 2014, 2015
- * 
+ *
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
  *  workspace++ is free software: you can redistribute it and/or modify
@@ -57,7 +57,7 @@ using namespace std;
 
 
 enum whichclient {
-    WS_Allocate, 
+    WS_Allocate,
     WS_Release
 };
 
@@ -68,20 +68,20 @@ class Workspace {
 
 private:
     YAML::Node config, userconfig;
-    int db_uid, db_gid; 
+    int db_uid, db_gid;
     po::variables_map opt;
     int maxextensions, duration;
     string filesystem, acctcode, username;
-    
+
     void validate(const whichclient wc, YAML::Node &config, YAML::Node &userconfig,
-                po::variables_map &opt, string &filesystem, int &duration, int &maxextensions, string &primarygroup);
+                  po::variables_map &opt, string &filesystem, int &duration, int &maxextensions, string &primarygroup);
 
 
     int mv(const char * source, const char *target);
 
-    
-public:    
-  
+
+public:
+
     // helpers
     static string getuserhome();
     static string getusername();
@@ -89,7 +89,7 @@ public:
     static void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid);
     static void raise_cap(int cap);
     static void lower_cap(int cap, int dbuid);
-    
+
     // constructor reads config and userconfig
     Workspace(const whichclient clientcode, const po::variables_map opt, const int _duration, string filesystem);
 
