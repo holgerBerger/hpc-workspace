@@ -11,6 +11,8 @@
 // BOOST
 #include <boost/program_options.hpp>
 
+#include "wsdb.h"
+
 #ifndef SETUID
 #include <sys/capability.h>
 #else
@@ -27,10 +29,6 @@ enum whichclient {
     WS_Release
 };
 
-
-class DBEntry {
-
-};
 
 
 
@@ -70,10 +68,10 @@ public:
     void release(string name);
 
     // extend an existing workspace
-    bool extend();
+    //bool extend();
 
     // return existing workspaces list from DB
-    vector<DBEntry> getList();
+    //vector<WsDB> getList();
 };
 
 #endif

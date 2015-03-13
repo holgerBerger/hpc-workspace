@@ -80,6 +80,9 @@ using boost::lexical_cast;
 using namespace std;
 
 
+/*
+ * read global and user config and validate parameters
+ */
 Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt, const int _duration, 
 		     string _filesystem) 
 	    : opt(_opt), duration(_duration), filesystem(_filesystem) 
@@ -123,14 +126,11 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
 
 /*
  *  create a workspace and its DB entry
- *
  */
 void Workspace::allocate(const string name, const bool extensionflag, const int reminder, const string mailaddress, string user_option) {
     string wsdir;
-    long expiration;
     int extension;
-    string acctcode;
-
+    long expiration;
 #ifdef LUACALLOUTS
     // see if we have a prefix callout
     string prefixcallout;
@@ -160,7 +160,10 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
     // does db entry exist?
     if(fs::exists(dbfilename)) {
-        WsDB::read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
+	WsDB dbentry(dbfilename);
+	wsdir = dbentry.getwsdir();
+	extension = dbentry.getextension();
+	expiration = dbentry.getexpiration();
         // if it exists, print it, if extension is required, extend it
         if(extensionflag) {
             // we allow a user to specify -u -x together, and to extend a workspace if the has rights on the workspace
@@ -170,16 +173,11 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
                     cerr << "Info: and you have no permissions to access the workspace, workspace will not be extended." << endl;
                     exit(-1);
                 }
-            }
+            }        
             cerr << "Info: extending workspace." << endl;
-            // if root does this, we do not use an extension
-            if(getuid()!=0) extension--;
-            if(extension<0) {
-                cerr << "Error: no more extensions." << endl;
-                exit(-1);
-            }
-            expiration = time(NULL)+duration*24*3600;
-            WsDB::write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+            long expiration = time(NULL)+duration*24*3600;
+	    dbentry.use_extension(expiration);
+	    extension = dbentry.getextension();
         } else {
             cerr << "Info: reusing workspace." << endl;
         }
@@ -203,7 +201,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         }
 #endif 
 
-        // add some random
+        // add some randomness
         srand(time(NULL));
         wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
 	
@@ -238,7 +236,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
         extension = maxextensions;
         expiration = time(NULL)+duration*24*3600;
-        WsDB::write_dbfile(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+	WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
     }
     cout << wsdir << endl;
     cerr << "remaining extensions  : " << extension << endl;
@@ -252,17 +250,14 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
  */
 void Workspace::release(string name) {
     string wsdir;
-    long expiration;
-    int extension;
-    string acctcode, mailaddress;
-    int reminder = 0;
     
     string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
 
     // does db entry exist?
     // cout << "file: " << dbfilename << endl;
     if(fs::exists(dbfilename)) {
-        WsDB::read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
+	WsDB dbentry(dbfilename);
+	wsdir = dbentry.getwsdir();
 
         string timestamp = lexical_cast<string>(time(NULL)); 
 

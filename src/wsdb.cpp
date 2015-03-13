@@ -55,12 +55,48 @@ const int CAP_CHOWN = 1;
 using namespace std;
 
 
+
 /*
- * write db file and change owner
+ * write new db entry
  */
-void WsDB::write_dbfile(const string filename, const string wsdir, const long expiration, const int extensions, 
-                    const string acctcode, const int dbuid, const int dbgid, 
-                    const int reminder, const string mailaddress ) 
+WsDB::WsDB(const string _filename, const string _wsdir, const long int _expiration, 
+	   const int _extensions, const string _acctcode, const int _dbuid, 
+	   const int _dbgid, const int _reminder, const string _mailaddress) :
+	   
+	   dbfilename(_filename), wsdir(_wsdir), expiration(_expiration), extensions(_extensions),
+	   acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress)
+{
+      write_dbfile(); 
+}
+
+/*
+ *  open db entry for reading
+ */
+WsDB::WsDB(const string _filename) : dbfilename(_filename)
+{
+      read_dbfile();
+}
+
+/*
+ * write db file after consuming an extension if not root
+ */
+void WsDB::use_extension(const long _expiration)
+{
+    expiration = _expiration;
+    // if root does this, we do not use an extension
+    if(getuid()!=0) extensions--;
+    if(extensions<0) {
+        cerr << "Error: no more extensions." << endl;
+        exit(-1);
+    }
+    write_dbfile();
+}
+
+
+
+
+// write data to file
+void WsDB::write_dbfile()
 {
     YAML::Node entry;
     entry["workspace"] = wsdir;
@@ -70,25 +106,22 @@ void WsDB::write_dbfile(const string filename, const string wsdir, const long ex
     entry["reminder"] = reminder;
     entry["mailaddress"] = mailaddress;
     Workspace::raise_cap(CAP_DAC_OVERRIDE);
-    ofstream fout(filename.c_str());
+    ofstream fout(dbfilename.c_str());
     fout << entry;
     fout.close();
     Workspace::lower_cap(CAP_DAC_OVERRIDE, dbuid);
     Workspace::raise_cap(CAP_CHOWN);
-    if(chown(filename.c_str(), dbuid, dbgid)) {
+    if(chown(dbfilename.c_str(), dbuid, dbgid)) {
         Workspace::lower_cap(CAP_CHOWN, dbuid);
         cerr << "Error: could not change owner of database entry" << endl;
     }
     Workspace::lower_cap(CAP_CHOWN, dbuid);
 }
 
-/*
- * read dbfile and return contents
- */
-void WsDB::read_dbfile(string filename, string &wsdir, long &expiration, int &extensions, string &acctcode,
-                        int reminder, string mailaddress) 
+// read data from file
+void WsDB::read_dbfile()
 {
-    YAML::Node entry = YAML::LoadFile(filename);
+    YAML::Node entry = YAML::LoadFile(dbfilename);
     wsdir = entry["workspace"].as<string>();
     expiration = entry["expiration"].as<long>();
     extensions = entry["extensions"].as<int>();
@@ -96,4 +129,5 @@ void WsDB::read_dbfile(string filename, string &wsdir, long &expiration, int &ex
     reminder = entry["reminder"].as<int>();
     mailaddress = entry["mailaddress"].as<string>();
 }
+
 
