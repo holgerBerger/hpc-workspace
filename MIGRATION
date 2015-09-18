@@ -44,8 +44,3 @@ ws_expirer:
 	-> changes in different locations
 
 
-example in old style format:
-1443963956
-/lustre/nec/ws2/ws/hpcralf-Data_1-0
-acctcode:43598
-available extensions:0
