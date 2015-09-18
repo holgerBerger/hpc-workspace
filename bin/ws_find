@@ -114,5 +114,12 @@ for fs in legal:
     except IOError:
         print >> sys.stderr, "Error: no such workspace"
         sys.exit(-1)
-    wsdir=f['workspace']
+    try:
+        wsdir=f['workspace']
+    except TypeError:
+        # fallback to old db format
+        f = open(dbfilename)
+        extensions = int(f.readline())
+        wsdir = f.readline()[:-1]
+        f.close()
     print wsdir
