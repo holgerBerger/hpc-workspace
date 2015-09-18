@@ -171,12 +171,23 @@ for fs in legal:
             entry.name = ws
             content = yaml.load(open(ws))
             entry.creation = os.path.getctime(ws)
-            entry.expiration = int(content['expiration'])
-            entry.extensions = content['extensions']
-            entry.acctcode = content['acctcode']
-            entry.workspace = content['workspace']
-            entry.reminder = int(content['reminder'])
-            entry.mailaddress = content['mailaddress']
+            try:
+                entry.expiration = int(content['expiration'])
+                entry.extensions = content['extensions']
+                entry.acctcode = content['acctcode']
+                entry.workspace = content['workspace']
+                entry.reminder = int(content['reminder'])
+                entry.mailaddress = content['mailaddress']
+            except TypeError:  
+                # fallback to old file format
+                f=open(ws)
+                entry.expiration = int(f.readline())
+                entry.workspace = f.readline()[:-1]
+                entry.acctcode = f.readline()[:-1].split(":")[1]
+                entry.extensions = int(f.readline()[:-1].split(":")[1])
+                entry.reminder = 0
+                entry.mailaddress = ""
+                f.close()
             if sort:
                 # store for sorting
                 entrylist.append(entry)    
