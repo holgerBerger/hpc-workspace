@@ -33,6 +33,7 @@
 // C++
 #include <string>
 #include <fstream>
+#include <iostream>
 
 // Posix
 #include <sys/types.h>
@@ -43,6 +44,10 @@
 
 // YAML
 #include <yaml-cpp/yaml.h>
+
+// boost
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 #ifndef SETUID
 #include <sys/capability.h>
@@ -124,12 +129,30 @@ void WsDB::write_dbfile()
 void WsDB::read_dbfile()
 {
     YAML::Node entry = YAML::LoadFile(dbfilename);
-    wsdir = entry["workspace"].as<string>();
-    expiration = entry["expiration"].as<long>();
-    extensions = entry["extensions"].as<int>();
-    acctcode = entry["acctcode"].as<string>();
-    reminder = entry["reminder"].as<int>();
-    mailaddress = entry["mailaddress"].as<string>();
+    try {
+        wsdir = entry["workspace"].as<string>();
+        expiration = entry["expiration"].as<long>();
+        extensions = entry["extensions"].as<int>();
+        acctcode = entry["acctcode"].as<string>();
+        reminder = entry["reminder"].as<int>();
+        mailaddress = entry["mailaddress"].as<string>();
+    } catch (YAML::BadSubscript) {
+        // fallback to old db format
+        ifstream entry (dbfilename.c_str());
+        entry >> expiration;
+        entry >> wsdir;
+        // get acctcode and extensions, need some splitting
+        string line;
+        std::vector<std::string> sp;
+        getline(entry, line); // newline
+        getline(entry, line); // acctcode
+        boost::split(sp, line, boost::is_any_of(":"));
+        acctcode = sp[1];
+        getline(entry, line); // extension
+        boost::split(sp, line, boost::is_any_of(":"));
+        extensions = boost::lexical_cast<int>(sp[1]);
+        entry.close();
+        mailaddress = "";
+        reminder = 0;
+    }
 }
-
-
