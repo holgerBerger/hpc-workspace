@@ -1,0 +1,51 @@
+
+During an in-place migration from old to new style database
+
+ws_allocate:
+    has to be able to read old entries to avoid collision,
+    and write them for extension (?)
+    can write in new format
+	
+	-> see below
+
+ws_release:
+    has to be able to read and expire old entries,
+    can write in new format
+
+	-> change in wsdb to fall back to old-style reader (has to be implemented)
+
+ws_list:
+    has to be able to fully read old entries
+
+	-> change near end to read entries from old style db entry
+
+ws_find:
+    has to be able to read old entries
+
+	-> change at end to be able to read directory name from old style
+
+ws_register:
+    has to be able to read old  entries
+	
+	-> change near end to read old entries
+
+ws_extend:
+    calls ws_allocate
+
+
+ws_restore: (sbin admin restore, not planned user restore)
+    has to be able to read old entry
+
+	-> change near end to read path in old style format
+
+ws_expirer:
+    has to be able to read old entry
+
+	-> changes in different locations
+
+
+example in old style format:
+1443963956
+/lustre/nec/ws2/ws/hpcralf-Data_1-0
+acctcode:43598
+available extensions:0
