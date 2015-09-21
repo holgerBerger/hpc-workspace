@@ -46,13 +46,14 @@
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string/predicate.hpp>
+#include <boost/smart_ptr.hpp>
 
 #define BOOST_FILESYSTEM_VERSION 3 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
 #include "ws_util.h"
+#include "ws.h"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -121,36 +122,17 @@ int main(int argc, char **argv) {
     po::variables_map opt;
     string name, filesystem, acctcode, username;
     bool listflag;
-    int duration, maxextensions;
+    int duration;
     YAML::Node config, userconfig;
 
+    // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, filesystem, listflag, username, argc, argv);
 
-    // read config 
-    try {
-        config = YAML::LoadFile("/etc/ws.conf");
-    } catch (YAML::BadFile) {
-        cerr << "Error: no config file!" << endl;
-        exit(-1);
-    }
+    // get workspace object
+    Workspace ws(WS_Allocate, opt, duration, filesystem);
 
-    // drop capabilites
-    drop_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-
-    // read private config
-    raise_cap(CAP_DAC_OVERRIDE);
-    try {
-        userconfig = YAML::LoadFile("ws_private.conf");
-    } catch (YAML::BadFile) {
-        // we do not care
-    }
-    lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-
-    // valide the input  (opt contains name, duration and filesystem as well)
-    validate(ws_release, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
-
-    // construct db-entry name
-    string real_username = getusername();
+    // construct db-entry username  name
+    string real_username = ws.getusername();
     if (username == "") {
         username = real_username;
     } else if (real_username != username) {
@@ -162,18 +144,11 @@ int main(int argc, char **argv) {
     }
 
     if (listflag) {
-        cerr << "Info: available workspaces for recovery:" << endl;
-        string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
-        string dbprefix = fs::path(dbfilename).parent_path().string() + "/" + 
-                          config["workspaces"][filesystem]["deleted"].as<string>();
-        
-        fs::directory_iterator end;
-        for (fs::directory_iterator it(dbprefix); it!=end; ++it) {
-            if (boost::starts_with(it->path().filename(), username + "-" )) {
-                cout << it->path().filename() << endl;
-            }
+        BOOST_FOREACH(string dn, ws.getRestorable(username)) {
+            cout << dn << endl;
         }
     } else {
+        /*
         string dbfilename=fs::path(config["workspaces"][filesystem]["database"].as<string>()).string() 
                         + "/" + config["workspaces"][filesystem]["deleted"].as<string>()+"/"+name;
         if (fs::exists(dbfilename)) {
@@ -189,6 +164,7 @@ int main(int argc, char **argv) {
         } else {
             cerr << "Error: workspace does not exist." << endl;
         }
+        */
     }
 
 }

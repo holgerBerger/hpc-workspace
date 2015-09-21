@@ -49,6 +49,7 @@ const int CAP_CHOWN = 1;
 #endif
 
 // C++ stuff
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -59,6 +60,8 @@ const int CAP_CHOWN = 1;
 #include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/smart_ptr.hpp>
 
 #define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_NO_DEPRECATED
@@ -475,6 +478,36 @@ string Workspace::getuserhome()
 
     pw = getpwuid(getuid());
     return string(pw->pw_dir);
+}
+
+
+/*
+ * get filesystem
+ */
+string Workspace::getfilesystem()
+{
+    return filesystem;
+}
+
+
+/*
+ * get list of restorable workspaces, as names
+ */
+vector<string> Workspace::getRestorable(string username)
+{
+    string dbprefix = config["workspaces"][filesystem]["database"].as<string>() + "/" +
+                      config["workspaces"][filesystem]["deleted"].as<string>();
+
+    vector<string> namelist;
+
+    fs::directory_iterator end;
+    for (fs::directory_iterator it(dbprefix); it!=end; ++it) {
+        if (boost::starts_with(it->path().filename(), username + "-" )) {
+            namelist.push_back(it->path().filename());
+        }
+    }
+
+    return namelist;
 }
 
 /*

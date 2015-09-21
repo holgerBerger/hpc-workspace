@@ -42,6 +42,7 @@
 
 // BOOST
 #include <boost/program_options.hpp>
+#include <boost/smart_ptr.hpp>
 
 #include "wsdb.h"
 
@@ -99,11 +100,16 @@ public:
     // release an existing workspace, move workspace and DB entry
     void release(string name);
 
+    string getfilesystem();
+
     // extend an existing workspace
     //bool extend();
 
     // return existing workspaces list from DB
     //vector<WsDB> getList();
+
+    // return restorable workspaces list from DB
+    vector<string> getRestorable(string username);
 };
 
 #endif
