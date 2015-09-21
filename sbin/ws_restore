@@ -58,7 +58,13 @@ for fs in config["workspaces"]:
             sys.exit(-1)
         else:
             entry = yaml.load(open(dbentry))
-            wsentry = os.path.join( os.path.dirname(entry["workspace"]), config["workspaces"][fs]["deleted"] , workspaceid )
+            try:
+                wsentry = os.path.join( os.path.dirname(entry["workspace"]), config["workspaces"][fs]["deleted"] , workspaceid )
+            except TypeError:
+                f = open(dbentry)
+                expiration = int(f.readline())
+                wsentry = os.path.join( os.path.dirname(f.readline()[:-1]), config["workspaces"][fs]["deleted"] , workspaceid )
+                f.close()
             if os.path.exists( wsentry ):
                 os.rename(dbentry,os.path.join( dbdir , workspaceid[:workspaceid.rfind('-')]))
                 os.rename(wsentry, entry["workspace"])
