@@ -508,9 +508,15 @@ vector<string> Workspace::getRestorable(string username)
 
     fs::directory_iterator end;
     for (fs::directory_iterator it(dbprefix); it!=end; ++it) {
-        if (boost::starts_with(it->path().string(), username + "-" )) {
-            namelist.push_back(it->path().string());
+#if BOOST_VERSION < 105000
+        if (boost::starts_with(it->path().filename(), username + "-" )) {
+            namelist.push_back(it->path().filename());
         }
+#else
+        if (boost::starts_with(it->path().filename().string(), username + "-" )) {
+            namelist.push_back(it->path().filename().string());
+        }
+#endif
     }
 
     return namelist;
