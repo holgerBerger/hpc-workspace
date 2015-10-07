@@ -88,11 +88,16 @@ cmake .
 make
 
 
-copy ws_allocate and ws_release and ws_list where wanted,
-and set capabilites with
+copy ws_allocate and ws_release and ws_restore and ws_list where wanted,
+( and set capabilites with
 
 setcap "CAP_DAC_OVERRIDE=p CAP_CHOWN=p" ws_allocate
 setcap "CAP_DAC_OVERRIDE=p" ws_release
+)
+
+OR (on filesystems without capabilties and now default in build,
+can be changed with ccmake .)
+make ws_allocate ws_release ws_restore setuid root
 
 install manpages.
 

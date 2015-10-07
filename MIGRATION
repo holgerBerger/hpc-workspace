@@ -6,28 +6,33 @@ ws_allocate:
     and write them for extension (?)
     can write in new format
 	
-	-> see below
+	-> see below 
+    DONE
 
 ws_release:
     has to be able to read and expire old entries,
     can write in new format
 
 	-> change in wsdb to fall back to old-style reader (has to be implemented)
+    DONE
 
 ws_list:
     has to be able to fully read old entries
 
 	-> change near end to read entries from old style db entry
+    DONE
 
 ws_find:
     has to be able to read old entries
 
 	-> change at end to be able to read directory name from old style
+    DONE
 
 ws_register:
     has to be able to read old  entries
 	
 	-> change near end to read old entries
+    DONE
 
 ws_extend:
     calls ws_allocate
@@ -37,6 +42,7 @@ ws_restore: (sbin admin restore, not planned user restore)
     has to be able to read old entry
 
 	-> change near end to read path in old style format
+
 
 ws_expirer:
     has to be able to read old entry

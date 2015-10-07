@@ -37,6 +37,11 @@ and to avoid the situations that data of past and finished projects/jobs is idli
 ever on disks. A user can create and dispose arbitrary number of workspaces, they are cheap,
 and can be created e.g. for each job.
 
+For the administrator, 
+.B workspaces 
+offer further advantages, like beeing able to migrate users to another filesystem over time,
+and to do loadbalancing over directories and filesystems.
+
 From the system side, 
 .B workspaces 
 will be deleted after beeing expired. A friendly user can release workspaces before the expiration
@@ -52,6 +57,9 @@ If a
 .B workspace
 was forgotten and expired, it might make sense to contact the administrator,
 as he probaly can restore a workspace for some time, if disk space is not low.
+Check if 
+.B ws_restore
+is available to restore workspaces that are still in the hidden area.
 
 .PP
 
