@@ -1,0 +1,51 @@
+.TH ws_restore 1 "October 2015" "USER COMMANDS"
+
+.SH NAME
+ws_restore \- restore a workspace that was removed, but is still in recovery area
+
+.SH SYNOPSIS
+.B ws_restore
+[\-h] [\-l] [\-F FILESYSTEM]  NAME TARGET
+
+.SH DESCRIPTION
+After a 
+.B workspace 
+was released by user or deleted due to expiration, it can be (depending on administrator policy) kept for a while
+in a unaccessable area of the filesystem before beeing finally deleted to free the space.
+In this case, it can be restored. The decision how long it can be restored is up to administrator.
+
+.B ws_restore \-l
+can be used to list the restorable workspaces and to restore a selected workspace into a new
+existing 
+.B workspace
+.
+
+.PP
+
+.SH OPTIONS
+.TP
+\-h 
+display usage help text
+.TP
+\-F
+select the filesystem to search workspaces in, there is always a default for this.
+See 
+.B ws_list
+.TP
+\-l
+list available workspaces for restore
+.TP
+.B NAME
+the name of the expired workspace, see 
+.B ws_restore -l
+for available names. This name contains username, workspace and a timestamp.
+.TP
+.B TARGET
+the name of the workspace which is target of the restoration, it has to exist.
+
+
+.SH AUTHOR
+Written by Holger Berger
+
+.SH SEE ALSO
+ws_allocate, ws_release, ws_list, ws_find
