@@ -211,7 +211,11 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         if (user_option.length()>0 && (user_option != username) && (getuid() != 0)) {
             wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
         } else {  // we are root and can change owner!
-            wsdir = spaces[rand()%spaces.size()]+prefix+"/"+user_option+"-"+name;
+            if (user_option.length()>0) {
+                wsdir = spaces[rand()%spaces.size()]+prefix+"/"+user_option+"-"+name;
+            } else {
+                wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
+            }
         }
 
         // make directory and change owner + permissions
