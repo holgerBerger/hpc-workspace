@@ -36,7 +36,6 @@
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
-#include <sys/capability.h>
 #include <time.h>
 
 #include <iostream>
@@ -52,7 +51,6 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
-#include "ws_util.h"
 #include "ws.h"
 #include "ruh.h"
 
