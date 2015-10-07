@@ -84,7 +84,7 @@ bool ruh() {
 		repstr(left, word[1].size()+word[2].size());
 		cout << word[1];
 		repstr(right, word[2].size());
-		for(int i=3; i<word.size(); i++) {
+		for(unsigned int i=3; i<word.size(); i++) {
 			cout << word[i];
 		}
 	} else {
@@ -94,7 +94,7 @@ bool ruh() {
 		repstr(left, word[0].size()+word[1].size());
 		cout << word[0];
 		repstr(right, word[1].size());
-		for(int i=2; i<word.size(); i++) {
+		for(unsigned int i=2; i<word.size(); i++) {
 			cout << word[i];
 		}
 	}
