@@ -46,7 +46,7 @@
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/smart_ptr.hpp>
+#include <boost/algorithm/string.hpp>
 
 #define BOOST_FILESYSTEM_VERSION 3 
 #define BOOST_FILESYSTEM_NO_DEPRECATED
@@ -54,6 +54,7 @@
 
 #include "ws_util.h"
 #include "ws.h"
+#include "ruh.h"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -61,7 +62,7 @@ using namespace std;
 using boost::lexical_cast;
 
 
-void commandline(po::variables_map &opt, string &name, 
+void commandline(po::variables_map &opt, string &name, string &target,
                     string &filesystem, bool &listflag, string &username,  int argc, char**argv) {
     // define all options
 
@@ -70,6 +71,7 @@ void commandline(po::variables_map &opt, string &name,
             ("help,h", "produce help message")
             ("list,l", "list restorable workspaces")
             ("name,n", po::value<string>(&name), "workspace name")
+            ("target,t", po::value<string>(&target), "existing target workspace name")
             ("filesystem,F", po::value<string>(&filesystem), "filesystem")
             ("username,u", po::value<string>(&username), "username")
     ;
@@ -77,13 +79,14 @@ void commandline(po::variables_map &opt, string &name,
     // define options without names
     po::positional_options_description p;
     p.add("name", 1);
+    p.add("target", 2);
 
     // parse commandline
     try{
         po::store(po::command_line_parser(argc, argv).options(cmd_options).positional(p).run(), opt);
         po::notify(opt);
     } catch (...) {
-        cout << "Usage:" << argv[0] << ": [options] workspace_name | -l" << endl;
+        cout << "Usage:" << argv[0] << ": [options] workspace_name target_name | -l" << endl;
         cout << cmd_options << "\n";
         exit(1);
     }
@@ -91,19 +94,25 @@ void commandline(po::variables_map &opt, string &name,
     // see whats up
 
     if (opt.count("help")) {
-        cout << "Usage:" << argv[0] << ": [options] workspace_name | -l" << endl;
+        cout << "Usage:" << argv[0] << ": [options] workspace_name target_name | -l" << endl;
         cout << cmd_options << "\n";
         exit(1);
     }
 
     if (opt.count("list")) {
-	listflag = true;
+        listflag = true;
     } else {
-	listflag = false;
+        listflag = false;
     }
 
     if (opt.count("name"))
     {
+        if (!opt.count("target")) {
+            cout << "Error: no target given." << endl;
+            cout << argv[0] << ": [options] workspace_name target_name | -l" << endl;
+            cout << cmd_options << "\n";
+            exit(1);
+        }
         // validate workspace name against nasty characters    
         static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
         if (!regex_match(name, e)) {
@@ -111,25 +120,44 @@ void commandline(po::variables_map &opt, string &name,
             exit(1);
         }
     } else if (!opt.count("list")) {
-        cout << argv[0] << ": [options] workspace_name" << endl;
+        cout << "Error: neither workspace nor -l specified." << endl;
+        cout << argv[0] << ": [options] workspace_name target_name | -l" << endl;
         cout << cmd_options << "\n";
         exit(1);
     }
 
 }
 
+/*
+ * check that either username matches the name of the workspace, or we are root
+ */
+bool check_name(const string name, const string username, const string real_username) {
+    // split the name in username, name and timestamp
+    vector<string> sp;
+    boost::split(sp, name, boost::is_any_of("-"));
+
+    // we checked already that only root can use another username with -u, so here
+    // we know we are either root or username == real_username
+    if ((username != sp[0]) && (real_username != "root")) {
+        cerr << "only root can do this" << endl;
+        return false;
+    } else {
+        return true;
+    }
+}
+
 int main(int argc, char **argv) {
     po::variables_map opt;
-    string name, filesystem, acctcode, username;
+    string name, target, filesystem, acctcode, username;
     bool listflag;
-    int duration;
+    int duration=0;
     YAML::Node config, userconfig;
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
-    commandline(opt, name, filesystem, listflag, username, argc, argv);
+    commandline(opt, name, target, filesystem, listflag, username, argc, argv);
 
     // get workspace object
-    Workspace ws(WS_Allocate, opt, duration, filesystem);
+    Workspace ws(WS_Release, opt, duration, filesystem);
 
     // construct db-entry username  name
     string real_username = ws.getusername();
@@ -148,23 +176,10 @@ int main(int argc, char **argv) {
             cout << dn << endl;
         }
     } else {
-        /*
-        string dbfilename=fs::path(config["workspaces"][filesystem]["database"].as<string>()).string() 
-                        + "/" + config["workspaces"][filesystem]["deleted"].as<string>()+"/"+name;
-        if (fs::exists(dbfilename)) {
-            string wsdir, mailaddress;
-            long expiration;
-            int reminder, extension;
-            read_dbfile(dbfilename, wsdir, expiration, extension, acctcode, reminder, mailaddress);
-            cout << fs::path(wsdir).parent_path().string() + "/" +
-                    config["workspaces"][filesystem]["deleted"].as<string>() + "/" +name
-                    << " -> " << wsdir << endl;
-            cout << dbfilename << " -> "    << endl;
- // TODO move to where?
-        } else {
-            cerr << "Error: workspace does not exist." << endl;
+        if (check_name(name, username, real_username)) {
+            if (ruh()) {
+                 ws.restore(name, target, username);
+            }
         }
-        */
     }
-
 }

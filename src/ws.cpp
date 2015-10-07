@@ -61,7 +61,6 @@ const int CAP_CHOWN = 1;
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/smart_ptr.hpp>
 
 #define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_NO_DEPRECATED
@@ -74,7 +73,6 @@ const int CAP_CHOWN = 1;
 
 #include "ws.h"
 #include "wsdb.h"
-//#include "ws_util.h"
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -158,7 +156,11 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
             exit(-1);
         }
     } else {
-        dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+username+"-"+name;
+        if(user_option.length()>0 && (getuid()==0)) {
+            dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
+        } else {
+            dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+username+"-"+name;
+        }
     }
 
     // does db entry exist?
@@ -206,7 +208,11 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
         // add some randomness
         srand(time(NULL));
-        wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
+        if (user_option.length()>0 && (user_option != username) && (getuid() != 0)) {
+            wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
+        } else {  // we are root and can change owner!
+            wsdir = spaces[rand()%spaces.size()]+prefix+"/"+user_option+"-"+name;
+        }
 
         // make directory and change owner + permissions
         try {
@@ -509,6 +515,49 @@ vector<string> Workspace::getRestorable(string username)
 
     return namelist;
 }
+
+/*
+ * restore a workspace, argument is name of workspace DB entry including username and timestamp, form user-name-timestamp
+ */
+void Workspace::restore(const string name, const string target, const string username) {
+    string dbfilename = fs::path(config["workspaces"][filesystem]["database"].as<string>()).string() 
+                         + "/" + config["workspaces"][filesystem]["deleted"].as<string>()+"/"+name;
+
+    string targetdbfilename = fs::path(config["workspaces"][filesystem]["database"].as<string>()).string() 
+                            + "/" + username + "-" + target;
+
+    string targetwsdir;
+
+    // check for target existance and get directory name of workspace, which will be target of mv operations
+    if(fs::exists(targetdbfilename)) {
+        WsDB targetdbentry(targetdbfilename);
+        targetwsdir = targetdbentry.getwsdir();
+    } else {
+        cerr << "Error: target workspace does not exist!" << endl;
+        exit(1);
+    }
+
+    if(fs::exists(dbfilename)) {
+        WsDB dbentry(dbfilename);
+        // this is path of original workspace, from this we derive the deleted name
+        string wsdir = dbentry.getwsdir();
+
+        // go one up, add deleted subdirectory and add workspace name 
+        string wssourcename = fs::path(wsdir).parent_path().string() + "/" +
+                              config["workspaces"][filesystem]["deleted"].as<string>() +
+                              "/" + name;
+
+        raise_cap(CAP_DAC_OVERRIDE);
+        mv(wssourcename.c_str(), targetwsdir.c_str());
+        unlink(dbfilename.c_str());
+        lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+        
+
+    } else {
+        cerr << "Error: workspace does not exist." << endl;
+    }
+}
+
 
 /*
  * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN

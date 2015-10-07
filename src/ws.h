@@ -110,6 +110,10 @@ public:
 
     // return restorable workspaces list from DB
     vector<string> getRestorable(string username);
+
+    // restore a workspace
+    void restore(const string name, const string target, const string username);
+
 };
 
 #endif

@@ -5,7 +5,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 #workaround for old Redhat 6 cmake
 set(Boost_NO_BOOST_CMAKE ON)
 
-SET(CMAKE_CXX_FLAGS "-g -Wall")
+SET(CMAKE_CXX_FLAGS "-Wall")
 
 OPTION(SETUID "use setuid instead of capabilites" TRUE)
 IF (SETUID)
@@ -26,9 +26,9 @@ ELSE (LUACALLOUTS)
 ENDIF (LUACALLOUTS)
 
 
-set(Boost_USE_STATIC_LIBS ON) 
+set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED OFF)  
-set(Boost_USE_STATIC_RUNTIME ON) 
+set(Boost_USE_STATIC_RUNTIME OFF) 
 FIND_PACKAGE(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 
 ADD_SUBDIRECTORY(${workspace_SOURCE_DIR}/yaml-cpp-0.5.0)
@@ -48,6 +48,15 @@ ADD_EXECUTABLE(ws_release ${workspace_SOURCE_DIR}/src/ws_release.cpp
 							 ${workspace_SOURCE_DIR}/src/wsdb.cpp 
 							 ${workspace_SOURCE_DIR}/src/wsdb.h)
 
+ADD_EXECUTABLE(ws_restore ${workspace_SOURCE_DIR}/src/ws_restore.cpp 
+							 ${workspace_SOURCE_DIR}/src/ruh.cpp 
+							 ${workspace_SOURCE_DIR}/src/ruh.h
+							 ${workspace_SOURCE_DIR}/src/ws.cpp 
+							 ${workspace_SOURCE_DIR}/src/ws.h
+							 ${workspace_SOURCE_DIR}/src/wsdb.cpp 
+							 ${workspace_SOURCE_DIR}/src/wsdb.h)
+
 TARGET_LINK_LIBRARIES( ws_allocate ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp)
 TARGET_LINK_LIBRARIES( ws_release ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp)
+TARGET_LINK_LIBRARIES( ws_restore ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp termcap)
 
