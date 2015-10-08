@@ -599,7 +599,9 @@ void Workspace::drop_cap(cap_value_t cap_arg, int dbuid)
     cap_free(caps);
 #else
     // seteuid(0);
-    seteuid(dbuid);
+    if(seteuid(dbuid)) {
+        cerr << "Error: can not change uid." << endl;
+    }
 #endif
 }
 
@@ -631,7 +633,9 @@ void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid)
     cap_free(caps);
 #else
     // seteuid(0);
-    seteuid(dbuid);
+    if(seteuid(dbuid)) {
+        cerr << "Error: can not change uid." << endl;
+    }
 #endif
 
 }
@@ -662,7 +666,10 @@ void Workspace::lower_cap(int cap, int dbuid)
     cap_free(caps);
 #else
     // seteuid(0);
-    seteuid(dbuid);
+
+    if(seteuid(dbuid)) {
+        cerr << "Error: can not change uid." << endl;
+    }
 #endif
 }
 
@@ -691,6 +698,8 @@ void Workspace::raise_cap(int cap)
 
     cap_free(caps);
 #else
-    seteuid(0);
+    if (seteuid(0)) {
+        cerr << "Error: can not change uid." << endl;
+    }
 #endif
 }

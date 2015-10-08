@@ -22,7 +22,8 @@ IF (LUACALLOUTS)
 	find_package(Lua51 REQUIRED)
 	INCLUDE_DIRECTORIES(${LUA_INCLUDE_DIR} ${workspace_SOURCE_DIR}/yaml-cpp-0.5.0/include)
 ELSE (LUACALLOUTS)
-	INCLUDE_DIRECTORIES(${workspace_SOURCE_DIR}/yaml-cpp-0.5.0/include)
+	#INCLUDE_DIRECTORIES(${workspace_SOURCE_DIR}/yaml-cpp-0.5.0/include)
+	INCLUDE_DIRECTORIES(${workspace_SOURCE_DIR}/yaml-cpp-release-0.5.2/include)
 ENDIF (LUACALLOUTS)
 
 
@@ -31,7 +32,8 @@ set(Boost_USE_MULTITHREADED OFF)
 set(Boost_USE_STATIC_RUNTIME OFF) 
 FIND_PACKAGE(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 
-ADD_SUBDIRECTORY(${workspace_SOURCE_DIR}/yaml-cpp-0.5.0)
+# ADD_SUBDIRECTORY(${workspace_SOURCE_DIR}/yaml-cpp-0.5.0)
+ADD_SUBDIRECTORY(${workspace_SOURCE_DIR}/yaml-cpp-release-0.5.2)
 
 
 SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${workspace_BINARY_DIR}/bin)
