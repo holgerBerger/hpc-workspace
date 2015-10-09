@@ -1,12 +1,12 @@
 /*
- *    workspace++
+ *  workspace++
  *
  *  ws_allocate
  *
- *    c++ version of workspace utility
+ *  c++ version of workspace utility
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
  *  This version is not DB and configuration compatible with the older version, the DB and 
- *    configuration was changed to YAML files.
+ *  configuration was changed to YAML files.
  * 
  *  differences to old workspace version
  *    - usage of YAML file format
