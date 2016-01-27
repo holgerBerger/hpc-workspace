@@ -10,7 +10,7 @@
     to be called from a cronjob to expire workspaces, does delete the data as well
     Reads new YAML configuration files and new YAML workspace database.
 
-    (c) Holger Berger 2013, 2014, 2015
+    (c) Holger Berger 2013, 2014, 2015, 2016
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
     and Adrian Reber
@@ -35,9 +35,11 @@ import os,sys
 import glob
 import time
 import smtplib
+import os.path
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
+count = 0
 
 # send a reminder email
 def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
@@ -83,6 +85,7 @@ END:VCALENDAR
 def deldir(dir):
     global count
     print "deldir",dir
+    if not os.path.exists(dir): return
     for obj in os.listdir(dir):
         fullname=os.path.join(dir,obj)
         if os.path.isdir(fullname) and not os.path.islink(fullname):
@@ -154,6 +157,9 @@ for fs in config["workspaces"]:
             os.unlink(dbentryfilename)
             workspace = dbentry['workspace']
             deldir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
-            os.rmdir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
+            try:
+              os.rmdir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
+            except:
+              print "does not exist"
         else:
             print "kept restorable",dbentryfilename
