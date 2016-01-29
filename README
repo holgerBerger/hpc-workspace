@@ -104,3 +104,11 @@ install manpages.
 try.
 have fun.
 complain.
+
+
+REMARKS
+
+capabities need support from OS and filesystem
+nfs and lustre are known not to work
+for suse user: SLES11.SP3 needs file_caps=1 on kernel command line
+
