@@ -111,7 +111,7 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     // read private config
     raise_cap(CAP_DAC_OVERRIDE);
     try {
-        userconfig = YAML::LoadFile("ws_private.conf");
+        userconfig = YAML::LoadFile("/etc/ws_private.conf");
     } catch (YAML::BadFile) {
         // we do not care
     }
