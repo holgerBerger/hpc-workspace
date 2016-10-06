@@ -29,6 +29,8 @@ set(Boost_USE_MULTITHREADED OFF)
 set(Boost_USE_STATIC_RUNTIME OFF) 
 FIND_PACKAGE(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 
+# find curses for "are you human" checker
+FIND_PACKAGE(Curses)
 
 FIND_LIBRARY(YAML libyaml-cpp.so)
 IF (YAML)
