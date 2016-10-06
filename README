@@ -1,114 +1,34 @@
+a **workspace** is a directory created in behalf of a user, associated with a expiration date, to prevent disks from uncontrolled filling.
+The project provides user and admin tools to manage those directories.
 
-** THIS IS NOT YET USEFULL, BUT WORK IN PROGRESS, AND PROBABLY ONLY USABLE FOR A VERY SMALL NUMBER OF PPLE **
+Example for usage:
 
+In a batch job, you write
 
-very short introduction to workspace++ 
+```
+SCR=$(ws_allocate MyData 10)
+cd $SCR
+```
 
-WHATS NEW
+This will set you into a temporary directory that will last 10 days.
 
-- incompatible file formats for DB and config
-- unification of config, all config options moved into one config file,
-  user exceptions are kept in a extra file which must not be readable for user commands
-- rewrite of ws_release and ws_allocate in C++, setuid optional, capability can be used if 
-  supported by filesysten.
-  never was comfortable with the python in C hack, this is cleaner, less attack vectors.
-- added/changed functionality
-    - ws_release always moves the data away when called (new semantics! users affected!)
-    - more admin options with ws_list, like seeing expired workspaces
-    - more output control in ws_list
-    - support for email reminders in ws_allocate/ws_cleaner
-    - YAML key:value configration and database, easyer to extend
-    - man pages
-    - ws_allocate has an argument -u  so root can extend workspaces
-      using    ws_allocate -u owner -x name duration
-      duration can be longer than allowed for the user, and it does not consume an extension,
-      so it works even if remaining extensions of the workspace is 0
-      Users can do this is as well if they can access the workspace!
-    - ws_allocate can prefix a workspace per user using a LUA callout.
-        example: spaces: /lustre/ws
-        with a callout could create
-        workspace: /lustre/ws/academic/username-workspacename
-        when the callout returns 'academic' for 'username'
-        ATTENTION: no code to modify permissions and ownerships of the subdirectory,
-        you better create them all as needed!
+You can check which **workspaces** you have using
 
+```
+$ ws_list 
+id: MyData
+     workspace directory  : /tmp/username-MyData
+     remaining time       : 9 days 23 hours
+     creation time        : Wed Mar 13 23:51:57 2013
+     expiration date      : Sat Mar 23 23:51:57 2013
+     available extensions : 15
+```
 
-PLANNED
+and you remove the directory if you do not need it anymore with
 
-- striping support in ws_allocate (lustre parameters, probably we want to drop some 
-  capabilities before we do that, needs study how to do that)
-- cleaner with support for reminder emails
-- quota settings
+```
+$ ws_release MyData
+```
 
-PREREQUISITS
-
-c++ compiler (no c++0x needed) (g++ and clang++ tested)
-boost
-boost_filesystem
-boost_regex
-boost_program_options
-yaml-cpp
-libcap2
-python2.6
-pyyaml
-lua5.1
-
-
-SUPPLIED
-
-ws_allocate         (C++)
-ws_release          (C++)
-ws_list             (python)
-ws_validate_config  (python)
-ws_restore          (python)
-ws_register         (python)
-ws_find             (python)
-ws_expirer          (python)
-
-
-
-BUGS
-
-- when LUA callout to prefix workspaces is used, the prefix directories do
-    not get proper owner and permissions (what is propper anyhow???)
-
-
-HOW TO INSTALL
-
-write a config file, see ws.conf_full_sample, validate it 
-with ws_validate_config myconfig.conf
-
-copy it to /etc/ws.conf
-may be having /etc/ws.conf being a link is a good idea,
-so different versions can be kept.
-
-compile the tools with
-./getyamlcpp.sh
-cmake .
-make
-
-
-copy ws_allocate and ws_release and ws_restore and ws_list where wanted,
-( and set capabilites with
-
-setcap "CAP_DAC_OVERRIDE=p CAP_CHOWN=p" ws_allocate
-setcap "CAP_DAC_OVERRIDE=p" ws_release
-)
-
-OR (on filesystems without capabilties and now default in build,
-can be changed with ccmake .)
-make ws_allocate ws_release ws_restore setuid root
-
-install manpages.
-
-try.
-have fun.
-complain.
-
-
-REMARKS
-
-capabities need support from OS and filesystem
-nfs and lustre are known not to work
-for suse user: SLES11.SP3 needs file_caps=1 on kernel command line
-
+For the administrator, the **workspace** is a way to make sure users do not store their data
+forever on your fast storage, but have to stage it to slower and cheaper storage.
