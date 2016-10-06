@@ -1,0 +1,104 @@
+#!/usr/bin/env python2
+
+# provided by Yvan Arnaud to prepare workspace according to config
+
+from __future__ import print_function
+import sys,os.path
+import yaml
+from optparse import OptionParser
+
+# option configuration
+parser = OptionParser()
+#parser.add_option('-h', '--help', dest='help', help='prints this help')
+parser.add_option('-s', '--setuid', action='store_true', dest='setuid', help='configure setuid')
+parser.add_option('-c', '--capabilities', action='store_true', dest='capabilities', help='configure capabilities')
+parser.add_option('-f', '--file', dest='configFile', help='specify a config file to use (default: /etc/ws.conf)')
+(options, args) = parser.parse_args()
+
+if options.configFile:
+    if not os.path.exists(options.configFile):
+        print("ERROR: the specified config file does not exist!")
+    else:
+        filename = options.configFile
+else:
+    filename = '/etc/ws.conf'
+
+if options.setuid:
+    if os.path.exists('./bin/ws_allocate'):
+        os.system("chmod 4755 ./bin/ws_allocate")
+        print("INFO: setuid was set on ws_allocate.")
+    else:
+        print("WARNING: ws_allocate was not found. Could not set setuid on ws_allocate.")
+    if os.path.exists('./bin/ws_release'):
+        os.system("chmod 4755 ./bin/ws_release")
+        print("INFO: setuid was set on ws_release.")
+    else:
+        print("WARNING: ws_release was not found. Could not set setuid on ws_release.")
+
+if options.capabilities:
+    if os.path.exists('./bin/ws_allocate'):
+        os.system("setcap 'CAP_DAC_OVERRIDE=p CAP_CHOWN=p' ./bin/ws_allocate")
+        print("INFO: capability was set on ws_allocate.")
+    else:
+        print("WARNING: ws_allocate was not found. Could not set capability on ws_allocate.")
+    if os.path.exists('./bin/ws_release'):
+        os.system("setcap 'CAP_DAC_OVERRIDE=p' ./bin/ws_release")
+        print("INFO: capability was set on ws_release.")
+    else:
+        print("WARNING: ws_release was not found. Could not set capability on ws_release.")
+
+if os.path.exists(filename):
+    config = yaml.load(open(filename))
+else:
+    print("ERROR: no config file available")
+    sys.exit(1)
+
+print("preparing directories from",filename)
+
+try:
+    workspaces=config["workspaces"].keys()
+    print("workspaces:",)
+    for i in workspaces: print(i,)
+    print()
+except KeyError:
+    print("ERROR: no workspaces defined!")
+    sys.exit(1)
+
+for ws in workspaces:
+    print("workspace:",ws)
+    try:
+        print(" workspace database directory:",config["workspaces"][ws]["database"])
+    except KeyError:
+        print(" ERROR: no database location defined, please add <\"database\": \"dir\"> clause to workspace",ws)
+        sys.exit(1)
+    if not os.path.exists(config["workspaces"][ws]["database"]):
+        print(" INFO: database directory <%s> does not exist. It will be created." % config["workspaces"][ws]["database"])
+        os.makedirs(config["workspaces"][ws]["database"])
+    else:
+        print(" WARNING: database directory <%s> does already exist!" % config["workspaces"][ws]["database"])
+    if not os.path.exists(os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"])):
+        print(" INFO: deleted database directory <%s> does not exist. It will be created." % os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"]))
+        os.makedirs(os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"]))
+    else:
+        print(" WARNING: deleted database directory <%s> does already exist!" % os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"]))
+
+    try:
+        print(" workspace directories:"," ".join(config["workspaces"][ws]["spaces"]))
+    except KeyError:
+        print(" ERROR: no workspace locations defined, please add <\"spaces\": list> clause to workspace",ws)
+        sys.exit(1)
+    for sp in config["workspaces"][ws]["spaces"]:
+        if not config["workspaces"][ws]["deleted"]:
+            print(" ERROR: no target for deletion defined in workspace", ws)
+        if not os.path.exists(sp):
+            print(" INFO: workspace directory <%s> does not exist. It will be created." % sp)
+            os.makedirs(sp, 0755)
+        else:
+            print(" WARNING: workspace directory <%s> does already exist!" % sp)
+        if not os.path.exists(os.path.join(sp,config["workspaces"][ws]["deleted"])):
+            print(" INFO: deleted workspace directory <%s> does not exist. It will be created." % os.path.join(sp,config["workspaces"][ws]["deleted"]))
+            os.makedirs(os.path.join(sp,config["workspaces"][ws]["deleted"]), 0755)
+        else:
+            print(" WARNING: deleted workspace directory <%s> does already exist!" % os.path.join(sp,config["workspaces"][ws]["deleted"]))
+
+sys.exit(0)
