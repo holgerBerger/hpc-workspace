@@ -10,9 +10,10 @@ SET(CMAKE_CXX_FLAGS "-Wall")
 OPTION(STATIC "static linking" FALSE)
 IF (STATIC)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
+    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++ -static")
     SET(EXTRA_STATIC_LIBS "pthread")
-    set(Boost_USE_STATIC_LIBS ON)
-    set(Boost_USE_STATIC_RUNTIME ON) 
+#    set(Boost_USE_STATIC_LIBS ON)
+#    set(Boost_USE_STATIC_RUNTIME ON) 
 ELSE (STATIC)
     set(Boost_USE_STATIC_LIBS OFF)
     set(Boost_USE_STATIC_RUNTIME OFF) 
@@ -41,9 +42,20 @@ include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 # find curses for terminfo for "are you human" checker
-find_package(Curses REQUIRED)
-include_directories(${CURSES_INCLUDE_DIR})
-link_directories(${CURSES_LIBRARY_DIR})
+#find_package(Curses REQUIRED)
+#include_directories(${CURSES_INCLUDE_DIR})
+#link_directories(${CURSES_LIBRARY_DIR})
+
+# find terminfo for "are you human" checker
+FIND_LIBRARY(TERMINFO NAMES libtinfo.so libtinfo.a)
+IF (TERMINFO)
+    MESSAGE("-- Found terminfo")
+    INCLUDE_DIRECTORIES(${TERMINFO_INCLUDE_DIRS})
+    SET(LIBS ${LIBS} ${TERMINFO_LIBRARIES})
+ELSE (TERMINFO)
+    MESSAGE(FATAL_ERROR "-- No terminfo, please get a terminfo library!")
+ENDIF (TERMINFO)
+
 
 # find termcap for "are you human" checker
 #FIND_LIBRARY(TERMCAP NAMES libtermcap.so libtermcap.a)
@@ -93,5 +105,5 @@ ADD_EXECUTABLE(ws_restore ${workspace_SOURCE_DIR}/src/ws_restore.cpp
 
 TARGET_LINK_LIBRARIES( ws_allocate ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
 TARGET_LINK_LIBRARIES( ws_release ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
-TARGET_LINK_LIBRARIES( ws_restore ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${CURSES_LIBRARIES} ${EXTRA_STATIC_LIBS})
+TARGET_LINK_LIBRARIES( ws_restore ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp tinfo ${EXTRA_STATIC_LIBS})
 
