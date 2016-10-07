@@ -7,6 +7,12 @@ set(Boost_NO_BOOST_CMAKE ON)
 
 SET(CMAKE_CXX_FLAGS "-Wall")
 
+OPTION(STATIC "static linking" FALSE)
+IF (STATIC)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
+    SET(EXTRA_STATIC_LIBS "pthread")
+ENDIF (STATIC)
+
 OPTION(SETUID "use setuid instead of capabilites" TRUE)
 IF (SETUID)
 	ADD_DEFINITIONS(-DSETUID)
@@ -29,7 +35,7 @@ set(Boost_USE_MULTITHREADED OFF)
 set(Boost_USE_STATIC_RUNTIME OFF) 
 FIND_PACKAGE(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 
-# find curses for "are you human" checker
+# find termcap for "are you human" checker
 FIND_LIBRARY(TERMCAP NAMES libtermcap.so libtermcap.a)
 IF (TERMCAP)
     MESSAGE("-- Found termcap")
@@ -72,7 +78,7 @@ ADD_EXECUTABLE(ws_restore ${workspace_SOURCE_DIR}/src/ws_restore.cpp
 							 ${workspace_SOURCE_DIR}/src/wsdb.cpp 
 							 ${workspace_SOURCE_DIR}/src/wsdb.h)
 
-TARGET_LINK_LIBRARIES( ws_allocate ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp)
-TARGET_LINK_LIBRARIES( ws_release ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp)
-TARGET_LINK_LIBRARIES( ws_restore ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp termcap)
+TARGET_LINK_LIBRARIES( ws_allocate ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
+TARGET_LINK_LIBRARIES( ws_release ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
+TARGET_LINK_LIBRARIES( ws_restore ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp termcap ${EXTRA_STATIC_LIBS})
 
