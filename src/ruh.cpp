@@ -19,7 +19,11 @@
 
 
 #include <stdlib.h>
+#ifdef TERMCAP
 #include <termcap.h>
+#else
+#include <term.h>
+#endif
 #include <vector>
 #include <string>
 #include <iostream>
@@ -65,6 +69,7 @@ bool ruh() {
 		word_as_string.append(syllable[r]);
 	}
 
+#ifdef TERMCAP
 	int r = tgetent(NULL,getenv("TERM"));
 	if (r != 1 ) {
 		cerr << "unsupported terminal!" << endl;
@@ -72,7 +77,11 @@ bool ruh() {
 	}
 	char *left  = tgetstr((char*)"le",NULL);
 	char *right = tgetstr((char*)"nd",NULL);
-
+#else
+    setupterm(NULL,1,NULL);
+    char *left  = tigetstr("cub1");
+    char *right = tigetstr("cuf1");
+#endif
 
 	cout << "to verify that you are human, please type '";
 

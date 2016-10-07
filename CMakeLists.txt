@@ -11,6 +11,11 @@ OPTION(STATIC "static linking" FALSE)
 IF (STATIC)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
     SET(EXTRA_STATIC_LIBS "pthread")
+    set(Boost_USE_STATIC_LIBS ON)
+    set(Boost_USE_STATIC_RUNTIME ON) 
+ELSE (STATIC)
+    set(Boost_USE_STATIC_LIBS OFF)
+    set(Boost_USE_STATIC_RUNTIME OFF) 
 ENDIF (STATIC)
 
 OPTION(SETUID "use setuid instead of capabilites" TRUE)
@@ -27,25 +32,28 @@ IF (LUACALLOUTS)
 	SET(LUALIB "lua5.1")
 	find_package(Lua51 REQUIRED)
 	INCLUDE_DIRECTORIES(${LUA_INCLUDE_DIR})
+    LINK_DIRECTORIES(${LUA_LIBRARY_DIRS})
 ENDIF (LUACALLOUTS)
 
-
-set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED OFF)  
-set(Boost_USE_STATIC_RUNTIME OFF) 
 FIND_PACKAGE(Boost COMPONENTS system filesystem regex program_options REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
+# find curses for terminfo for "are you human" checker
+find_package(Curses REQUIRED)
+include_directories(${CURSES_INCLUDE_DIR})
+link_directories(${CURSES_LIBRARY_DIR})
+
 # find termcap for "are you human" checker
-FIND_LIBRARY(TERMCAP NAMES libtermcap.so libtermcap.a)
-IF (TERMCAP)
-    MESSAGE("-- Found termcap")
-    INCLUDE_DIRECTORIES(${TERMCAP_INCLUDE_DIRS})
-    SET(LIBS ${LIBS} ${TERMCAP_LIBRARIES})
-ELSE (TERMCAP)
-    MESSAGE(FATAL_ERROR "-- No termcap, please get a termcap library!")
-ENDIF (TERMCAP)
+#FIND_LIBRARY(TERMCAP NAMES libtermcap.so libtermcap.a)
+#IF (TERMCAP)
+    #MESSAGE("-- Found termcap")
+    #INCLUDE_DIRECTORIES(${TERMCAP_INCLUDE_DIRS})
+    #SET(LIBS ${LIBS} ${TERMCAP_LIBRARIES})
+#ELSE (TERMCAP)
+    #MESSAGE(FATAL_ERROR "-- No termcap, please get a termcap library!")
+#ENDIF (TERMCAP)
 
 
 FIND_LIBRARY(YAML libyaml-cpp.so)
@@ -56,6 +64,9 @@ ELSE (YAML)
     ADD_SUBDIRECTORY(${workspace_SOURCE_DIR}/yaml-cpp-release-0.5.2)
     INCLUDE_DIRECTORIES(${workspace_SOURCE_DIR}/yaml-cpp-release-0.5.2/include)
 ENDIF (YAML)
+
+#get_directory_property(LINKER_VAR LINK_DIRECTORIES)
+#message(STATUS "LINKER_VAR: ${LINKER_VAR}")
 
 
 SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${workspace_BINARY_DIR}/bin)
@@ -82,5 +93,5 @@ ADD_EXECUTABLE(ws_restore ${workspace_SOURCE_DIR}/src/ws_restore.cpp
 
 TARGET_LINK_LIBRARIES( ws_allocate ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
 TARGET_LINK_LIBRARIES( ws_release ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
-TARGET_LINK_LIBRARIES( ws_restore ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp termcap ${EXTRA_STATIC_LIBS})
+TARGET_LINK_LIBRARIES( ws_restore ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${CURSES_LIBRARIES} ${EXTRA_STATIC_LIBS})
 
