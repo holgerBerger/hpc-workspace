@@ -34,6 +34,8 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED OFF)  
 set(Boost_USE_STATIC_RUNTIME OFF) 
 FIND_PACKAGE(Boost COMPONENTS system filesystem regex program_options REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
+link_directories(${Boost_LIBRARY_DIRS})
 
 # find termcap for "are you human" checker
 FIND_LIBRARY(TERMCAP NAMES libtermcap.so libtermcap.a)
