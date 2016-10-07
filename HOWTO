@@ -108,7 +108,12 @@ complain.
 
 REMARKS
 
-capabities need support from OS and filesystem
-nfs and lustre are known not to work
-for suse user: SLES11.SP3 needs file_caps=1 on kernel command line
+- capabities need support from OS and filesystem
+  nfs and lustre are known not to work
+- for SuSE users: SLES11.SP3 needs file_caps=1 on kernel command line
+- for Redhat6 users: system yaml seems to old,
+  change in CMakeLists.txt
+  FIND_LIBRARY(YAML libyaml-cpp.so)
+  to
+  FIND_LIBRARY(YAML no-libyaml-cpp.so)
 
