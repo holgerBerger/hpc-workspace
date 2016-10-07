@@ -9,8 +9,8 @@ maxextensions: 1 		# the number of extensions, if not specified in workspace
 dbuid: 9999				# mandantory
 dbgid: 9999				# mandantory
 admins: [hobel]		# list of admin users
-workspaces				# now the list of the workspaces
-	lustre				# name of workspace as shown with ws_list -l
+workspaces:				# now the list of the workspaces
+	lustre:				# name of workspace as shown with ws_list -l
         keeptime: 1    # mandantory, time in days to keep workspaces after they expired
 		spaces:	[/lustre1/ws, /lustre2/ws]					# mandantory, list of directories
 		deleted: .removed									# mandantory, will be appended to spaces and database 
