@@ -104,6 +104,7 @@ parser.add_option('-R', action="store_true", dest='sort_remaining', default=Fals
 parser.add_option('-r', action="store_true", dest='sort_revert', default=False, help='revert sorting order')
 parser.add_option('-t', action="store_true", dest='terse', default=False, help='terse output format')
 parser.add_option('-v', action="store_true", dest='verbose', default=False, help='verbose output format')
+parser.add_option('-a', action="store_true", dest='all', default=False, help='for compatibility')
 (options, args) = parser.parse_args()
 
 # all filesystems or a selected one?
