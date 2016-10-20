@@ -147,6 +147,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
     }
 #endif
 
+
     // construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
     string dbfilename;
     if(extensionflag && user_option.length()>0) {
@@ -397,6 +398,14 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         map<string, string>groups_defaults;
         map<string, string>user_defaults;
         BOOST_FOREACH(const YAML::Node &v, config["workspaces"]) {
+            // check permissions during search, has to be repeated later in case
+            // no search performed
+            if(wc==WS_Allocate) {
+                if( config["workspaces."][v.as<string>()]["allocatable"]) // && 
+                  //  config["workspaces."][v.as<string>()]["allocatable"].as<bool>() == false ) 
+                  //  continue;
+                  cout << config["workspaces."][v.as<string>()]["allocatable"].as<bool>() << endl;
+            }
             try {
                 BOOST_FOREACH(string u, config["workspaces."][v.as<string>()]["groupdefault"].as<vector<string> >())
                 groups_defaults[u]=v.as<string>();
@@ -435,6 +444,11 @@ found:
     }
 
     if(wc==WS_Allocate) {
+        if( config["workspaces."][filesystem]["allocatable"] &&
+            config["workspaces."][filesystem]["allocatable"].as<bool>() == false )  {
+            cerr << "Error: this workspace can not be used for allocation." << endl;
+            exit(1);
+        }
         // check durations - userexception in workspace/workspace/global
         int configduration;
         if(userconfig["workspaces"][filesystem]["userexceptions"][username]["duration"]) {
