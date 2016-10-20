@@ -295,6 +295,12 @@ void Workspace::release(string name) {
                               config["workspaces"][filesystem]["deleted"].as<string>() +
                               "/" + username + "-" + name + "-" + timestamp;
 
+/*
+		cout << "RELEASE:" <<
+			"\n  filesystem:" << filesystem <<
+			"\n  wstargetname:" << wstargetname << endl;
+*/
+
         // cout << wsdir.c_str() << " - " << wstargetname.c_str() << endl;
         raise_cap(CAP_DAC_OVERRIDE);
         if(rename(wsdir.c_str(), wstargetname.c_str())) {
@@ -408,7 +414,12 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
             }
         }
         // fallback, if no per user or group default, we use the config default
-        filesystem=config["default"].as<string>();
+		try {
+        	filesystem=config["default"].as<string>();
+		} catch (...) {
+			cerr << "Error: please specify a valid filesystem with -F!" << endl;
+            exit(1);
+		}
 found:
         ;
     }
