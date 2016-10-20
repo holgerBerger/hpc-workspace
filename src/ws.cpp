@@ -348,6 +348,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         grp=getgrgid(gids[i]);
         if(grp) groupnames.push_back(string(grp->gr_name));
     }
+    // get current group
     grp=getgrgid(getegid());
     primarygroup=string(grp->gr_name);
 
@@ -409,6 +410,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
             filesystem=user_defaults[username];
             goto found;
         }
+        // name is misleading, this is current group, not primary group
         if( groups_defaults.count(primarygroup) > 0 ) {
             filesystem=groups_defaults[primarygroup];
             goto found;
