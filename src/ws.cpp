@@ -413,12 +413,14 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
             filesystem=groups_defaults[primarygroup];
             goto found;
         }
+#ifdef CHECK_ALL_GROUPS
         BOOST_FOREACH(string grp, groupnames) {
             if( groups_defaults.count(grp)>0 ) {
                 filesystem=groups_defaults[grp];
                 goto found;
             }
         }
+#endif
         // fallback, if no per user or group default, we use the config default
 		try {
         	filesystem=config["default"].as<string>();
