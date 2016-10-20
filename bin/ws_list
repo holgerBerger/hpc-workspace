@@ -121,7 +121,8 @@ else:
 legal=[]
 for f in filesystems:
     userok=True
-    if 'user_acl' in config['workspaces'][f] or 'group_acl' in config['workspaces'][f]:
+    if (('user_acl' in config['workspaces'][f] and len(config['workspaces'][f]['user_acl'])>0 ) or 
+        ('group_acl' in config['workspaces'][f] and len(config['workspaces'][f]['group_acl'])>0)):
         userok=False
     if 'group_acl' in config['workspaces'][f]:
         for g in groups:
