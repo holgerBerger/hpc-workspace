@@ -357,6 +357,12 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         vector<string>user_acl;
         vector<string>group_acl;
 
+        // check if filesystem is valid
+        if (!config["workspaces"][opt["filesystem"].as<string>()]) {
+			cerr << "Error: please specify an existing filesystem with -F!" << endl;
+            exit(1);
+        }
+
         // read ACL lists
         try {
             BOOST_FOREACH(string v,

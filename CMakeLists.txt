@@ -5,7 +5,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 #workaround for old Redhat 6 cmake
 set(Boost_NO_BOOST_CMAKE ON)
 
-SET(CMAKE_CXX_FLAGS "-Wall")
+SET(CMAKE_CXX_FLAGS "-Wall -g")
 
 OPTION(STATIC "static linking" FALSE)
 IF (STATIC)
