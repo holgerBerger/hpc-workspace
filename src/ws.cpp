@@ -172,7 +172,13 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         expiration = dbentry.getexpiration();
         // if it exists, print it, if extension is required, extend it
         if(extensionflag) {
-            // we allow a user to specify -u -x together, and to extend a workspace if the has rights on the workspace
+            if ( config["workspaces"][filesystem]["extendable"] ) {
+                if ( config["workspaces"][filesystem]["extendable"].as<bool>() == false ) {
+                    cerr << "Error: workspaces can not be extended in this filesystem." << endl;
+                    exit(1);
+                }
+            }
+            // we allow a user to specify -u -x together, and to extend a workspace if he has rights on the workspace
             if(user_option.length()>0 && (user_option != username) && (getuid() != 0)) {
                 cerr << "Info: you are not owner of the workspace." << endl;
                 if(access(wsdir.c_str(), R_OK|W_OK|X_OK)!=0) {
