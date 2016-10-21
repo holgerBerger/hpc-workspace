@@ -41,8 +41,10 @@ import glob, time
 from optparse import OptionParser
 
 class struct: pass
-
+space2fs={}
+spaces=[]
 # print a entry
+
 def printentry(entry, admin, terse, verbose):
     if verbose: terse = False
     if admin:
@@ -59,6 +61,9 @@ def printentry(entry, admin, terse, verbose):
     if not terse:
         print 4*' ','creation time        :', time.ctime(entry.creation)
         print 4*' ','expiration date      :', time.ctime(entry.expiration)
+        for s in spaces:
+            if entry.workspace.startswith(s):
+                print 4*' ','filesystem name      :', space2fs[s]
     print 4*' ','available extensions :', entry.extensions
     if verbose:
         print 4*' ','acctcode             :', entry.acctcode
@@ -145,6 +150,11 @@ if options.filesystemlist:
         print i
     sys.exit(0)
 
+# create mapping from spaces to filesystems
+for f in legal:
+    for s in config['workspaces'][f]["spaces"]:
+        space2fs[s]=f
+        spaces.append(s)
 
 
 # list workspaces, the normal case
