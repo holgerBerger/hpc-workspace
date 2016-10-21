@@ -1,5 +1,8 @@
-wget https://github.com/jbeder/yaml-cpp/archive/release-0.5.2.tar.gz
-tar xzf release-0.5.2.tar.gz
+wget https://github.com/jbeder/yaml-cpp/archive/release-0.5.3.tar.gz
+tar xzf release-0.5.3.tar.gz
+
+#wget https://github.com/jbeder/yaml-cpp/archive/release-0.5.2.tar.gz
+#tar xzf release-0.5.2.tar.gz
 
 #wget https://yaml-cpp.googlecode.com/files/yaml-cpp-0.5.0.tar.gz
 #tar xzf yaml-cpp-0.5.0.tar.gz

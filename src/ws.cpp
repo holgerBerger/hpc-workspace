@@ -366,26 +366,32 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         }
 
         // read ACL lists
-        try {
+        if ( config["workspaces"][opt["filesystem"].as<string>()]["user_acl"]) {
             BOOST_FOREACH(string v,
                           config["workspaces"][opt["filesystem"].as<string>()]["user_acl"].as<vector<string> >())
-            user_acl.push_back(v);
-        } catch (...) {};
-        try {
+                user_acl.push_back(v);
+        }
+        if ( config["workspaces"][opt["filesystem"].as<string>()]["group_acl"]) {
             BOOST_FOREACH(string v,
                           config["workspaces"][opt["filesystem"].as<string>()]["group_acl"].as<vector<string> >())
-            group_acl.push_back(v);
-        } catch (...) {};
+                group_acl.push_back(v);
+        }
 
         // check ACLs
         bool userok=true;
         if(user_acl.size()>0 || group_acl.size()>0) userok=false;
+        
+        if( find(group_acl.begin(), group_acl.end(), primarygroup) != group_acl.end() ) {
+            userok=true;
+        }
+#ifdef CHECK_ALL_GROUPS
         BOOST_FOREACH(string grp, groupnames) {
             if( find(group_acl.begin(), group_acl.end(), grp) != group_acl.end() ) {
                 userok=true;
                 break;
             }
         }
+#endif
         if( find(user_acl.begin(), user_acl.end(), username) != user_acl.end() ) {
             userok=true;
         }
@@ -397,23 +403,25 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         // no filesystem specified, figure out which to use
         map<string, string>groups_defaults;
         map<string, string>user_defaults;
-        BOOST_FOREACH(const YAML::Node &v, config["workspaces"]) {
+        YAML::Node node = config["workspaces"];
+        for(YAML::const_iterator it = node.begin(); it!=node.end(); ++it ) {
+            // cout << "v=" <<  it->first << endl;
+            std::string v = it->first.as<std::string>();
             // check permissions during search, has to be repeated later in case
             // no search performed
             if(wc==WS_Allocate) {
-                if( config["workspaces."][v.as<string>()]["allocatable"]) // && 
-                  //  config["workspaces."][v.as<string>()]["allocatable"].as<bool>() == false ) 
-                  //  continue;
-                  cout << config["workspaces."][v.as<string>()]["allocatable"].as<bool>() << endl;
+                if( config["workspaces"] [it->first] ["allocatable"] && 
+                    config["workspaces"][it->first]["allocatable"].as<bool>() == false ) 
+                  continue;
             }
-            try {
-                BOOST_FOREACH(string u, config["workspaces."][v.as<string>()]["groupdefault"].as<vector<string> >())
-                groups_defaults[u]=v.as<string>();
-            } catch (...) {};
-            try {
-                BOOST_FOREACH(string u, config["workspaces."][v.as<string>()]["userdefault"].as<vector<string> >())
-                user_defaults[u]=v.as<string>();
-            } catch (...) {};
+            if(config["workspaces"][it->first]["groupdefault"]) {
+                BOOST_FOREACH(string u, config["workspaces"][it->first]["groupdefault"].as<vector<string> >())
+                    groups_defaults[u]=v;
+            }
+            if(config["workspaces"][it->first]["userdefault"]) {
+                BOOST_FOREACH(string u, config["workspaces"][it->first]["userdefault"].as<vector<string> >())
+                    user_defaults[u]=v;
+            }
         }
         if( user_defaults.count(username) > 0 ) {
             filesystem=user_defaults[username];
@@ -444,8 +452,8 @@ found:
     }
 
     if(wc==WS_Allocate) {
-        if( config["workspaces."][filesystem]["allocatable"] &&
-            config["workspaces."][filesystem]["allocatable"].as<bool>() == false )  {
+        if( config["workspaces"][filesystem]["allocatable"] &&
+            config["workspaces"][filesystem]["allocatable"].as<bool>() == false )  {
             cerr << "Error: this workspace can not be used for allocation." << endl;
             exit(1);
         }
