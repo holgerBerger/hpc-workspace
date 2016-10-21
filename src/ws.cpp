@@ -415,7 +415,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
             std::string v = it->first.as<std::string>();
             // check permissions during search, has to be repeated later in case
             // no search performed
-            if(wc==WS_Allocate) {
+            if(wc==WS_Allocate && !opt.count("extension")) {
                 if( config["workspaces"] [it->first] ["allocatable"] && 
                     config["workspaces"][it->first]["allocatable"].as<bool>() == false ) 
                   continue;
@@ -458,10 +458,12 @@ found:
     }
 
     if(wc==WS_Allocate) {
-        if( config["workspaces"][filesystem]["allocatable"] &&
-            config["workspaces"][filesystem]["allocatable"].as<bool>() == false )  {
-            cerr << "Error: this workspace can not be used for allocation." << endl;
-            exit(1);
+        if (!opt.count("extension")) {
+            if( config["workspaces"][filesystem]["allocatable"] &&
+                config["workspaces"][filesystem]["allocatable"].as<bool>() == false )  {
+                cerr << "Error: this workspace can not be used for allocation." << endl;
+                exit(1);
+            }
         }
         // check durations - userexception in workspace/workspace/global
         int configduration;

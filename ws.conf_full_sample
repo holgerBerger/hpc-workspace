@@ -23,9 +23,9 @@ workspaces:				# now the list of the workspaces
 											# the workspace is access restricted to those users/groups listed
 		group_acl: [adm]
 		maxextensions: 5					# maximum extensios allowed
-        allocatable: no
-        extendable: no
-        restorable: no
+        allocatable: no                     # do not allow new allocations in this workspace if no
+        extendable: no                      # do not allow extensions in this workspace if no
+        restorable: no                      # do not allow restores from this workspace if no
 	nfs:				# second workspace, minimum example
         keeptime: 1    # mandantory, time in days to keep workspaces after they expired
 		database: /nfs-db
