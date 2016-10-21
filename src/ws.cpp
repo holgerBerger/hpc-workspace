@@ -581,6 +581,15 @@ void Workspace::restore(const string name, const string target, const string use
 
     string targetwsdir;
 
+    // FIXME shoudl root be able to override this?
+    if (config["workspaces"][filesystem]["restorable"]) {
+        if (config["workspaces"][filesystem]["restorable"].as<bool>() == false) {
+            cerr << "Error: it is not possible to restore workspaces in this filesystem." << endl;
+            exit(1);
+        }
+    }
+
+
     // check for target existance and get directory name of workspace, which will be target of mv operations
     if(fs::exists(targetdbfilename)) {
         WsDB targetdbentry(targetdbfilename);
