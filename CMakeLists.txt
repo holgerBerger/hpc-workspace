@@ -80,8 +80,8 @@ ELSE (YAML)
     INCLUDE_DIRECTORIES(${workspace_SOURCE_DIR}/yaml-cpp-release-0.5.3/include)
 ENDIF (YAML)
 
-#get_directory_property(LINKER_VAR LINK_DIRECTORIES)
-#message(STATUS "LINKER_VAR: ${LINKER_VAR}")
+get_directory_property(LINKER_VAR LINK_DIRECTORIES)
+message(STATUS "LINKER_VAR: ${LINKER_VAR}")
 
 
 SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${workspace_BINARY_DIR}/bin)
@@ -106,7 +106,7 @@ ADD_EXECUTABLE(ws_restore ${workspace_SOURCE_DIR}/src/ws_restore.cpp
 							 ${workspace_SOURCE_DIR}/src/wsdb.cpp 
 							 ${workspace_SOURCE_DIR}/src/wsdb.h)
 
-TARGET_LINK_LIBRARIES( ws_allocate ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
-TARGET_LINK_LIBRARIES( ws_release ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
-TARGET_LINK_LIBRARIES( ws_restore ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${TLIB} ${EXTRA_STATIC_LIBS})
+TARGET_LINK_LIBRARIES( ws_allocate "-L ${LINKER_VAR}" ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
+TARGET_LINK_LIBRARIES( ws_release "-L ${LINKER_VAR}" ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
+TARGET_LINK_LIBRARIES( ws_restore "-L ${LINKER_VAR}" ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${TLIB} ${EXTRA_STATIC_LIBS})
 
