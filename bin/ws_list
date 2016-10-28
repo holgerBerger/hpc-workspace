@@ -147,7 +147,15 @@ for f in filesystems:
 if options.filesystemlist:
     print 'available filesystems:'
     for i in legal:
-        print i
+        print i,
+        default=False
+        if 'userdefault' in config['workspaces'][i] and user in config['workspaces'][i]['userdefault']: default=True
+        elif 'groupdefault' in config['workspaces'][i] and group in config['workspaces'][i]['groupdefault']: default=True
+        elif 'default' in config and config['default']==i: default=True
+        if default:
+            print " (default)"
+        else:
+            print
     sys.exit(0)
 
 # create mapping from spaces to filesystems
