@@ -1,9 +1,13 @@
 #!/bin/bash
 
-if [ $# -ne 2 ]
+if [ $# -eq 2 ]
 then
-    echo "Usage: ws_extend workspace days"
-    exit
+    ws_allocate -x $1 $2
+else
+    if [ $# -eq 4 ]
+    then
+    	ws_allocate -x $1 $2 $3 $4
+    else
+        echo "Usage: ws_extend [-F filesystem] workspace days"
+    fi
 fi
-
-ws_allocate -x $1 $2
