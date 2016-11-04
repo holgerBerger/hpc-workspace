@@ -187,7 +187,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
                 }
             }
             cerr << "Info: extending workspace." << endl;
-            long expiration = time(NULL)+duration*24*3600;
+            expiration = time(NULL)+duration*24*3600;
             dbentry.use_extension(expiration);
             extension = dbentry.getextension();
         } else {
