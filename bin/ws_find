@@ -106,20 +106,26 @@ if len(args)==0:
 wsname = args[0]
 
 # main loop
-
+found=False
 for fs in legal:
     dbfilename='%s/%s-%s' % (config["workspaces"][fs]['database'], user, wsname)
     try:
-        f=yaml.load(open(dbfilename)) 
+        f=yaml.load(open(dbfilename))
     except IOError:
-        print >> sys.stderr, "Error: no such workspace"
-        sys.exit(-1)
+        continue
     try:
         wsdir=f['workspace']
     except TypeError:
         # fallback to old db format
-        f = open(dbfilename)
-        extensions = int(f.readline())
-        wsdir = f.readline()[:-1]
-        f.close()
+        try:
+             f = open(dbfilename)
+             extensions = int(f.readline())
+             wsdir = f.readline()[:-1]
+             f.close()
+        except IOError:
+             continue
     print wsdir
+    found=True
+    # break
+if not found:
+    print >> sys.stderr, "Error: no such workspace"
