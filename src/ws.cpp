@@ -236,8 +236,17 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
             exit(-1);
         }
 
+        uid_t tuid=getuid();
+        gid_t tgid=getgid();
+
+        if (user_option.length()>0) {
+            struct passwd *pws = getpwnam(user_option.c_str());
+            tuid = pws->pw_uid;
+            tgid = pws->pw_gid;
+        }
+
         raise_cap(CAP_CHOWN);
-        if(chown(wsdir.c_str(), getuid(), getgid())) {
+        if(chown(wsdir.c_str(), tuid, tgid)) {
             lower_cap(CAP_CHOWN, db_uid);
             cerr << "Error: could not change owner of workspace!" << endl;
             unlink(wsdir.c_str());
@@ -401,7 +410,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         if( find(user_acl.begin(), user_acl.end(), username) != user_acl.end() ) {
             userok=true;
         }
-        if(!userok) {
+        if(!userok && getuid()!=0) {
             cerr << "Error: You are not allowed to use the specified workspace!" << endl;
             exit(4);
         }
