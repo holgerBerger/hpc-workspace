@@ -58,6 +58,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
     po::options_description cmd_options( "\nOptions" );
     cmd_options.add_options()
             ("help,h", "produce help message")
+            ("version,V", "show version")
             ("duration,d", po::value<int>(&duration)->default_value(1), "duration in days")
             ("name,n", po::value<string>(&name), "workspace name")
             ("filesystem,F", po::value<string>(&filesystem), "filesystem")
@@ -86,6 +87,11 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
     if (opt.count("help")) {
         cout << "Usage: " << argv[0] << ": [options] workspace_name duration" << endl;
         cout << cmd_options << "\n";
+        exit(1);
+    }
+
+    if (opt.count("version")) {
+        cout << "workspace version " << GIT_COMMIT_HASH << endl;
         exit(1);
     }
 

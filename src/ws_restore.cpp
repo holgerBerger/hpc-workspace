@@ -67,6 +67,7 @@ void commandline(po::variables_map &opt, string &name, string &target,
     po::options_description cmd_options( "\nOptions" );
     cmd_options.add_options()
             ("help,h", "produce help message")
+            ("version,V", "show version")
             ("list,l", "list restorable workspaces")
             ("name,n", po::value<string>(&name), "workspace name")
             ("target,t", po::value<string>(&target), "existing target workspace name")
@@ -94,6 +95,11 @@ void commandline(po::variables_map &opt, string &name, string &target,
     if (opt.count("help")) {
         cout << "Usage:" << argv[0] << ": [options] workspace_name target_name | -l" << endl;
         cout << cmd_options << "\n";
+        exit(1);
+    }
+
+    if (opt.count("version")) {
+        cout << "workspace version " << GIT_COMMIT_HASH << endl;
         exit(1);
     }
 
