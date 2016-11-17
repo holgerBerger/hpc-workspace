@@ -15,3 +15,6 @@ adduser --quiet --gecos "" --ingroup groupa --disabled-password usera
 adduser --quiet --gecos "" --ingroup groupb --disabled-password userb
 adduser --quiet --gecos "" --ingroup groupc --disabled-password userc
 usermod -a -G groupa userc
+
+echo create workspaces etc
+../contribs/ws_prepare
