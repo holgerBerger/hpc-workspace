@@ -1,6 +1,6 @@
 testname=${0%%test.sh}
 printf "%-60s " ${testname%%/}
-../bin/ws_allocate workspace1 10 2> $testname/err.res > $testname/out.res
+sudo -u usera ../bin/ws_allocate workspace1 10 2> $testname/err.res > $testname/out.res
 ret=$?
 
 cmp --quiet $testname/err.res $testname/err.ref

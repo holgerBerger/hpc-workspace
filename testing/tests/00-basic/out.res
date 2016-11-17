@@ -1,1 +1,1 @@
-/tmp/ws/ws7/usera-workspace1
+/tmp/ws/ws1/usera-workspace1

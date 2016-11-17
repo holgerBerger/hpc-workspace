@@ -1,0 +1,1 @@
+drwx------ usera groupa

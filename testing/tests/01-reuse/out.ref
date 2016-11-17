@@ -1,1 +1,1 @@
-/tmp/ws/ws10/berger-workspace1
+/tmp/ws/ws1/usera-workspace1
