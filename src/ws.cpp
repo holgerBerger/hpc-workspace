@@ -166,7 +166,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
     // does db entry exist?
     if(fs::exists(dbfilename)) {
-        WsDB dbentry(dbfilename);
+        WsDB dbentry(dbfilename,  config["dbuid"].as<int>(),  config["dbgid"].as<int>());
         wsdir = dbentry.getwsdir();
         extension = dbentry.getextension();
         expiration = dbentry.getexpiration();
@@ -285,7 +285,7 @@ void Workspace::release(string name) {
     // does db entry exist?
     // cout << "file: " << dbfilename << endl;
     if(fs::exists(dbfilename)) {
-        WsDB dbentry(dbfilename);
+        WsDB dbentry(dbfilename,  config["dbuid"].as<int>(),  config["dbgid"].as<int>());
         wsdir = dbentry.getwsdir();
 
         string timestamp = lexical_cast<string>(time(NULL));
@@ -609,7 +609,7 @@ void Workspace::restore(const string name, const string target, const string use
 
     // check for target existance and get directory name of workspace, which will be target of mv operations
     if(fs::exists(targetdbfilename)) {
-        WsDB targetdbentry(targetdbfilename);
+        WsDB targetdbentry(targetdbfilename, config["dbuid"].as<int>(),  config["dbgid"].as<int>());
         targetwsdir = targetdbentry.getwsdir();
     } else {
         cerr << "Error: target workspace does not exist!" << endl;
@@ -617,7 +617,7 @@ void Workspace::restore(const string name, const string target, const string use
     }
 
     if(fs::exists(dbfilename)) {
-        WsDB dbentry(dbfilename);
+        WsDB dbentry(dbfilename,  config["dbuid"].as<int>(),  config["dbgid"].as<int>());
         // this is path of original workspace, from this we derive the deleted name
         string wsdir = dbentry.getwsdir();
 

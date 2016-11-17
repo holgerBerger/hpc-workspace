@@ -68,7 +68,7 @@ private:
 
 public:
     // constructor to query a DB entry, this reads the database entry
-    WsDB(const string filename);
+    WsDB(const string filename, const int dbuid, const int dbgid);
 
     // constructor to create a new DB entry
     WsDB(const string filename, const string wsdir, const long expiration, const int extensions,

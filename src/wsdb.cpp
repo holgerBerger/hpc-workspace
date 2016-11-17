@@ -79,7 +79,7 @@ WsDB::WsDB(const string _filename, const string _wsdir, const long int _expirati
 /*
  *  open db entry for reading
  */
-WsDB::WsDB(const string _filename) : dbfilename(_filename)
+WsDB::WsDB(const string _filename, const int _dbuid, const int _dbgid) : dbfilename(_filename), dbuid(_dbuid), dbgid(_dbgid)
 {
     read_dbfile();
 }
