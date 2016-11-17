@@ -95,6 +95,10 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
         exit(1);
     }
 
+    if(opt.count("username") && !(opt.count("extension") || getuid()==0 )) {
+        cerr << "Info: Ignoring username option." << endl;
+    }
+
     if(opt.count("extension")) {
         extension = true;
     } else {
