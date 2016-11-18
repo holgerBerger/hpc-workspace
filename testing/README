@@ -1,9 +1,3 @@
-First get virtualbox and vagrant and do
-
-	cd /tmp; vagrant init ubuntu/xenial64
-
-(the created vagrantfile can be ignored)
-
 For testing, you start a virtual machine using in this directory here
 using the provided Vagrantfile:
 
