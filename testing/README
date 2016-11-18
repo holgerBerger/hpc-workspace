@@ -1,23 +1,29 @@
 For testing, you start a virtual machine (after installing virtualbox and vagrant)
 using in this directory
 
-vagrant up
+	vagrant up
 
-the loginto virtual machine with
+to create a ubuntu based virtual machine (2GB ram, change in file if too much).
+install prerequisits like compillers and libraries, and download latest hpc-workspace
+from github and configure and compile it.
 
-vagrant ssh
 
-cd hpc-workspace/testing
+log into virtual machine with
 
-sudo ./scripts/prepare_tests.sh
+	vagrant ssh
 
-sudo ./run_tests.sh
+	cd hpc-workspace/testing
+
+	sudo ./scripts/prepare_tests.sh
+
+and run tests with
+
+	sudo ./run_tests.sh
 
 to repeat, do in doubt
 
-sudo ./scripts/cleanup_tests.sh
-+
-sudo ./scripts/prepare_tests.sh
+	sudo ./scripts/cleanup_tests.sh
+	sudo ./scripts/prepare_tests.sh
 
-before running tests another time.
+before running tests another time, to be sure you have a clean setup.
 
