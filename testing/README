@@ -1,0 +1,23 @@
+For testing, you start a virtual machine (after installing virtualbox and vagrant)
+using in this directory
+
+vagrant up
+
+the loginto virtual machine with
+
+vagrant ssh
+
+cd hpc-workspace/testing
+
+sudo ./scripts/prepare_tests.sh
+
+sudo ./run_tests.sh
+
+to repeat, do in doubt
+
+sudo ./scripts/cleanup_tests.sh
++
+sudo ./scripts/prepare_tests.sh
+
+before running tests another time.
+
