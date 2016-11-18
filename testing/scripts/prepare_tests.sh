@@ -18,3 +18,7 @@ usermod -a -G groupa userc
 
 echo create workspaces etc
 ../contribs/ws_prepare
+
+chown root ../bin/ws_allocate ../bin/ws_release ../bin/ws_restore
+chmod u+s ../bin/ws_allocate ../bin/ws_release ../bin/ws_restore
+
