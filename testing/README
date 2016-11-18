@@ -34,3 +34,9 @@ to repeat, do in doubt
 
 before running tests another time, to be sure you have a clean setup.
 
+
+To stop or destroy the VM, use
+
+	vagrant halt
+or
+	vagrant destroy
