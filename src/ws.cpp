@@ -194,6 +194,11 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
             cerr << "Info: reusing workspace." << endl;
         }
     } else {
+        if( config["workspaces"][filesystem]["allocatable"] &&
+            config["workspaces"][filesystem]["allocatable"].as<bool>() == false )  {
+            cerr << "Error: this workspace can not be used for allocation." << endl;
+            exit(1);
+        }
         // if it does not exist, create it
         cerr << "Info: creating workspace." << endl;
         // read the possible spaces for the filesystem
@@ -467,13 +472,6 @@ found:
     }
 
     if(wc==WS_Allocate) {
-        if (!opt.count("extension")) {
-            if( config["workspaces"][filesystem]["allocatable"] &&
-                config["workspaces"][filesystem]["allocatable"].as<bool>() == false )  {
-                cerr << "Error: this workspace can not be used for allocation." << endl;
-                exit(1);
-            }
-        }
         // check durations - userexception in workspace/workspace/global
         int configduration;
         if(userconfig["workspaces"][filesystem]["userexceptions"][username]["duration"]) {
