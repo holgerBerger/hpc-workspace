@@ -1,0 +1,44 @@
+admins: [root, useradmin]
+clustername: regression_test
+dbgid: 85
+dbuid: 85
+duration: 10
+maxextensions: 1
+smtphost: mailhost
+default: ws10
+workspaces:
+  ws1:
+    database: /tmp/ws/ws1-db
+    deleted: .removed
+    duration: 30
+    group_acl: []
+    groupdefault: []
+    user_acl: [usera,userb]
+    keeptime: 7
+    maxextensions: 3
+    spaces: [/tmp/ws/ws1]
+  ws2:
+    database: /tmp/ws/ws2-db
+    deleted: .removed
+    duration: 30
+    group_acl: [groupa, groupb]
+    groupdefault: [groupb, groupc]
+    userdefault: [usera]
+    keeptime: 7
+    maxextensions: 3
+    prefix_callout: prefix.lua
+    spaces: [/tmp/ws/ws2/1, /tmp/ws/ws2/2]
+  ws3:
+    database: /tmp/ws/ws3-db
+    deleted: .removed
+    duration: 30
+    keeptime: 7
+    maxextensions: 3
+    spaces: [/tmp/ws/ws3]
+  ws10:
+    database: /tmp/ws/ws10-db
+    deleted: .removed
+    duration: 30
+    keeptime: 7
+    maxextensions: 3
+    spaces: [/tmp/ws/ws10]

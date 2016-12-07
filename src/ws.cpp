@@ -205,6 +205,21 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
     }
 
     if (!ws_exists) {
+        if(extensionflag && user_option.length()>0) {
+            dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
+            if(!fs::exists(dbfilename)) {
+                cerr << "Error: workspace does not exist, can not be extended!" << endl;
+                exit(-1);
+            }
+        } else {
+            if(user_option.length()>0 && (getuid()==0)) {
+                dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
+            } else {
+                dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+username+"-"+name;
+            }
+        }
+
+
         // workspace does not exist, we have to create one
         if( config["workspaces"][filesystem]["allocatable"] &&
             config["workspaces"][filesystem]["allocatable"].as<bool>() == false )  {
