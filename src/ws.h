@@ -79,7 +79,7 @@ private:
 
 
     int mv(const char * source, const char *target);
-
+    std::vector<string> get_valid_fslist();
 
 public:
 

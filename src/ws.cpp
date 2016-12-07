@@ -119,7 +119,7 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     // lower again, nothing needed
     lower_cap(CAP_DAC_OVERRIDE, db_uid);
 
-    username = getusername();
+    username = getusername(); // FIXME is this correct? what if username given on commandline?
 
     // valide the input  (opt contains name, duration and filesystem as well)
     validate(clientcode, config, userconfig, opt, filesystem, duration, maxextensions, acctcode);
@@ -147,53 +147,65 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
     }
 #endif
 
+    // TODO iterate over list of allowed filesystems here if user did not specify
+    // a filesystem. if user did not specify, check all allowed once for existing db entry,
+    // and reuse if it exists, otherwise create in <filesystem>
 
-    // construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
     string dbfilename;
-    if(extensionflag && user_option.length()>0) {
-        dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
-        if(!fs::exists(dbfilename)) {
-            cerr << "Error: workspace does not exist, can not be extended!" << endl;
-            exit(-1);
-        }
-    } else {
-        if(user_option.length()>0 && (getuid()==0)) {
-            dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
-        } else {
-            dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+username+"-"+name;
-        }
+    bool ws_exists = false;
+    BOOST_FOREACH(string cfilesystem, get_valid_fslist()) {
+      // construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
+
+      if(extensionflag && user_option.length()>0) {
+          dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+user_option+"-"+name;
+          if(!fs::exists(dbfilename)) {
+              cerr << "Error: workspace does not exist, can not be extended!" << endl;
+              exit(-1);
+          }
+      } else {
+          if(user_option.length()>0 && (getuid()==0)) {
+              dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+user_option+"-"+name;
+          } else {
+              dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+username+"-"+name;
+          }
+      }
+
+      // does db entry exist?
+      if(fs::exists(dbfilename)) {
+          WsDB dbentry(dbfilename,  config["dbuid"].as<int>(),  config["dbgid"].as<int>());
+          wsdir = dbentry.getwsdir();
+          extension = dbentry.getextension();
+          expiration = dbentry.getexpiration();
+          // if it exists, print it, if extension is required, extend it
+          if(extensionflag) {
+              if ( config["workspaces"][cfilesystem]["extendable"] ) {
+                  if ( config["workspaces"][cfilesystem]["extendable"].as<bool>() == false ) {
+                      cerr << "Error: workspaces can not be extended in this filesystem." << endl;
+                      exit(1);
+                  }
+              }
+              // we allow a user to specify -u -x together, and to extend a workspace if he has rights on the workspace
+              if(user_option.length()>0 && (user_option != username) && (getuid() != 0)) {
+                  cerr << "Info: you are not owner of the workspace." << endl;
+                  if(access(wsdir.c_str(), R_OK|W_OK|X_OK)!=0) {
+                      cerr << "Info: and you have no permissions to access the workspace, workspace will not be extended." << endl;
+                      exit(-1);
+                  }
+              }
+              cerr << "Info: extending workspace." << endl;
+              expiration = time(NULL)+duration*24*3600;
+              dbentry.use_extension(expiration);
+              extension = dbentry.getextension();
+          } else {
+              cerr << "Info: reusing workspace." << endl;
+          }
+          ws_exists = true;
+          break;
+      }
     }
 
-    // does db entry exist?
-    if(fs::exists(dbfilename)) {
-        WsDB dbentry(dbfilename,  config["dbuid"].as<int>(),  config["dbgid"].as<int>());
-        wsdir = dbentry.getwsdir();
-        extension = dbentry.getextension();
-        expiration = dbentry.getexpiration();
-        // if it exists, print it, if extension is required, extend it
-        if(extensionflag) {
-            if ( config["workspaces"][filesystem]["extendable"] ) {
-                if ( config["workspaces"][filesystem]["extendable"].as<bool>() == false ) {
-                    cerr << "Error: workspaces can not be extended in this filesystem." << endl;
-                    exit(1);
-                }
-            }
-            // we allow a user to specify -u -x together, and to extend a workspace if he has rights on the workspace
-            if(user_option.length()>0 && (user_option != username) && (getuid() != 0)) {
-                cerr << "Info: you are not owner of the workspace." << endl;
-                if(access(wsdir.c_str(), R_OK|W_OK|X_OK)!=0) {
-                    cerr << "Info: and you have no permissions to access the workspace, workspace will not be extended." << endl;
-                    exit(-1);
-                }
-            }
-            cerr << "Info: extending workspace." << endl;
-            expiration = time(NULL)+duration*24*3600;
-            dbentry.use_extension(expiration);
-            extension = dbentry.getextension();
-        } else {
-            cerr << "Info: reusing workspace." << endl;
-        }
-    } else {
+    if (!ws_exists) {
+        // workspace does not exist, we have to create one
         if( config["workspaces"][filesystem]["allocatable"] &&
             config["workspaces"][filesystem]["allocatable"].as<bool>() == false )  {
             cerr << "Error: this workspace can not be used for allocation." << endl;
@@ -400,7 +412,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         // check ACLs
         bool userok=true;
         if(user_acl.size()>0 || group_acl.size()>0) userok=false;
-        
+
         if( find(group_acl.begin(), group_acl.end(), primarygroup) != group_acl.end() ) {
             userok=true;
         }
@@ -430,8 +442,8 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
             // check permissions during search, has to be repeated later in case
             // no search performed
             if(wc==WS_Allocate && !opt.count("extension")) {
-                if( config["workspaces"] [it->first] ["allocatable"] && 
-                    config["workspaces"][it->first]["allocatable"].as<bool>() == false ) 
+                if( config["workspaces"] [it->first] ["allocatable"] &&
+                    config["workspaces"][it->first]["allocatable"].as<bool>() == false )
                   continue;
             }
             if(config["workspaces"][it->first]["groupdefault"]) {
@@ -463,10 +475,16 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         // fallback, if no per user or group default, we use the config default
 		try {
         	filesystem=config["default"].as<string>();
+          goto found;
 		} catch (...) {
 			cerr << "Error: please specify a valid filesystem with -F!" << endl;
             exit(1);
 		}
+    // fallback, we end here if user does not specify a filesystem and does
+    // not have any default
+    cerr << "Error: please specify a valid filesystem with -F." << endl;
+    cerr << "The administrator did not configure a default filesystem for you." << endl;
+    exit(1);
 found:
         ;
     }
@@ -527,7 +545,7 @@ int Workspace::mv(const char * source, const char *target) {
 
 /*
  * get user name
- * we have this to avoud cuserid
+ * we have this to avoid cuserid
  */
 string Workspace::getusername()
 {
@@ -588,10 +606,10 @@ vector<string> Workspace::getRestorable(string username)
  * restore a workspace, argument is name of workspace DB entry including username and timestamp, form user-name-timestamp
  */
 void Workspace::restore(const string name, const string target, const string username) {
-    string dbfilename = fs::path(config["workspaces"][filesystem]["database"].as<string>()).string() 
+    string dbfilename = fs::path(config["workspaces"][filesystem]["database"].as<string>()).string()
                          + "/" + config["workspaces"][filesystem]["deleted"].as<string>()+"/"+name;
 
-    string targetdbfilename = fs::path(config["workspaces"][filesystem]["database"].as<string>()).string() 
+    string targetdbfilename = fs::path(config["workspaces"][filesystem]["database"].as<string>()).string()
                             + "/" + username + "-" + target;
 
     string targetwsdir;
@@ -619,7 +637,7 @@ void Workspace::restore(const string name, const string target, const string use
         // this is path of original workspace, from this we derive the deleted name
         string wsdir = dbentry.getwsdir();
 
-        // go one up, add deleted subdirectory and add workspace name 
+        // go one up, add deleted subdirectory and add workspace name
         string wssourcename = fs::path(wsdir).parent_path().string() + "/" +
                               config["workspaces"][filesystem]["deleted"].as<string>() +
                               "/" + name;
@@ -628,7 +646,7 @@ void Workspace::restore(const string name, const string target, const string use
         mv(wssourcename.c_str(), targetwsdir.c_str());
         unlink(dbfilename.c_str());
         lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-        
+
 
     } else {
         cerr << "Error: workspace does not exist." << endl;
@@ -769,4 +787,73 @@ void Workspace::raise_cap(int cap)
         cerr << "Error: can not change uid." << endl;
     }
 #endif
+}
+
+std::vector<string> Workspace::get_valid_fslist() {
+  vector<string> fslist;
+
+  // get user name, group names etc
+  vector<string> groupnames;
+
+  struct group *grp;
+  int ngroups = 128;
+  gid_t gids[128];
+  int nrgroups;
+  string primarygroup;
+
+  nrgroups = getgrouplist(username.c_str(), geteuid(), gids, &ngroups);
+  if(nrgroups<=0) {
+      cerr << "Error: user in too many groups!" << endl;
+  }
+  for(int i=0; i<nrgroups; i++) {
+      grp=getgrgid(gids[i]);
+      if(grp) groupnames.push_back(string(grp->gr_name));
+  }
+  // get current group
+  grp=getgrgid(getegid());
+  primarygroup=string(grp->gr_name);
+
+  // iterate over all filesystems and search the ones allowed for current user
+  YAML::Node node = config["workspaces"];
+  for(YAML::const_iterator it = node.begin(); it!=node.end(); ++it ) {
+      std::string cfilesystem = it->first.as<std::string>();
+      // check ACLs
+      vector<string>user_acl;
+      vector<string>group_acl;
+
+      // read ACL lists
+      if ( config["workspaces"][cfilesystem]["user_acl"]) {
+          BOOST_FOREACH(string v,
+                        config["workspaces"][cfilesystem]["user_acl"].as<vector<string> >())
+              user_acl.push_back(v);
+      }
+      if ( config["workspaces"][cfilesystem]["group_acl"]) {
+          BOOST_FOREACH(string v,
+                        config["workspaces"][cfilesystem]["group_acl"].as<vector<string> >())
+              group_acl.push_back(v);
+      }
+
+      // check ACLs
+      bool userok=true;
+      if(user_acl.size()>0 || group_acl.size()>0) userok=false;
+
+      if( find(group_acl.begin(), group_acl.end(), primarygroup) != group_acl.end() ) {
+          userok=true;
+      }
+#ifdef CHECK_ALL_GROUPS
+      BOOST_FOREACH(string grp, groupnames) {
+          if( find(group_acl.begin(), group_acl.end(), grp) != group_acl.end() ) {
+              userok=true;
+              break;
+          }
+      }
+#endif
+      if( find(user_acl.begin(), user_acl.end(), username) != user_acl.end() ) {
+          userok=true;
+      }
+      if(userok || getuid()==0) {
+          fslist.push_back(cfilesystem);
+      }
+  }
+  return fslist;
 }
