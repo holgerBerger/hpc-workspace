@@ -153,7 +153,13 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
     string dbfilename;
     bool ws_exists = false;
-    BOOST_FOREACH(string cfilesystem, get_valid_fslist()) {
+    vector<string> searchlist;
+    if(opt.count("filesystem")) {
+        searchlist.push_back(opt["filesystem"].as<string>());
+    } else {
+        searchlist = get_valid_fslist();
+    }
+    BOOST_FOREACH(string cfilesystem, searchlist) {
       // construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
 
       if(extensionflag && user_option.length()>0) {

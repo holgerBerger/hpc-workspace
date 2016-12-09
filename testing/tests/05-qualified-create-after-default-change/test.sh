@@ -1,14 +1,12 @@
 testname=${0%%test.sh}
 printf "%-60s " ${testname%%/}
 
+# create in non-default
+sudo -u usera ../bin/ws_allocate -F ws2 workspace1 10 2> $testname/err.res > $testname/out.res
 
-sudo -u usera ../bin/ws_allocate workspace1 10 2> $testname/err.res > $testname/out.res
-cp input/ws.conf.2 /etc/ws.conf
-
-sudo -u usera ../bin/ws_allocate workspace1 10 2> $testname/err.res > $testname/out.res
+# should create another one and not reuse
+sudo -u usera ../bin/ws_allocate -F ws1 workspace1 10 2> $testname/err.res > $testname/out.res
 ret=$?
-
-cp input/ws.conf.1 /etc/ws.conf
 
 cmp --quiet $testname/err.res $testname/err.ref
 cmp1=$?
@@ -28,6 +26,3 @@ then
 else	
 	echo -e "\e[1;32msuccess\e[0m"
 fi
-
-sudo -u usera ../bin/ws_release -F ws1 workspace1 2>/dev/null > /dev/null
-sudo -u usera ../bin/ws_release -F ws2 workspace1 2>/dev/null > /dev/null
