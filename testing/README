@@ -1,3 +1,22 @@
+
+Tests require to
+	- add some users and groups to the system
+	- modify /etc/ws.conf
+
+if this is ok, you can run tests on your machine,
+like	
+	cd testing
+	sudo ./scripts/prepare_tests.sh
+	sudo ./run_tests.sh
+	sudo ./scripts/cleanup_tests.sh
+
+or if that is proven to work you can run	
+	cd testing
+	sudo ./prepare_and_run.sh
+
+
+If modifying local machine is not ok, use virtual machine:
+
 For testing, you start a virtual machine using in this directory here
 using the provided Vagrantfile:
 
