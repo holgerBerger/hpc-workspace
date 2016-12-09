@@ -18,7 +18,7 @@ cmp2=$?
 
 if [ $ret != 0 -o $cmp0 != 0 -o $cmp1 != 0 -o $cmp2 != 0 ]
 then
-	echo -e "\e[1;31mfailed\e[0m"
+	echo -e "\e[1;31mfailed\e[0m $ret $cmp0 $cmp1 $cmp2"
 else	
 	echo -e "\e[1;32msuccess\e[0m"
 fi

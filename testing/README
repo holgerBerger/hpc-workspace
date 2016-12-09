@@ -2,6 +2,7 @@
 Tests require to
 	- add some users and groups to the system
 	- modify /etc/ws.conf
+	- create some files in /tmp
 
 if this is ok, you can run tests on your machine,
 like	
