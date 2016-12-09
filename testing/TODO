@@ -8,9 +8,13 @@ creation of workspace
 	ws owner and permissions			x
 	limits and defaults				x
 	random over spaces
-	only on correct fs with -F?
+	only on correct fs with -F?			x
 		for user	
 		for group
+	only for current user				x
+	only valid names				x
+	only existing filesystems			x
+	only allowed filesystem				x
 	
 reuse of workspace
 	path correct					x
