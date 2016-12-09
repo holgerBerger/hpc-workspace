@@ -1,3 +1,8 @@
+# checks for
+#  correct output, including time and remaining extensiosn
+#  correct permissions and owners
+#  correct location of workspace
+
 testname=${0%%test.sh}
 printf "%-60s " ${testname%%/}
 sudo -u usera ../bin/ws_allocate workspace1 10 2> $testname/err.res > $testname/out.res

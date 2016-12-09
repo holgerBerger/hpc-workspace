@@ -1,3 +1,5 @@
+# checks if an old workspace is reused even if meanwhile
+# the users default workspace changed
 testname=${0%%test.sh}
 printf "%-60s " ${testname%%/}
 

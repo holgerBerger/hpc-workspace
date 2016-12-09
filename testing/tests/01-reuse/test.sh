@@ -1,3 +1,6 @@
+# checks for
+#   resuing a workspace that already exists
+# 
 testname=${0%%test.sh}
 printf "%-60s " ${testname%%/}
 sudo -u usera ../bin/ws_allocate workspace1 10 2> $testname/err.res > $testname/out.res

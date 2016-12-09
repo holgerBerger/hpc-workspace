@@ -1,3 +1,6 @@
+# checks if specifying a filesystem with -F
+# disables the search for workspace in non-default filesystems
+#
 testname=${0%%test.sh}
 printf "%-60s " ${testname%%/}
 

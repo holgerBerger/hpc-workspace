@@ -1,3 +1,7 @@
+# checks for
+#  directory is moved to .removed and has correct permissions and ownsers
+#  correct output of ws_release
+#
 testname=${0%%test.sh}
 printf "%-60s " ${testname%%/}
 sudo -u usera ../bin/ws_release workspace1 2> $testname/err.res > $testname/out.res

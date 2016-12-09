@@ -1,3 +1,5 @@
+# checks for
+#   extension of existing workspace, numer of extensiosn has to decrease, time has to increase
 testname=${0%%test.sh}
 printf "%-60s " ${testname%%/}
 sudo -u usera ../bin/ws_allocate -x workspace1 20 2> $testname/err.res > $testname/out.res

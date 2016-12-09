@@ -1,0 +1,47 @@
+
+Tests to be implemented
+
+				implemented for 	user 	root
+creation of workspace
+	path correct					x
+	db permissions and ownser 			x
+	ws owner and permissions			x
+	limits and defaults				x
+	random over spaces
+	only on correct fs with -F?
+		for user	
+		for group
+	
+reuse of workspace
+	path correct					x
+	db permissions and ownser 			x
+	ws owner and permissions			x
+	limits and defaults				x
+	random over spaces
+	only on correct fs with -F?
+		for user	
+		for group
+
+extend a workspace
+	correct time and reuse count?			x
+	only allowed for owner
+	allowed for other user same group
+		only allowed with correct permissions?
+
+release workspace
+	only for own?
+	permissions in .removed?			x
+	timestamp correct in .removed?
+
+restore workspace
+	owner etc correct?
+	in same fs?
+	does test for human work?
+
+workspace listings
+	output correct	
+	shows all workspaces from all filesystems?
+	shows only single fs with -F?
+	shows only own workspaces?
+
+
