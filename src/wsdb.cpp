@@ -122,11 +122,16 @@ void WsDB::write_dbfile()
     fout << entry;
     fout.close();
 #ifdef SETUID
-    seteuid(0); setegid(0);
-#endif
     if (chmod(dbfilename.c_str(), 0644) != 0) {
         cerr << "Error: could not change permissions of database entry" << endl;
     }
+    seteuid(0); setegid(0);
+#endif
+#ifndef SETUID
+    if (chmod(dbfilename.c_str(), 0644) != 0) {
+        cerr << "Error: could not change permissions of database entry" << endl;
+    }
+#endif
     Workspace::lower_cap(CAP_DAC_OVERRIDE, dbuid);
 
 #ifndef SETUID
