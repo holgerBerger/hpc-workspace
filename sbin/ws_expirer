@@ -81,7 +81,7 @@ END:VCALENDAR
     s.quit()
 
 
-# slow recursive deleter, to avoid high meta pressure on servers
+# slow recursive deleter, to avoid high meta data pressure on servers
 def deldir(dir):
     global count
     print "deldir",dir
@@ -120,6 +120,7 @@ smtphost = config['smtphost']
 clustername = config['clustername']
 
 # expire the workspaces by moving them into deleted spaces, dbentry + workspace itself
+# this searches over db
 for fs in config["workspaces"]:
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     workspacedelprefix = config["workspaces"][fs]["deleted"]
@@ -145,6 +146,7 @@ for fs in config["workspaces"]:
 
 
 # delete the already expired workspaces which are over "keeptime" days old
+# this searches over DB
 for fs in config["workspaces"]:
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     keeptime = config["workspaces"][fs]["keeptime"]
@@ -154,8 +156,10 @@ for fs in config["workspaces"]:
         expiration = int(dbentry['expiration'])
         if time.time() > expiration + keeptime*24*3600:
             print "deleting", dbentryfilename
+            # remove the DB entry
             os.unlink(dbentryfilename)
             workspace = dbentry['workspace']
+            # remove the workspace directory
             deldir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
             try:
               os.rmdir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
