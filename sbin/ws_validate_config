@@ -67,13 +67,12 @@ except KeyError:
 
 try:
     print 'default workspace:',config["default"]
+    if config["default"] not in workspaces:
+        print 'ERROR: default workspace is not defined as workspace in the file'
+        sys.exit(1)
 except KeyError:
-    print 'ERROR: no default workspace defined, please add <"default": "name"> clause to toplevel'
-    sys.exit(1)
+    print 'WARNING: no default workspace defined, please add <"default": "name"> clause to toplevel'
 
-if config["default"] not in workspaces:
-    print 'ERROR: default workspace is not defined as workspace in the file'
-    sys.exit(1)
 
 
 try:
