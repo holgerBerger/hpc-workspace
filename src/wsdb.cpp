@@ -41,6 +41,7 @@
 #include <unistd.h>
 #include <grp.h>
 #include <time.h>
+#include <sys/stat.h>
 
 // YAML
 #include <yaml-cpp/yaml.h>
@@ -115,7 +116,7 @@ void WsDB::write_dbfile()
     Workspace::raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here
-    seteuid(dbuid); setegid(dbgid);
+    setegid(dbgid); seteuid(dbuid); 
 #endif
     ofstream fout(dbfilename.c_str());
     fout << entry;
@@ -123,13 +124,19 @@ void WsDB::write_dbfile()
 #ifdef SETUID
     seteuid(0); setegid(0);
 #endif
+    if (chmod(dbfilename.c_str(), 0644) != 0) {
+        cerr << "Error: could not change permissions of database entry" << endl;
+    }
     Workspace::lower_cap(CAP_DAC_OVERRIDE, dbuid);
+
+#ifndef SETUID
     Workspace::raise_cap(CAP_CHOWN);
-    if(chown(dbfilename.c_str(), dbuid, dbgid)) {
+    if (chown(dbfilename.c_str(), dbuid, dbgid)) {
         Workspace::lower_cap(CAP_CHOWN, dbuid);
         cerr << "Error: could not change owner of database entry" << endl;
     }
     Workspace::lower_cap(CAP_CHOWN, dbuid);
+#endif
 }
 
 // read data from file

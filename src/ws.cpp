@@ -338,7 +338,7 @@ void Workspace::release(string name) {
         raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID
         // for filesystem with root_squash, we need to be DB user here
-        seteuid(dbuid); setegid(dbgid);
+        setegid(dbgid); seteuid(dbuid); 
 #endif
         if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
             // cerr << "rename " << dbfilename.c_str() << " -> " << dbtargetname.c_str() << " failed" << endl;
