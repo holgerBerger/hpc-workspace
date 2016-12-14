@@ -642,7 +642,7 @@ void Workspace::restore(const string name, const string target, const string use
 
     string targetwsdir;
 
-    // FIXME shoudl root be able to override this?
+    // FIXME should root be able to override this?
     if (config["workspaces"][filesystem]["restorable"]) {
         if (config["workspaces"][filesystem]["restorable"].as<bool>() == false) {
             cerr << "Error: it is not possible to restore workspaces in this filesystem." << endl;
@@ -672,7 +672,14 @@ void Workspace::restore(const string name, const string target, const string use
 
         raise_cap(CAP_DAC_OVERRIDE);
         mv(wssourcename.c_str(), targetwsdir.c_str());
+#ifdef SETUID
+        // get db user to be able to unlink db entry from root_squash filesystems
+        setegid(config["dbgid"].as<int>()); seteuid(config["dbuid"].as<int>());
+#endif
         unlink(dbfilename.c_str());
+#ifdef SETUID
+        seteuid(0); setegid(0);
+#endif
         lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
 
 
