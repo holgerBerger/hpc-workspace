@@ -318,6 +318,9 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 void Workspace::release(string name) {
     string wsdir;
 
+    int dbuid = config["dbuid"].as<int>();
+    int dbgid = config["dbgid"].as<int>();
+
     string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
 
     // does db entry exist?
@@ -333,6 +336,10 @@ void Workspace::release(string name) {
                               "/" + username + "-" + name + "-" + timestamp;
         // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
         raise_cap(CAP_DAC_OVERRIDE);
+#ifdef SETUID
+        // for filesystem with root_squash, we need to be DB user here
+        seteuid(dbuid); setegid(dbgid);
+#endif
         if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
             // cerr << "rename " << dbfilename.c_str() << " -> " << dbtargetname.c_str() << " failed" << endl;
             lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());

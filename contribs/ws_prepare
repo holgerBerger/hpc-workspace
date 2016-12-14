@@ -74,11 +74,13 @@ for ws in workspaces:
     if not os.path.exists(config["workspaces"][ws]["database"]):
         print(" INFO: database directory <%s> does not exist. It will be created." % config["workspaces"][ws]["database"])
         os.makedirs(config["workspaces"][ws]["database"])
+        os.system("chown "+str(config["dbuid"])+":"+str(config["dbgid"])+" "+config["workspaces"][ws]["database"])
     else:
         print(" WARNING: database directory <%s> does already exist!" % config["workspaces"][ws]["database"])
     if not os.path.exists(os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"])):
         print(" INFO: deleted database directory <%s> does not exist. It will be created." % os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"]))
         os.makedirs(os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"]))
+        os.system("chown "+str(config["dbuid"])+":"+str(config["dbgid"])+" "+os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"]))
     else:
         print(" WARNING: deleted database directory <%s> does already exist!" % os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"]))
 

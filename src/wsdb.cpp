@@ -113,9 +113,16 @@ void WsDB::write_dbfile()
     entry["reminder"] = reminder;
     entry["mailaddress"] = mailaddress;
     Workspace::raise_cap(CAP_DAC_OVERRIDE);
+#ifdef SETUID
+    // for filesystem with root_squash, we need to be DB user here
+    seteuid(dbuid); setegid(dbgid);
+#endif
     ofstream fout(dbfilename.c_str());
     fout << entry;
     fout.close();
+#ifdef SETUID
+    seteuid(0); setegid(0);
+#endif
     Workspace::lower_cap(CAP_DAC_OVERRIDE, dbuid);
     Workspace::raise_cap(CAP_CHOWN);
     if(chown(dbfilename.c_str(), dbuid, dbgid)) {
