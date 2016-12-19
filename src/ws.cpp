@@ -413,8 +413,17 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
     grp=getgrgid(getegid());
     primarygroup=string(grp->gr_name);
 
+    if (opt.count("debug")) {
+        cerr << "debug: primarygroup=" << primarygroup << endl;
+    }
+
     // if the user specifies a filesystem, he must be allowed to use it
     if(opt.count("filesystem")) {
+
+        if (opt.count("debug")) {
+            cerr << "debug: filesystem given: " << opt["filesystem"].as<string>() << endl;
+        }
+        
         // check ACLs
         vector<string>user_acl;
         vector<string>group_acl;
@@ -431,6 +440,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
                           config["workspaces"][opt["filesystem"].as<string>()]["user_acl"].as<vector<string> >())
                 user_acl.push_back(v);
         }
+
         if ( config["workspaces"][opt["filesystem"].as<string>()]["group_acl"]) {
             BOOST_FOREACH(string v,
                           config["workspaces"][opt["filesystem"].as<string>()]["group_acl"].as<vector<string> >())
@@ -439,10 +449,18 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
 
         // check ACLs
         bool userok=true;
-        if(user_acl.size()>0 || group_acl.size()>0) userok=false;
+        if(user_acl.size()>0 || group_acl.size()>0) {
+            userok=false;
+            if (opt.count("debug")) {
+                cerr << "debug: acls non-empty, all user access denied before check." << endl;
+            }
+        }
 
         if( find(group_acl.begin(), group_acl.end(), primarygroup) != group_acl.end() ) {
             userok=true;
+            if (opt.count("debug")) {
+                cerr << "debug: group found in group acl, access granted." << endl;
+            }
         }
 #ifdef CHECK_ALL_GROUPS
         BOOST_FOREACH(string grp, groupnames) {
@@ -454,6 +472,9 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
 #endif
         if( find(user_acl.begin(), user_acl.end(), username) != user_acl.end() ) {
             userok=true;
+            if (opt.count("debug")) {
+                cerr << "debug: user found in user acl, access granted." << endl;
+            }
         }
         if(!userok && getuid()!=0) {
             cerr << "Error: You are not allowed to use the specified workspace!" << endl;
@@ -461,18 +482,28 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         }
     } else {
         // no filesystem specified, figure out which to use
+        if (opt.count("debug")) {
+            cerr << "debug: no filesystem given, searching..." << endl;
+        }
         map<string, string>groups_defaults;
         map<string, string>user_defaults;
         YAML::Node node = config["workspaces"];
         for(YAML::const_iterator it = node.begin(); it!=node.end(); ++it ) {
             // cout << "v=" <<  it->first << endl;
             std::string v = it->first.as<std::string>();
+            if (opt.count("debug")) {
+                cerr << "debug: searching " << v << endl;
+            }
             // check permissions during search, has to be repeated later in case
             // no search performed
             if(wc==WS_Allocate && !opt.count("extension")) {
                 if( config["workspaces"] [it->first] ["allocatable"] &&
-                    config["workspaces"][it->first]["allocatable"].as<bool>() == false )
-                  continue;
+                    config["workspaces"][it->first]["allocatable"].as<bool>() == false ) {
+                    if (opt.count("debug")) {
+                        cerr << "debug: not allocatable, skipping " << endl;
+                    }
+                    continue;
+                }
             }
             if(config["workspaces"][it->first]["groupdefault"]) {
                 BOOST_FOREACH(string u, config["workspaces"][it->first]["groupdefault"].as<vector<string> >())
@@ -483,13 +514,20 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
                     user_defaults[u]=v;
             }
         }
+
         if( user_defaults.count(username) > 0 ) {
             filesystem=user_defaults[username];
+            if (opt.count("debug")) {
+                cerr << "debug: user default, ending search" << endl;
+            }
             goto found;
         }
         // name is misleading, this is current group, not primary group
         if( groups_defaults.count(primarygroup) > 0 ) {
             filesystem=groups_defaults[primarygroup];
+            if (opt.count("debug")) {
+                cerr << "debug: group default, ending search" << endl;
+            }
             goto found;
         }
 #ifdef CHECK_ALL_GROUPS
@@ -503,6 +541,9 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         // fallback, if no per user or group default, we use the config default
 		try {
         	filesystem=config["default"].as<string>();
+            if (opt.count("debug")) {
+                cerr << "debug: fallback, using global default, ending search" << endl;
+            }
           goto found;
 		} catch (...) {
 			cerr << "Error: please specify a valid filesystem with -F!" << endl;
@@ -671,12 +712,16 @@ void Workspace::restore(const string name, const string target, const string use
                               "/" + name;
 
         raise_cap(CAP_DAC_OVERRIDE);
-        mv(wssourcename.c_str(), targetwsdir.c_str());
+        int mv_ret = mv(wssourcename.c_str(), targetwsdir.c_str());
 #ifdef SETUID
         // get db user to be able to unlink db entry from root_squash filesystems
         setegid(config["dbgid"].as<int>()); seteuid(config["dbuid"].as<int>());
 #endif
-        unlink(dbfilename.c_str());
+        if (mv_ret == 0) {
+            unlink(dbfilename.c_str());
+        } else {
+            cerr << "Error: moving data failed, database entry kept!" << endl;
+        }
 #ifdef SETUID
         seteuid(0); setegid(0);
 #endif
