@@ -36,6 +36,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <syslog.h>
 
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
@@ -171,6 +172,8 @@ int main(int argc, char **argv) {
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, argc, argv);
+
+    openlog("ws_allocate", 0, LOG_USER); // SYSLOG
 
     // get workspace object
     Workspace ws(WS_Allocate, opt, duration, filesystem);

@@ -37,6 +37,7 @@
 #include <grp.h>
 #include <sys/types.h>
 #include <time.h>
+#include <syslog.h>
 
 #include <iostream>
 #include <string>
@@ -143,7 +144,7 @@ bool check_name(const string name, const string username, const string real_user
     // we checked already that only root can use another username with -u, so here
     // we know we are either root or username == real_username
     if ((username != sp[0]) && (real_username != "root")) {
-        cerr << "only root can do this" << endl;
+        cerr << "Error: only root can do this 1" << username << sp[0] << endl;
         return false;
     } else {
         return true;
@@ -169,11 +170,13 @@ int main(int argc, char **argv) {
         username = real_username;
     } else if (real_username != username) {
         if (real_username != "root") {
-            cerr << "Error: only root can do that." << endl;
+            cerr << "Error: only root can do that. 2" << endl;
             username = real_username;
             exit(-1);
         }
     }
+
+    openlog("ws_restore", 0, LOG_USER); // SYSLOG
 
     if (listflag) {
         BOOST_FOREACH(string dn, ws.getRestorable(username)) {
@@ -182,7 +185,9 @@ int main(int argc, char **argv) {
     } else {
         if (check_name(name, username, real_username)) {
             if (ruh()) {
-                 ws.restore(name, target, username);
+                ws.restore(name, target, username);
+            } else {
+                syslog(LOG_INFO, "user <%s> failed ruh test.", username.c_str());
             }
         }
     }

@@ -34,6 +34,7 @@
 
 #include <iostream>
 #include <string>
+#include <syslog.h>
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 
@@ -120,6 +121,8 @@ int main(int argc, char **argv) {
 
     // check commandline
     commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
+
+    openlog("ws_release", 0, LOG_USER); // SYSLOG
 
     // get workspace object
     Workspace ws(WS_Release, opt, duration, filesystem);

@@ -38,6 +38,7 @@
 #include <time.h>
 #include <pwd.h>
 #include <sys/wait.h>
+#include <syslog.h>
 
 
 #ifndef SETUID
@@ -199,11 +200,14 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
                   }
               }
               cerr << "Info: extending workspace." << endl;
+              syslog(LOG_INFO, "extending DB <%s> for user <%s>.", dbfilename.c_str(), username.c_str());
+
               expiration = time(NULL)+duration*24*3600;
               dbentry.use_extension(expiration);
               extension = dbentry.getextension();
           } else {
               cerr << "Info: reusing workspace." << endl;
+              syslog(LOG_INFO, "reusing DB <%s> for user <%s>.", dbfilename.c_str(), username.c_str());
           }
           ws_exists = true;
           break;
@@ -304,6 +308,8 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         extension = maxextensions;
         expiration = time(NULL)+duration*24*3600;
         WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+
+        syslog(LOG_INFO, "created for user <%s> DB <%s> with space <%s>.", username.c_str(), dbfilename.c_str(), wsdir.c_str());
     }
     cout << wsdir << endl;
     cerr << "remaining extensions  : " << extension << endl;
@@ -376,6 +382,8 @@ void Workspace::release(string name) {
             }
         }
         lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+
+        syslog(LOG_INFO, "release for user <%s> from <%s> to <%s> done, moved DB entry from <%s> to <%s>.", username.c_str(), wsdir.c_str(), wstargetname.c_str(), dbfilename.c_str(), dbtargetname.c_str());
 
     } else {
         cerr << "Error: workspace does not exist!" << endl;
@@ -711,6 +719,9 @@ void Workspace::restore(const string name, const string target, const string use
                               config["workspaces"][filesystem]["deleted"].as<string>() +
                               "/" + name;
 
+        // log restore request
+        // syslog(LOG_INFO, "restore for user <%s> from <%s> to <%s>.", username, wssourcename.c_str(), targetwsdir.c_str());
+
         raise_cap(CAP_DAC_OVERRIDE);
 
         int ret = mv(wssourcename.c_str(), targetwsdir.c_str());
@@ -720,7 +731,10 @@ void Workspace::restore(const string name, const string target, const string use
 #endif
         if (ret == 0) {
             unlink(dbfilename.c_str());
+            syslog(LOG_INFO, "restore for user <%s> from <%s> to <%s> done, removed DB entry <%s>.", username.c_str(), wssourcename.c_str(), targetwsdir.c_str(), dbfilename.c_str());
+            cerr << "Info: restore successfull, database entry removed." << endl;
         } else {
+            syslog(LOG_INFO, "restore for user <%s> from <%s> to <%s> failed, kept DB entry <%s>.", username.c_str(), wssourcename.c_str(), targetwsdir.c_str(), dbfilename.c_str());
             cerr << "Error: moving data failed, database entry kept!" << endl;
         }
 #ifdef SETUID
