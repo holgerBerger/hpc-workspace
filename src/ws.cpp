@@ -671,12 +671,17 @@ void Workspace::restore(const string name, const string target, const string use
                               "/" + name;
 
         raise_cap(CAP_DAC_OVERRIDE);
-        mv(wssourcename.c_str(), targetwsdir.c_str());
+
+        int ret = mv(wssourcename.c_str(), targetwsdir.c_str());
 #ifdef SETUID
         // get db user to be able to unlink db entry from root_squash filesystems
         setegid(config["dbgid"].as<int>()); seteuid(config["dbuid"].as<int>());
 #endif
-        unlink(dbfilename.c_str());
+        if (ret == 0) {
+            unlink(dbfilename.c_str());
+        } else {
+            cerr << "Error: moving data failed, database entry kept!" << endl;
+        }
 #ifdef SETUID
         seteuid(0); setegid(0);
 #endif
