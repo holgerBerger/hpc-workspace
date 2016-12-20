@@ -5,7 +5,7 @@ ws_allocate \- create a workspace directory and return its path
 
 .SH SYNOPSIS
 .B ws_allocate
-[\-h] [\-x] [\-F FILESYSTEM] [\-r DAYS] [\-m MAILADDRESS] NAME DURATION
+[\-h] [\-x] [\-g] [\-F FILESYSTEM] [\-r DAYS] [\-m MAILADDRESS] NAME DURATION
 
 .SH DESCRIPTION
 Create a 
@@ -87,7 +87,10 @@ reminder email will be send DAYS days before the
 .B
 workspace 
 will expire. This could be send in the night after the exact point in time, during a cleanup.
-
+.TP
+\-g 
+a group-workspace will be created, that is a workspace that can be seen by others members of current group with 
+.B ws_list -g
 
 
 .SH EXAMPLES
