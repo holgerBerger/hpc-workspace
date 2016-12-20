@@ -307,7 +307,13 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
         extension = maxextensions;
         expiration = time(NULL)+duration*24*3600;
-        WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+        string primarygroup;
+        if (opt.count("group")) {
+            struct group *grp;
+            grp=getgrgid(getegid());
+            primarygroup = string(grp->gr_name);
+        }
+        WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress, primarygroup);
 
         syslog(LOG_INFO, "created for user <%s> DB <%s> with space <%s>.", username.c_str(), dbfilename.c_str(), wsdir.c_str());
     }
