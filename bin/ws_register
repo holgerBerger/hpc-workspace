@@ -105,8 +105,8 @@ for f in filesystems:
 if not os.path.isdir(dirname):
     os.mkdir(dirname)
 
-keeplist=[]
 for fs in legal:
+    keeplist=[]
     dbfilename='%s/%s-*' % (config["workspaces"][fs]['database'], user)
     wsdirs=[]
     if not os.path.isdir(dirname+"/"+fs):
@@ -122,11 +122,11 @@ for fs in legal:
         if not (os.path.exists(dirname+"/"+fs+"/"+os.path.basename(wsname)) or 
                        (os.path.islink(dirname+"/"+fs+"/"+os.path.basename(wsname)))):
             os.symlink(wsname,dirname+"/"+fs+"/"+os.path.basename(wsname))
-        # delete links not beeing workspaces anymore
-        for f in glob.glob(dirname+"/"+fs+"/*"):
-            if os.path.islink(f):
-                if not f in keeplist:
-                    os.unlink(f)
-                else:
-                    print "keep",f
+    # delete links not beeing workspaces anymore
+    for f in glob.glob(dirname+"/"+fs+"/*"):
+        if os.path.islink(f):
+            if not f in keeplist:
+                os.unlink(f)
+            else:
+                print "keep",f
 
