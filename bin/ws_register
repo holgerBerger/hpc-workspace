@@ -113,7 +113,11 @@ for fs in legal:
         os.mkdir(dirname+"/"+fs)
     for fname in glob.glob(dbfilename):
         f=yaml.load(open(fname)) 
-        wsname=f['workspace']
+        try:
+            wsname=f['workspace']
+        except TypeError:
+            f=open(fname).readines()
+            wsname=f[1][:-1]
         keeplist.append(dirname+"/"+fs+"/"+os.path.basename(wsname))
         if not (os.path.exists(dirname+"/"+fs+"/"+os.path.basename(wsname)) or 
                        (os.path.islink(dirname+"/"+fs+"/"+os.path.basename(wsname)))):
