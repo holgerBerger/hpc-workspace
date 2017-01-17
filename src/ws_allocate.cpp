@@ -67,7 +67,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
             ("mailaddress,m", po::value<string>(&mailaddress), "mailaddress to send reminder to")
             ("extension,x", "extend workspace")
             ("username,u", po::value<string>(&user), "username")
-            ("group,g", "extend workspace")
+            ("group,g", "group workspace")
     ;
 
     po::options_description secret_options("Secret");

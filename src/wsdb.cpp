@@ -126,6 +126,7 @@ void WsDB::write_dbfile()
     fout << entry;
     fout.close();
     if (group.length()>0) {
+        // for group workspaces, we set the x-bit
         perm = 0744;
     } else {
         perm = 0644;
