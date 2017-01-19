@@ -6,6 +6,7 @@ smtphost: localhost  # mandantory, a host accepting smtp connections to send ema
 default: lustre		# mandantory, the default workspace to choose
 duration: 10				# the max duration in days, if not specified in workspace
 maxextensions: 1 		# the number of extensions, if not specified in workspace
+# pythonpath: /path/to/my/python    # path which is appended to python search path for ws_list and other pythons scripts to find yaml
 dbuid: 9999				# mandantory
 dbgid: 9999				# mandantory
 admins: [hobel]		# list of admin users

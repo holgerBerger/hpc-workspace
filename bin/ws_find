@@ -34,11 +34,26 @@
 """
 
 
-import yaml
 import os, os.path, pwd, grp, sys
 import glob, time
 from optparse import OptionParser
 
+# read a single line from ws.conf of the form: pythonpath: /path/to/python
+def read_python_conf():
+    for l in open("/etc/ws.conf","r"):
+        if 'pythonpath' in l:
+            key=l.split(":")[0].strip()
+            value=l.split(":")[1].strip()
+            if key == 'pythonpath':
+                if os.path.isdir(value):
+                    sys.path.append(value)
+                    break
+                else:
+                    print >> sys.stderr, "Warning: Invalid pythonpath in ws.conf"
+
+read_python_conf()
+
+import yaml
 
 # who are we?
 uid = os.getuid()
