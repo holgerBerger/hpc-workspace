@@ -44,10 +44,10 @@ count = 0
 
 # send a reminder email
 def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
-    text = """
+    text = """ 
         Your workspace %s on system %s will expire at %s.
     """ % (wsname, clustername, time.ctime(expiration))
-    msg = MIMEMultipart()
+    msg = MIMEMultipart('mixed')
     recipients = [ mailaddress ]
     sender = "wsadmin"
     msg['From'] = "wsadmin"
@@ -55,7 +55,7 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
     msg['Subject'] = 'Workspace %s will expire on %s' % (wsname, time.ctime(expiration))
     msg.preamble = text
 
-    msg.attach(MIMEText(text))
+    msg.attach(MIMEText(text,'html'))
 
     now=time.strftime('%Y%m%dT%H%M%S', time.localtime())
     then=time.strftime('%Y%m%dT%H%M%S', time.localtime(expiration))
@@ -74,13 +74,13 @@ CLASS:PRIVATE
 END:VEVENT
 END:VCALENDAR
     """ % (time.time(), wsname, clustername,then, now, then, wsname)
-    att = MIMEText(ical,"calender")
+
+    att = MIMEText(ical,"calendar")
     msg.attach(att)
 
     s = smtplib.SMTP(host=smtphost)
     s.sendmail(sender, recipients, msg.as_string())
     s.quit()
-
 
 # slow recursive deleter, to avoid high meta data pressure on servers
 def deldir(dir):
