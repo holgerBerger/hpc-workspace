@@ -132,9 +132,20 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
             reminder = 0;
         } else {
             if (!opt.count("mailaddress")) {
+                YAML::Node user_home_config;  // load yaml file from home here, not used anywhere else so far
                 ifstream infile;
                 infile.open((Workspace::getuserhome()+"/.ws_user.conf").c_str());
+                // get first line, this is either a mailaddress or something like key: value
                 getline(infile, mailaddress);
+                // check if file looks like yaml
+                if (mailaddress.find(":",0) != string::npos) {
+                    user_home_config = YAML::LoadFile((Workspace::getuserhome()+"/.ws_user.conf").c_str());
+                    try {
+                        mailaddress = user_home_config["mail"].as<std::string>();
+                    } catch (...) {
+                        mailaddress = "";
+                    }
+                }
                 if(mailaddress.length()>0) {
                     cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;
                 } else {
