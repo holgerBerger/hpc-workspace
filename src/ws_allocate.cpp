@@ -13,7 +13,7 @@
  *    - using setuid or capabilities (needs support by filesystem!)
  *    - supports configuration of reminder emails
  *
- *  (c) Holger Berger 2013,2014,2015
+ *  (c) Holger Berger 2013, 2014, 2015, 2016, 2017
  * 
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
