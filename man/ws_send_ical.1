@@ -1,0 +1,38 @@
+.TH ws_send_ical 1 "January 2017" "USER COMMANDS"
+
+.SH NAME
+ws_send_ical \- send a reminder for a workspace as calender entry
+
+.SH SYNOPSIS
+.B ws_send_ical
+[\-F filesystem | \-\-filesystem filesystem] [\-n|\-\-workspace] workspacename [\-m | \-\-mail] mailadress
+
+.SH DESCRIPTION
+Sends a ical calender entry for a specified
+.B workspaces
+to the specified mail address.
+
+.PP
+
+.SH OPTIONS
+.TP
+\-F
+select the filesystem to list the workspaces from.
+.TP
+\-n | \-\-workspace 
+workspace name
+.TP
+\-m 
+mailaddress
+
+.SH EXAMPLES
+.TP
+send a calender entry for workspace WS to user john
+.B ws_send_ical WS -m john@home
+
+
+.SH AUTHOR
+Written by Thomas Beisel
+
+.SH SEE ALSO
+ws_allocate, ws_release, ws_list, ws_find, ws_restore
