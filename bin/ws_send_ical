@@ -211,24 +211,38 @@ parser.add_option('-n', '--workspace', dest='workspace', help='name of selected 
 opts_used = 0
 
 if options.workspace == None:
-   if len(args) == 0:
-      print >> sys.stderr, "Error: need to specify workspace name"
-      print >> sys.stderr, "\nusage: " + Usage
-      sys.exit(2)
-   else:
-      options.workspace = args[0]
-      opts_used = 1
+    if len(args) == 0:
+        print >> sys.stderr, "Error: need to specify workspace name"
+        print >> sys.stderr, "\nusage: " + Usage
+        sys.exit(2)
+    else:
+        options.workspace = args[0]
+        opts_used = 1
 
 if options.mailadress == None:
-   if len(args) - opts_used == 0:
-      print >> sys.stderr, "Error: need to specify mailaddress"
-      print >> sys.stderr, "\nusage: " + Usage
-      sys.exit(2)   
-   else:
-      arg_idx = len(args) - opts_used - 1
-      options.mailadress = args[arg_idx]
+    if len(args) - opts_used == 0:
+        try:
+            attendees = open(os.path.expanduser("~/.ws_user.conf")).readline()
+        except:
+            attendees = ""
+        if ":" in attendees:
+            try:
+                user_config = yaml.load(open(os.path.expanduser("~/.ws_user.conf")))
+                attendees = user_config["mail"]
+            except:
+                attendees = ""
+        if attendees == "":
+            print >> sys.stderr, "Error: need to specify mailaddress"
+            print >> sys.stderr, "\nusage: " + Usage
+            sys.exit(2)   
+        else:
+            print >> sys.stderr, "Info: took email address",attendees,"from ~/.ws_user.conf"
+    else:
+        arg_idx = len(args) - opts_used - 1
+        attendees = args[arg_idx]
+else:
+    attendees = options.mailadress
 
-attendees = options.mailadress
 ws_name   = options.workspace
 
 # all filesystems or a selected one?
