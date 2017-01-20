@@ -71,6 +71,7 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
     msg['Subject'] = 'Workspace %s will expire at %s' % (wsname, time.ctime(expiration))
     msg.preamble = text
 
+<<<<<<< HEAD
 #    msg.attach(MIMEText(text,'html'))
 #
 #    now=time.strftime('%Y%m%dT%H%M%S', time.localtime())
