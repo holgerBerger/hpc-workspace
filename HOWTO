@@ -86,6 +86,7 @@ cmake .
 make
 
 
+on filesystem with capability support:
 copy ws_allocate and ws_release and ws_restore and ws_list where wanted,
 ( and set capabilites with
 
@@ -93,7 +94,7 @@ setcap "CAP_DAC_OVERRIDE=p CAP_CHOWN=p" ws_allocate
 setcap "CAP_DAC_OVERRIDE=p" ws_release
 )
 
-OR (on filesystems without capabilties and now default in build,
+OR (on filesystems without capabilities and now default in build,
 can be changed with ccmake .)
 make ws_allocate ws_release ws_restore setuid root
 
@@ -109,7 +110,7 @@ REMARKS
 - capabities need support from OS and filesystem
   nfs and lustre are known not to work
 - for SuSE users: SLES11.SP3 needs file_caps=1 on kernel command line
-- for Redhat6 users: system yaml seems to old,
+- for Redhat6 users: system yaml seems to be to old,
   change in CMakeLists.txt
   FIND_LIBRARY(YAML libyaml-cpp.so)
   to
