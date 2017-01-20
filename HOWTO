@@ -1,7 +1,4 @@
 
-** THIS IS NOT YET USEFULL, BUT WORK IN PROGRESS, AND PROBABLY ONLY USABLE FOR A VERY SMALL NUMBER OF PPLE **
-
-
 very short introduction to workspace++ 
 
 WHATS NEW
@@ -31,13 +28,12 @@ WHATS NEW
         when the callout returns 'academic' for 'username'
         ATTENTION: no code to modify permissions and ownerships of the subdirectory,
         you better create them all as needed!
-
+    - ws_restore can restore expired workspaces, can be called by user 
 
 PLANNED
 
 - striping support in ws_allocate (lustre parameters, probably we want to drop some 
   capabilities before we do that, needs study how to do that)
-- cleaner with support for reminder emails
 - quota settings
 
 PREREQUISITS
@@ -58,12 +54,14 @@ SUPPLIED
 
 ws_allocate         (C++)
 ws_release          (C++)
+we_restore          (C++)
 ws_list             (python)
 ws_validate_config  (python)
 ws_restore          (python)
 ws_register         (python)
 ws_find             (python)
 ws_expirer          (python)
+ws_send_ical        (python)
 
 
 
