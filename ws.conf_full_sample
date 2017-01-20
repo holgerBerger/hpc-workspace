@@ -3,6 +3,7 @@
 # use ws_validate_config to validate a config file
 clustername: aName  # mandantory, a name to identify the system
 smtphost: localhost  # mandantory, a host accepting smtp connections to send emails
+mail_from: noreply@mydomain.de   # sender address for reminders
 default: lustre		# mandantory, the default workspace to choose
 duration: 10				# the max duration in days, if not specified in workspace
 maxextensions: 1 		# the number of extensions, if not specified in workspace

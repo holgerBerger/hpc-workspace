@@ -1,0 +1,315 @@
+#!/usr/bin/python2
+
+"""
+    workspace++
+
+    ws_send_ical
+
+    python version of ws_send_ical command, no privileges necessary
+
+    send a rminder as VCALENDAR entry for a named workspace to the 
+    address. 
+
+    Reads new YAML configuration files and new YAML workspace database.
+
+    differences to old workspace version
+       rewritten using python, 1st version bash-script
+
+    Thomas Beisel Januar 2017
+
+    based on (c) Holger Berger 2013, 2014, 2015, 2016, 2017 ws_list version
+
+
+    workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
+
+    workspace++ is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    workspace++ is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with workspace++.  If not, see <http://www.gnu.org/licenses/>.
+
+"""
+
+#import yaml
+import os, os.path, pwd, grp, sys
+import glob, time
+from optparse import OptionParser
+from tempfile import mkstemp
+### from datetime import datetime, date, time
+import smtplib
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEBase import MIMEBase
+from email.MIMEText import MIMEText
+from email.Utils import COMMASPACE, formatdate
+from email import Encoders
+import datetime
+
+CRLF = "\r\n"
+
+# read a single line from ws.conf of the form: pythonpath: /path/to/python
+def read_python_conf():
+    for l in open("/etc/ws.conf","r"):
+        if 'pythonpath' in l:
+            key=l.split(":")[0].strip()
+            value=l.split(":")[1].strip()
+            if key == 'pythonpath':
+                if os.path.isdir(value):
+                    sys.path.append(value)
+                    break
+                else:
+                    print >> sys.stderr, "Warning: Invalid pythonpath in ws.conf"
+
+read_python_conf()
+
+import yaml
+
+class struct: pass
+space2fs={}
+spaces=[]
+
+
+def send_ical(entry, smtphost, resource, attendee, mail_from, login, ws_name, create_time):
+    entry_hash = hash( entry.name + str( entry.expiration) )
+    
+    exp_time = time.localtime( entry.expiration )   # time ws expires
+    exp_time_str = time.strftime("%Y%m%dT%H%M00", exp_time ) # convert format
+    ##  start time for calendar entry is 1 hour before expiration time of the ws
+    start_time_str = time.strftime("%Y%m%dT%H%M00", time.localtime( entry.expiration -3600 ) )
+
+    ### Im EVENT Bereich wollten wir das Senden einer Antwortmail unterdruecken, aber hier gibt
+    ### es ein Problem mit dem bei einem Kunden eingestzten Note System. Dieses sendet immer eine 
+    ### Antwort, die aber durch unsere Netzkonfig nicht ankommen kann...
+    ## so nicht ## ical += "ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=FALSE" + CRLF
+    ## so nicht ## ical += "ATTENDEE;CUTYPE=RESOURCE;ROLE=NON-PARTICIPANT;RSVP=FALSE" + CRLF
+    ## so nicht ## ical += "ATTENDEE;CUTYPE=RESOURCE;RSVP=FALSE" + CRLF
+    ## ical += "ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=FALSE" + CRLF
+
+    ##   Header _____________________________________
+    ical  = "BEGIN:VCALENDAR" + CRLF
+    ical += "PRODID:-//HLRS Cluster Team//Workspace V2.1//EN" + CRLF
+    ical += "VERSION:2.0" + CRLF
+    ical += "METHOD:REQUEST" + CRLF
+    ical += "BEGIN:VTIMEZONE" + CRLF
+    ical += "TZID:Europe/Berlin" + CRLF
+    ical += "BEGIN:DAYLIGHT" + CRLF
+    ical += "TZOFFSETFROM:+0100" + CRLF
+    ical += "TZOFFSETTO:+0200" + CRLF
+    ical += "TZNAME:CEST" + CRLF
+    ical += "DTSTART:19700329T020000" + CRLF
+    ical += "RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=3" + CRLF
+    ical += "END:DAYLIGHT" + CRLF
+    ical += "BEGIN:STANDARD" + CRLF
+    ical += "TZOFFSETFROM:+0200" + CRLF
+    ical += "TZOFFSETTO:+0100" + CRLF
+    ical += "TZNAME:CET" + CRLF
+    ical += "DTSTART:19701025T030000" + CRLF
+    ical += "RRULE:FREQ=YEARLY;BYDAY=-1SU;BYMONTH=10" + CRLF
+    ical += "END:STANDARD" + CRLF
+    ical += "END:VTIMEZONE" + CRLF
+    ical += "X-MS-OLK-FORCEINSPECTOROPEN:TRUE" + CRLF
+
+    ## Event _______________________________________
+
+    ical += "BEGIN:VEVENT" + CRLF 
+    ical += "CREATED:" + create_time + CRLF 
+    ical += "DTSTAMP:" + create_time + CRLF 
+    ical += "UID:587a1aa6-" + str( entry_hash ) + CRLF 
+    ical += "DESCRIPTION:Workspace " + ws_name + " will be deleted on host " + resource + CRLF 
+    ical += "LOCATION:" + resource + CRLF
+    ical += "SUMMARY: Workspace " + ws_name + " expires" + CRLF 
+    ical += "DTSTART;TZID=Europe/Berlin:" + start_time_str + CRLF 
+    ical += "DTEND;TZID=Europe/Berlin:" + exp_time_str + CRLF 
+    ical += "LAST-MODIFIED:" + create_time + CRLF
+    ical += "CLASS:PRIVATE" + CRLF 
+    ical += "X-MICROSOFT-CDO-BUSYSTATUS:BUSY" + CRLF
+    ical += "X-MICROSOFT-DISALLOW-COUNTER:TRUE" + CRLF
+    ical += "END:VEVENT" + CRLF 
+    ical += "END:VCALENDAR" + CRLF 
+
+    ##  ___ now compose the mail header and send ________________
+
+    eml_body = "Workspace " + ws_name + " on host " + resource + " is going to expire "
+    msg = MIMEMultipart('mixed')
+    msg['Reply-To'] = mail_from
+    msg['Date'] = formatdate(localtime=True)
+    msg['Subject'] = "Workspace expire on " + exp_time_str
+    msg['From'] = mail_from
+    msg['To'] = attendees
+    
+    part_email = MIMEText(eml_body,"html")
+    part_cal = MIMEText(ical,'calendar;method=REQUEST')   # FIXME method=REQUEST ay be wrong here, is not in calendar entry
+    
+    msgAlternative = MIMEMultipart('alternative')
+    msg.attach(msgAlternative)
+    
+    msgAlternative.attach(part_email)
+    msgAlternative.attach(part_cal)
+     
+    mailServer = smtplib.SMTP(smtphost)
+    #mailServer.ehlo()
+    #mailServer.starttls()
+    #mailServer.ehlo()
+    #mailServer.login(login, password)
+    mailServer.sendmail(mail_from, attendees, msg.as_string())
+    mailServer.close()
+
+    print "Sent reminder for workspace " + ws_name + " to " + attendees + " please do not forget to accept invitation"
+
+
+# we have to find out if the calling user is admin before we can process commandline,
+# so we have to determine user and read config first, and parse commandline last
+
+# who are we?
+login = os.getlogin()
+create_time = time.strftime("%Y%m%dT%H%M00", time.localtime(None))
+uid = os.getuid()
+gid = os.getgid()
+user = pwd.getpwuid(uid)[0]
+group = grp.getgrgid(gid)[0]
+groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
+
+# load config file
+config = yaml.load(open('/etc/ws.conf'))
+
+smtphost  = config['smtphost']
+resource = config['clustername']
+try:
+    mail_from = config['mail_from']
+except KeyError:
+    print >>sys.stderr, "Warning: no mail_from in global config, please inform system administrator!"
+    mail_from = ""
+
+# make root always admin, seeing admin options and admin output
+# FIXME: eid or uid or both?
+if os.geteuid()==0 or os.getuid()==0:
+    admin = True
+    print  ' Error: this command is not for admins'
+    sys.exit( 1 )
+
+
+# option configuration
+Usage  = "[-F filesystem | --filesystem filesystem] [-n|--workspace] workspacename [-m | --mail] mailadress\n"
+Usage += "      this command is used to send a calendar invitation by Email to ensure users do not forget\n"
+Usage += "      the expiration date of a workspace"
+       
+parser = OptionParser( Usage )
+parser.add_option('-F', '--filesystem', dest='filesystem', help='filesystem where the workspaces is located on')
+parser.add_option('-m', '--mail', dest='mailadress', help='your mail address to send to')
+parser.add_option('-n', '--workspace', dest='workspace', help='name of selected workspaces')
+
+# print sys.argv
+(options, args) = parser.parse_args()
+# print 'args ', args
+
+opts_used = 0
+
+if options.workspace == None:
+   if len(args) == 0:
+      print >> sys.stderr, "Error: need to specify workspace name"
+      print >> sys.stderr, "\nusage: " + Usage
+      sys.exit(2)
+   else:
+      options.workspace = args[0]
+      opts_used = 1
+
+if options.mailadress == None:
+   if len(args) - opts_used == 0:
+      print >> sys.stderr, "Error: need to specify mailaddress"
+      print >> sys.stderr, "\nusage: " + Usage
+      sys.exit(2)   
+   else:
+      arg_idx = len(args) - opts_used - 1
+      options.mailadress = args[arg_idx]
+
+attendees = options.mailadress
+ws_name   = options.workspace
+
+# all filesystems or a selected one?
+if(options.filesystem): 
+    if options.filesystem in config['workspaces']:
+        filesystems = [options.filesystem]
+    else:
+        print >> sys.stderr, "Error: no such filesystem."
+        sys.exit(-1)
+else:
+    filesystems = config['workspaces'].keys()
+
+# reduce list to allowed filesystems
+legal=[]
+for f in filesystems:
+    userok=True
+    if (('user_acl' in config['workspaces'][f] and len(config['workspaces'][f]['user_acl'])>0 ) or 
+        ('group_acl' in config['workspaces'][f] and len(config['workspaces'][f]['group_acl'])>0)):
+        userok=False
+    if 'group_acl' in config['workspaces'][f]:
+        for g in groups:
+            if g in config['workspaces'][f]['group_acl']:
+                userok=True
+                break
+        if group in config['workspaces'][f]['group_acl']:
+            userok=True
+    if 'user_acl' in config['workspaces'][f]:
+        if user in config['workspaces'][f]['user_acl']:
+            userok=True
+     # 
+    if userok:
+        legal.append(f)
+
+
+# create mapping from spaces to filesystems
+for f in legal:
+    for s in config['workspaces'][f]["spaces"]:
+        space2fs[s]=f
+        spaces.append(s)
+
+
+found_a_ws = False
+
+for fs in legal:
+    pattern = os.path.join(config['workspaces'][fs]['database'],user+'-*')
+    for    ws in glob.glob(pattern):
+        entry = struct()
+        entry.name = ws
+        content = yaml.load(open(ws))
+        entry.creation = os.path.getctime(ws)
+        try:
+             entry.expiration = int(content['expiration'])
+             entry.extensions = content['extensions']
+             entry.acctcode = content['acctcode']
+             entry.workspace = content['workspace']
+             entry.reminder = int(content['reminder'])
+             entry.mailaddress = content['mailaddress']
+        except TypeError:  
+             # fallback to old file format
+             f=open(ws)
+             entry.expiration = int(f.readline())
+             entry.workspace = f.readline()[:-1]
+             entry.acctcode = f.readline()[:-1].split(":")[1]
+             entry.extensions = int(f.readline()[:-1].split(":")[1])
+             entry.reminder = 0
+             entry.mailaddress = ""
+             f.close()
+
+        if os.path.basename(entry.name)[os.path.basename(entry.name).find('-')+1:]  == options.workspace:
+            if time.time() > entry.expiration:
+                print "Error: your workspace " + ws_name + " has been expired!!"
+                print "use the ws_restore command to recover this workspace..."
+                sys.exit( 3 )
+            
+            send_ical(entry, smtphost, resource, attendees, mail_from, login, ws_name, create_time)
+            found_a_ws = True
+
+if found_a_ws == False:
+    print "Sorry, there is no workspace " + ws_name + " available on this system!!" 
+    print "if you think there should be such a workspace, please check the output of"
+    print "    ws_restore -l"
+    print "for removed workspaces which are possible to recover"
+    print "or run the ws_list and double check for a typo of the workspace name"
+    sys.exit(2)
