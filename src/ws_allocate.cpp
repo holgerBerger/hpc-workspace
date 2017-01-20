@@ -67,6 +67,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
             ("mailaddress,m", po::value<string>(&mailaddress), "mailaddress to send reminder to")
             ("extension,x", "extend workspace")
             ("username,u", po::value<string>(&user), "username")
+            ("group,g", "group workspace")
     ;
 
     po::options_description secret_options("Secret");
@@ -129,22 +130,21 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
         if (reminder > duration) {
             cerr << "Info: reminder in the past, ignored." << endl;
             reminder = 0;
-            goto noreminder;
-        }
-        if (!opt.count("mailaddress")) {
-            ifstream infile;
-            infile.open((Workspace::getuserhome()+"/.ws_user.conf").c_str());
-            getline(infile, mailaddress);
-            if(mailaddress.length()>0) {
-                cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;
-            } else {
-                cerr << "Info: could not read email from users config ~/.ws_user.conf." << endl;
-                cerr << "Info: reminder will be ignored" << endl;
-                reminder = 0;
+        } else {
+            if (!opt.count("mailaddress")) {
+                ifstream infile;
+                infile.open((Workspace::getuserhome()+"/.ws_user.conf").c_str());
+                getline(infile, mailaddress);
+                if(mailaddress.length()>0) {
+                    cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;
+                } else {
+                    cerr << "Info: could not read email from users config ~/.ws_user.conf." << endl;
+                    cerr << "Info: reminder will be ignored" << endl;
+                    reminder = 0;
+                }
             }
         }
     }
-    noreminder:
 
     // validate workspace name against nasty characters    
     static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");

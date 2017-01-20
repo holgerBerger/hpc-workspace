@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/python2
 
 """
     workspace++
@@ -35,16 +35,34 @@
 
 """
 
-import yaml
-import os, os.path, pwd, grp, sys
+import os, os.path, pwd, grp, sys, stat
 import glob, time
 from optparse import OptionParser
+
 
 class struct: pass
 space2fs={}
 spaces=[]
-# print a entry
 
+# read a single line from ws.conf of the form: pythonpath: /path/to/python
+def read_python_conf():
+    for l in open("/etc/ws.conf","r"):
+        if 'pythonpath' in l:
+            key=l.split(":")[0].strip()
+            value=l.split(":")[1].strip()
+            if key == 'pythonpath':
+                if os.path.isdir(value):
+                    sys.path.append(value)
+                    break
+                else:
+                    print >> sys.stderr, "Warning: Invalid pythonpath in ws.conf"
+
+read_python_conf()
+
+import yaml
+
+
+# print a entry
 def printentry(entry, admin, terse, verbose):
     if verbose: terse = False
     if admin:
@@ -97,6 +115,7 @@ if os.geteuid()==0 or os.getuid()==0:
 # option configuration
 parser = OptionParser()
 parser.add_option('-F', '--filesystem', dest='filesystem', help='filesystem to list workspaces from')
+parser.add_option('-g', action="store_true", dest='groupws', default=False, help='also list group workspaces')
 parser.add_option('-l', action="store_true", dest='filesystemlist', default=False, help='list available filesystems')
 parser.add_option('-s', action="store_true", dest='short', default=False, help='only show names of workspaces')
 if admin:
@@ -189,8 +208,23 @@ for fs in legal:
             else:
                 pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],'*-*')
     else:
-        pattern = os.path.join(config['workspaces'][fs]['database'],user+'-*')
-    for    ws in glob.glob(pattern):
+        if options.groupws:
+            pattern = os.path.join(config['workspaces'][fs]['database'],'*-*')
+        else:
+            pattern = os.path.join(config['workspaces'][fs]['database'],user+'-*')
+
+    for ws in glob.glob(pattern):
+        if options.groupws:
+            if not os.path.basename(ws).startswith(user+"-"):
+                mode = os.stat(ws).st_mode
+                if not mode & stat.S_IXUSR:
+                    continue
+                else:
+                    content = yaml.load(open(ws))
+                    wsgroup = content['group']
+                    if group != wsgroup:
+                        continue
+
         if options.short:
             print os.path.basename(ws)[os.path.basename(ws).find('-')+1:]
         else:

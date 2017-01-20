@@ -5,7 +5,7 @@ ws_list \- list workspaces
 
 .SH SYNOPSIS
 .B ws_list
-[\-h] [\-F FILESYSTEM] [\-l] [\-s] [\-v] [\-s] [\-r] [\-N] [\-R] [\-C] 
+[\-h] [\-F FILESYSTEM] [\-g] [\-l] [\-s] [\-v] [\-s] [\-r] [\-N] [\-R] [\-C] 
 
 .SH DESCRIPTION
 List 
@@ -51,6 +51,9 @@ list the available filesystems, only filesystems the user has access to will be 
 .TP
 \-F
 select the filesystem to list the workspaces from.
+.TP
+\-g
+show group-workspaces visible for current group in addition to own workspaces
 .TP
 \-s
 short listing, only workspace names will be listed.

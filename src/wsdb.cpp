@@ -69,10 +69,10 @@ using namespace std;
  */
 WsDB::WsDB(const string _filename, const string _wsdir, const long int _expiration,
            const int _extensions, const string _acctcode, const int _dbuid,
-           const int _dbgid, const int _reminder, const string _mailaddress)
+           const int _dbgid, const int _reminder, const string _mailaddress, const string _group)
     :
     dbfilename(_filename), wsdir(_wsdir), expiration(_expiration), extensions(_extensions),
-    acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress)
+    acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress), group(_group)
 {
     write_dbfile();
 }
@@ -106,6 +106,7 @@ void WsDB::use_extension(const long _expiration)
 // write data to file
 void WsDB::write_dbfile()
 {
+    int perm;
     YAML::Node entry;
     entry["workspace"] = wsdir;
     entry["expiration"] = expiration;
@@ -113,6 +114,9 @@ void WsDB::write_dbfile()
     entry["acctcode"] = acctcode;
     entry["reminder"] = reminder;
     entry["mailaddress"] = mailaddress;
+    if (group.length()>0) {
+        entry["group"] = group;
+    }
     Workspace::raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here
@@ -121,16 +125,17 @@ void WsDB::write_dbfile()
     ofstream fout(dbfilename.c_str());
     fout << entry;
     fout.close();
+    if (group.length()>0) {
+        // for group workspaces, we set the x-bit
+        perm = 0744;
+    } else {
+        perm = 0644;
+    }
+    if (chmod(dbfilename.c_str(), perm) != 0) {
+        cerr << "Error: could not change permissions of database entry" << endl;
+    }
 #ifdef SETUID
-    if (chmod(dbfilename.c_str(), 0644) != 0) {
-        cerr << "Error: could not change permissions of database entry" << endl;
-    }
     seteuid(0); setegid(0);
-#endif
-#ifndef SETUID
-    if (chmod(dbfilename.c_str(), 0644) != 0) {
-        cerr << "Error: could not change permissions of database entry" << endl;
-    }
 #endif
     Workspace::lower_cap(CAP_DAC_OVERRIDE, dbuid);
 

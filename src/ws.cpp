@@ -297,7 +297,12 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         lower_cap(CAP_CHOWN, db_uid);
 
         raise_cap(CAP_DAC_OVERRIDE);
-        if(chmod(wsdir.c_str(), S_IRUSR | S_IWUSR | S_IXUSR)) {
+		mode_t mode = S_IRUSR | S_IWUSR | S_IXUSR;
+        // group workspaces can be read and listed by group
+		if (opt.count("group")) {
+			mode |= S_IRGRP | S_IXGRP;
+		}
+        if(chmod(wsdir.c_str(), mode)) {
             lower_cap(CAP_DAC_OVERRIDE, db_uid);
             cerr << "Error: could not change permissions of workspace!" << endl;
             unlink(wsdir.c_str());
@@ -307,7 +312,13 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
         extension = maxextensions;
         expiration = time(NULL)+duration*24*3600;
-        WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress);
+        string primarygroup;
+        if (opt.count("group")) {
+            struct group *grp;
+            grp=getgrgid(getegid());
+            primarygroup = string(grp->gr_name);
+        }
+        WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress, primarygroup);
 
         syslog(LOG_INFO, "created for user <%s> DB <%s> with space <%s>.", username.c_str(), dbfilename.c_str(), wsdir.c_str());
     }
