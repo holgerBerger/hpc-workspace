@@ -272,7 +272,7 @@ for f in filesystems:
     if 'user_acl' in config['workspaces'][f]:
         if user in config['workspaces'][f]['user_acl']:
             userok=True
-     # 
+    # 
     if userok:
         legal.append(f)
 
@@ -282,7 +282,6 @@ for f in legal:
     for s in config['workspaces'][f]["spaces"]:
         space2fs[s]=f
         spaces.append(s)
-
 
 found_a_ws = False
 
@@ -294,22 +293,22 @@ for fs in legal:
         content = yaml.load(open(ws))
         entry.creation = os.path.getctime(ws)
         try:
-             entry.expiration = int(content['expiration'])
-             entry.extensions = content['extensions']
-             entry.acctcode = content['acctcode']
-             entry.workspace = content['workspace']
-             entry.reminder = int(content['reminder'])
-             entry.mailaddress = content['mailaddress']
+            entry.expiration = int(content['expiration'])
+            entry.extensions = content['extensions']
+            entry.acctcode = content['acctcode']
+            entry.workspace = content['workspace']
+            entry.reminder = int(content['reminder'])
+            entry.mailaddress = content['mailaddress']
         except TypeError:  
-             # fallback to old file format
-             f=open(ws)
-             entry.expiration = int(f.readline())
-             entry.workspace = f.readline()[:-1]
-             entry.acctcode = f.readline()[:-1].split(":")[1]
-             entry.extensions = int(f.readline()[:-1].split(":")[1])
-             entry.reminder = 0
-             entry.mailaddress = ""
-             f.close()
+            # fallback to old file format
+            f=open(ws)
+            entry.expiration = int(f.readline())
+            entry.workspace = f.readline()[:-1]
+            entry.acctcode = f.readline()[:-1].split(":")[1]
+            entry.extensions = int(f.readline()[:-1].split(":")[1])
+            entry.reminder = 0
+            entry.mailaddress = ""
+            f.close()
 
         if os.path.basename(entry.name)[os.path.basename(entry.name).find('-')+1:]  == options.workspace:
             if time.time() > entry.expiration:
