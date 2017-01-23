@@ -238,8 +238,8 @@ if options.mailadress == None:
         else:
             print >> sys.stderr, "Info: took email address",attendees,"from ~/.ws_user.conf"
     else:
-        arg_idx = len(args) - opts_used - 1
-        attendees = args[arg_idx]
+        # arg_idx = len(args) - opts_used - 1
+        attendees = args[opts_used]
 else:
     attendees = options.mailadress
 
