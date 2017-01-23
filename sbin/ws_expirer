@@ -357,19 +357,19 @@ for fs in fslist:
             print "  deleting", dbentryfilename
             # remove the DB entry
             if not dryrun:
-                #os.unlink(dbentryfilename)
+                os.unlink(dbentryfilename)
                 print " OS.UNLINK", dbentryfilename
             else:
                 print "  RM",dbentryfilename
             # remove the workspace directory
             if not dryrun:
-                #deldir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
+                deldir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
                 print "  DELDIR", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename))
             else:
                 print "  RM", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename))
             try:
                 if not dryrun:
-                    #os.rmdir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
+                    os.rmdir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
                     print "  OS.RMDIR", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename))
                 else:
                     print "  RM", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename))
