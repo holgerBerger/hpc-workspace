@@ -62,7 +62,7 @@ using boost::lexical_cast;
 
 
 void commandline(po::variables_map &opt, string &name, string &target,
-                    string &filesystem, bool &listflag, string &username,  int argc, char**argv) {
+                    string &filesystem, bool &listflag, bool &terse, string &username,  int argc, char**argv) {
     // define all options
 
     po::options_description cmd_options( "\nOptions" );
@@ -70,6 +70,7 @@ void commandline(po::variables_map &opt, string &name, string &target,
             ("help,h", "produce help message")
             ("version,V", "show version")
             ("list,l", "list restorable workspaces")
+            ("brief,b", "do not show unavailability date in list")
             ("name,n", po::value<string>(&name), "workspace name")
             ("target,t", po::value<string>(&target), "existing target workspace name")
             ("filesystem,F", po::value<string>(&filesystem), "filesystem")
@@ -108,6 +109,12 @@ void commandline(po::variables_map &opt, string &name, string &target,
         listflag = true;
     } else {
         listflag = false;
+    }
+
+    if (opt.count("brief")) {
+        terse = true;
+    } else {
+        terse = false;
     }
 
     if (opt.count("name"))
@@ -154,12 +161,12 @@ bool check_name(const string name, const string username, const string real_user
 int main(int argc, char **argv) {
     po::variables_map opt;
     string name, target, filesystem, acctcode, username;
-    bool listflag;
+    bool listflag, terse;
     int duration=0;
     YAML::Node config, userconfig;
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
-    commandline(opt, name, target, filesystem, listflag, username, argc, argv);
+    commandline(opt, name, target, filesystem, listflag, terse, username, argc, argv);
 
     // get workspace object
     Workspace ws(WS_Release, opt, duration, filesystem);
@@ -180,11 +187,13 @@ int main(int argc, char **argv) {
 
     if (listflag) {
         BOOST_FOREACH(string dn, ws.getRestorable(username)) {
-            std::vector<std::string> splitted;
-            boost::split(splitted, dn, boost::is_any_of("-"));
             cout << dn << endl;
-            time_t t = atol(splitted[2].c_str());
-            cout << "\tunavailable since " << std::ctime(&t);
+            if (!terse) {
+                std::vector<std::string> splitted;
+                boost::split(splitted, dn, boost::is_any_of("-"));
+                time_t t = atol(splitted[2].c_str());
+                cout << "\tunavailable since " << std::ctime(&t);
+            }
         }
     } else {
         if (check_name(name, username, real_username)) {
