@@ -71,8 +71,8 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
     msg['Subject'] = 'Workspace %s will expire at %s' % (wsname, time.ctime(expiration))
     msg.preamble = text
 
-#    msg.attach(MIMEText(text,'html'))
-#
+    msg.attach(MIMEText(text,'html'))
+
 #    now=time.strftime('%Y%m%dT%H%M%S', time.localtime())
 #    then=time.strftime('%Y%m%dT%H%M%S', time.localtime(expiration))
 #    ical="""
@@ -319,13 +319,13 @@ for fs in fslist:
         else:
             print "  keeping", dbentryfilename
             if time.time() > (expiration - (reminder*(24*3600))):
-                print "  mail needed"
+                #print "  mail needed"
                 if not dryrun:
                     if mailaddress != "":
-                       send_reminder(smtphost, clustername, dbentryfilename.split('-')[2],expiration,mailaddress)
-                       print "  SEND_REMINDER", dbentryfilename.split('-')[2],expiration,mailaddress
+                       send_reminder(smtphost, clustername, dbentryfilename.split('-')[1],expiration,mailaddress)
+                       print "  SEND_REMINDER", dbentryfilename.split('-')[1],expiration,mailaddress
                 else:
-                    print "  MAIL", dbentryfilename.split('-')[2],expiration,mailaddress
+                    print "  MAIL", dbentryfilename.split('-')[1],expiration,mailaddress
 
 
 
