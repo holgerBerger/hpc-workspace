@@ -180,7 +180,11 @@ int main(int argc, char **argv) {
 
     if (listflag) {
         BOOST_FOREACH(string dn, ws.getRestorable(username)) {
+            std::vector<std::string> splitted;
+            boost::split(splitted, dn, boost::is_any_of("-"));
             cout << dn << endl;
+            time_t t = atol(splitted[2].c_str());
+            cout << "\tunavailable since " << std::ctime(&t);
         }
     } else {
         if (check_name(name, username, real_username)) {
