@@ -88,9 +88,10 @@ WsDB::WsDB(const string _filename, const int _dbuid, const int _dbgid) : dbfilen
 /*
  * write db file after consuming an extension if not root
  */
-void WsDB::use_extension(const long _expiration)
+void WsDB::use_extension(const long _expiration, const string _mailaddress)
 {
     expiration = _expiration;
+    if (_mailaddress!="") mailaddress=_mailaddress;
     // if root does this, we do not use an extension
     if(getuid()!=0) extensions--;
     if(extensions<0) {

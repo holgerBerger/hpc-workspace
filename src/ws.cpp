@@ -202,8 +202,12 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
               cerr << "Info: extending workspace." << endl;
               syslog(LOG_INFO, "extending DB <%s> for user <%s>.", dbfilename.c_str(), username.c_str());
 
+              if(mailaddress!="") {
+                   cerr << "Info: changed mail address to " << mailaddress <<  endl;
+              }
+
               expiration = time(NULL)+duration*24*3600;
-              dbentry.use_extension(expiration);
+              dbentry.use_extension(expiration, mailaddress);
               extension = dbentry.getextension();
           } else {
               cerr << "Info: reusing workspace." << endl;
