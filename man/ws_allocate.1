@@ -70,7 +70,8 @@ display usage help text
 .TP
 \-x
 extend an existing workspace until today + DURATION days.
-The number of extensions can be limited.
+The number of extensions can be limited. Can be combined with -m to add a mail address
+to an existing workspace.
 .TP
 \-F
 select the filesystem to create the workspace in, there is always a default for this.
@@ -80,7 +81,7 @@ See
 for a list of available filesystems.
 .TP
 \-m
-mailaddress to send reminder mail to.
+mailaddress to send reminder mail to, can be combined with -x to add mailaddress to existing workspace.
 .TP
 \-r DAYS
 reminder email will be send DAYS days before the 
