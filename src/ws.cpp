@@ -208,6 +208,9 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
               if(mailaddress!="") {
                    cerr << "Info: changed mail address to " << mailaddress <<  endl;
               }
+              if(reminder!=0) {
+                   cerr << "Info: changed reminder setting." << endl;
+              }
 
               expiration = time(NULL)+duration*24*3600;
               dbentry.use_extension(expiration, mailaddress, reminder);
