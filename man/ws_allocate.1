@@ -71,7 +71,7 @@ display usage help text
 \-x
 extend an existing workspace until today + DURATION days.
 The number of extensions can be limited. Can be combined with -m to add a mail address
-to an existing workspace.
+and with -r to add reminder to existing workspaces.
 .TP
 \-F
 select the filesystem to create the workspace in, there is always a default for this.
@@ -84,7 +84,7 @@ for a list of available filesystems.
 mailaddress to send reminder mail to, can be combined with -x to add mailaddress to existing workspace.
 .TP
 \-r DAYS
-reminder email will be send DAYS days before the 
+reminder email will be send DAYS days before the, can be combined with -x to add reminder to existing workspace.
 .B
 workspace 
 will expire. This could be send in the night after the exact point in time, during a cleanup.

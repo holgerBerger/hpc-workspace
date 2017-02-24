@@ -31,6 +31,9 @@
  */
 
 
+#include <iostream>
+#include <fstream>
+#include <string>
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
@@ -207,7 +210,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
               }
 
               expiration = time(NULL)+duration*24*3600;
-              dbentry.use_extension(expiration, mailaddress);
+              dbentry.use_extension(expiration, mailaddress, reminder);
               extension = dbentry.getextension();
           } else {
               cerr << "Info: reusing workspace." << endl;

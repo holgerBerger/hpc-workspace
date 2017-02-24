@@ -76,7 +76,7 @@ public:
          const string acctcode, const int dbuid, const int dbgid,
          const int reminder, const string mailaddress, const string group);
 
-    void use_extension(const long expiration, const string mailaddress);
+    void use_extension(const long expiration, const string mailaddress, const int reminder);
 
 
     long int getexpiration() {
