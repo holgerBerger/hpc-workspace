@@ -53,12 +53,22 @@ void commandline(po::variables_map &opt, string &name, int &duration,
     // define all options
 
     po::options_description cmd_options( "\nOptions" );
-    cmd_options.add_options()
-            ("help,h", "produce help message")
-            ("version,V", "show version")
-            ("name,n", po::value<string>(&name), "workspace name")
-            ("filesystem,F", po::value<string>(&filesystem), "filesystem")
-    ;
+	if (getuid()==0) {
+		cmd_options.add_options()
+				("help,h", "produce help message")
+				("version,V", "show version")
+				("name,n", po::value<string>(&name), "workspace name")
+				("filesystem,F", po::value<string>(&filesystem), "filesystem")
+				("userworkspace", "release a user workspace")
+		;
+	} else {
+		cmd_options.add_options()
+				("help,h", "produce help message")
+				("version,V", "show version")
+				("name,n", po::value<string>(&name), "workspace name")
+				("filesystem,F", po::value<string>(&filesystem), "filesystem")
+		;
+	}
 
     // define options without names
     po::positional_options_description p;

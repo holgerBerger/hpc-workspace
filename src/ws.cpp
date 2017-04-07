@@ -348,7 +348,14 @@ void Workspace::release(string name) {
     int dbuid = config["dbuid"].as<int>();
     int dbgid = config["dbgid"].as<int>();
 
-    string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
+    string dbfilename;
+
+    if (opt.count("userworkspace") && (getuid()==0)) {
+        cerr << "not prefixing workspace name" << endl;
+        dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+name;
+    } else {
+        dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
+    }
 
     // does db entry exist?
     // cout << "file: " << dbfilename << endl;
