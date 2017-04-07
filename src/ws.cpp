@@ -348,14 +348,16 @@ void Workspace::release(string name) {
     int dbuid = config["dbuid"].as<int>();
     int dbgid = config["dbgid"].as<int>();
 
-    string dbfilename;
+    string userprefix;
 
     if (opt.count("userworkspace") && (getuid()==0)) {
         cerr << "not prefixing workspace name" << endl;
-        dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+name;
+        userprefix="";
     } else {
-        dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+username+"-"+name;
+        userprefix=username+"-";
     }
+
+    string dbfilename=config["workspaces"][filesystem]["database"].as<string>()+"/"+userprefix+name;
 
     // does db entry exist?
     // cout << "file: " << dbfilename << endl;
@@ -367,7 +369,7 @@ void Workspace::release(string name) {
 
         string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" +
                               config["workspaces"][filesystem]["deleted"].as<string>() +
-                              "/" + username + "-" + name + "-" + timestamp;
+                              "/" + userprefix + name + "-" + timestamp;
         // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
         raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID
@@ -388,7 +390,7 @@ void Workspace::release(string name) {
 
         string wstargetname = fs::path(wsdir).parent_path().string() + "/" +
                               config["workspaces"][filesystem]["deleted"].as<string>() +
-                              "/" + username + "-" + name + "-" + timestamp;
+                              "/" + userprefix + name + "-" + timestamp;
 
 /*
 		cout << "RELEASE:" <<
