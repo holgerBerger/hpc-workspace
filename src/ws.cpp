@@ -609,8 +609,8 @@ found:
             }
         }
 
-        // if we are root, we ignore the limits
-        if ( getuid()!=0 && opt["duration"].as<int>() > configduration ) {
+        // if we are root, we ignore the limits, check for negativ duration as well
+        if ( getuid()!=0 && ( (opt["duration"].as<int>() > configduration) || (opt["duration"].as<int>() < 0) ) ) {
             duration = configduration;
             cerr << "Error: Duration longer than allowed for this workspace" << endl;
             cerr << "       setting to allowed maximum of " << duration << endl;
