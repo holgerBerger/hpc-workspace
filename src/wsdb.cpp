@@ -90,15 +90,15 @@ WsDB::WsDB(const string _filename, const int _dbuid, const int _dbgid) : dbfilen
  */
 void WsDB::use_extension(const long _expiration, const string _mailaddress, const int _reminder)
 {
-    expiration = _expiration;
     if (_mailaddress!="") mailaddress=_mailaddress;
     if (_reminder!=0) reminder=_reminder;
     // if root does this, we do not use an extension
-    if(getuid()!=0) extensions--;
-    if(extensions<0) {
+    if((getuid()!=0) && (_expiration > expiration)) extensions--;
+    if((extensions<0) && (getuid()!=0)) {
         cerr << "Error: no more extensions." << endl;
         exit(-1);
     }
+    expiration = _expiration;
     write_dbfile();
 }
 
