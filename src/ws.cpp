@@ -133,7 +133,7 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
  *  create a workspace and its DB entry
  */
 void Workspace::allocate(const string name, const bool extensionflag, const int reminder, const string mailaddress, string user_option) {
-    string wsdir;
+    string wsdir, wsdir_nopostfix;
     int extension;
     long expiration;
 #ifdef LUACALLOUTS
@@ -145,7 +145,8 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         L = lua_open();
         luaL_openlibs(L);
         if(luaL_dofile(L, prefixcallout.c_str())) {
-            cerr << "Error: prefix callout script does not exist!" << endl;
+            cerr << "Error: prefix callout script <"<< prefixcallout << "> does not exist or other lua error!"  << endl;
+            cerr << lua_tostring(L, -1) << endl;
             prefixcallout = "";
         }
     }
@@ -270,17 +271,21 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         if (user_option.length()>0 && (user_option != username) && (getuid() != 0)) {
             wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
         } else {  // we are root and can change owner!
+            string randspace = spaces[rand()%spaces.size()];
+            wsdir_nopostfix = randspace+prefix;
             if (user_option.length()>0 && (getuid()==0)) {
-                wsdir = spaces[rand()%spaces.size()]+prefix+"/"+user_option+"-"+name;
+                wsdir = randspace+prefix+"/"+user_option+"-"+name;
             } else {
-                wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
+                wsdir = randspace+prefix+"/"+username+"-"+name;
             }
         }
 
         // make directory and change owner + permissions
         try {
             raise_cap(CAP_DAC_OVERRIDE);
+            mode_t oldmask = umask( 077 );    // as we create intermediate directories, we better take care of umask!!
             fs::create_directories(wsdir);
+            umask(oldmask);
             lower_cap(CAP_DAC_OVERRIDE, db_uid);
         } catch (...) {
             lower_cap(CAP_DAC_OVERRIDE, db_uid);
@@ -298,6 +303,10 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         }
 
         raise_cap(CAP_CHOWN);
+        if(prefix.length()>0) {  // in case we have a prefix, we change owner of that one
+            chown(wsdir_nopostfix.c_str(), tuid, tgid);
+        }
+
         if(chown(wsdir.c_str(), tuid, tgid)) {
             lower_cap(CAP_CHOWN, db_uid);
             cerr << "Error: could not change owner of workspace!" << endl;
@@ -388,9 +397,13 @@ void Workspace::release(string name) {
         // as a new workspace could have same name and releasing the new one would lead to a name
         // collision, so the timestamp is kind of generation label attached to a workspace
 
+
         string wstargetname = fs::path(wsdir).parent_path().string() + "/" +
                               config["workspaces"][filesystem]["deleted"].as<string>() +
                               "/" + userprefix + name + "-" + timestamp;
+       
+        // FIXME when a prefix is used, this is the wrong place!!!
+        // may be check in case of prefix callout .. and ../.. for config["workspaces"][filesystem]["deleted"] ??
 
 /*
 		cout << "RELEASE:" <<
