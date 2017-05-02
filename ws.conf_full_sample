@@ -1,35 +1,35 @@
 # this file illustrates and documents the workspace++ config files
-# this is a YAML file
+# this is a YAML file, view with tabstop=8
 # use ws_validate_config to validate a config file
-clustername: aName  # mandantory, a name to identify the system
-smtphost: localhost  # mandantory, a host accepting smtp connections to send emails
-mail_from: noreply@mydomain.de   # sender address for reminders
-default: lustre		# mandantory, the default workspace to choose
-duration: 10				# the max duration in days, if not specified in workspace
-maxextensions: 1 		# the number of extensions, if not specified in workspace
-# pythonpath: /path/to/my/python    # path which is appended to python search path for ws_list and other pythons scripts to find yaml
-dbuid: 9999				# mandantory
-dbgid: 9999				# mandantory
-admins: [hobel]		# list of admin users
-workspaces:				# now the list of the workspaces
-	lustre:				# name of workspace as shown with ws_list -l
-        keeptime: 1    # mandantory, time in days to keep workspaces after they expired
-		spaces:	[/lustre1/ws, /lustre2/ws]					# mandantory, list of directories
-		deleted: .removed									# mandantory, will be appended to spaces and database 
-															# to move deleted files to
-		database: /lustre-db				# mandantory, the DB directory, this is where DB files will end
-		duration: 30						# max duration, overwrites global value
-		groupdefault: [inst1,inst2]			# users of those groups will have this workspace as default
-		userdefault: [user1]				# those users will have this workspace as default
-		user_acl: [user1]					# as soon as user_acl or group_acl exist, 
-											# the workspace is access restricted to those users/groups listed
+clustername: aName		# mandantory, a name to identify the system
+smtphost: localhosti		# mandantory, a host accepting smtp connections to send emails
+mail_from: noreply@mydomain.de	# sender address for reminders
+default: lustre			# mandantory, the default workspace to choose
+duration: 10			# mantantory, the max duration in days, if not specified in workspace
+maxextensions: 1 		# mandantory, the number of extensions, if not specified in workspace
+pythonpath: /path/to/my/python	# optional, path which is appended to python search path for ws_list and other pythons scripts to find yaml
+dbuid: 9999			# mandantory
+dbgid: 9999			# mandantory
+admins: [hobel]			# list of admin users, for ws_list
+workspaces:		# now the list of the workspaces
+	lustre:			# name of workspace as shown with ws_list -l
+		keeptime: 1				# mandantory, time in days to keep workspaces after they expired
+		spaces:	[/lustre1/ws, /lustre2/ws]	# mandantory, list of directories
+		deleted: .removed			# mandantory, will be appended to spaces and database 
+							# to move deleted files to
+		database: /lustre-db			# mandantory, the DB directory, this is where DB files will end
+		duration: 30				# max duration, overwrites global value
+		groupdefault: [inst1,inst2]		# users of those groups will have this workspace as default
+		userdefault: [user1]			# those users will have this workspace as default
+		user_acl: [user1]			# as soon as user_acl or group_acl exist, 
+							# the workspace is access restricted to those users/groups listed
 		group_acl: [adm]
-		maxextensions: 5					# maximum extensios allowed
-        allocatable: no                     # do not allow new allocations in this workspace if no
-        extendable: no                      # do not allow extensions in this workspace if no
-        restorable: no                      # do not allow restores from this workspace if no
-	nfs:				# second workspace, minimum example
-        keeptime: 1    # mandantory, time in days to keep workspaces after they expired
+		maxextensions: 5			# maximum extensios allowed
+		allocatable: no				# do not allow new allocations in this workspace if no
+		extendable: no				# do not allow extensions in this workspace if no
+		restorable: no				# do not allow restores from this workspace if no
+	nfs:			# second workspace, minimum example
+        	keeptime: 1    				# mandantory, time in days to keep workspaces after they expired
 		database: /nfs-db
 		spaces: [/nfs1/ws]
 		deleted: .trash
