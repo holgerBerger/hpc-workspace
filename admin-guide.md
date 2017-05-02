@@ -23,7 +23,7 @@ The tools main components are user visible commands (ws_allocate, ws_release, ws
 the configuration file /etc/ws.conf and the administrators tools like the cleaner removing
 the workspaces.
 
-All configuration is in /etc/ws.conf
+All configuration is in /etc/ws.conf.
 
 ```
 admins: [root]			# root sees all workspaces with ws_list
@@ -41,4 +41,41 @@ workspaces:
     spaces: [/tmp/ws/ws1]	# pathes where workspaces are created, this is a list and path is picked randomly
 ```
 
-## more complex examples
+## installation
+
+the workspace tools use CMake for configuration and building, make sure it is installed.
+Furthermore it uses the boost components system, filesystem, regex and program_options.
+It also needs terminfo or ncurses, and lobyaml-cpp. You can use getyamlcpp.sh to get and compile
+a local libyaml-cpp into the source directory.
+
+The default is to use setuid executables for those parts of the tools needing it (ws_allocate, ws_release
+and ws_restore). You can enable a capability aware variant using ccmake, but this is not encouraged, most network
+filesystems and some linux distributions do not support capabilites. 
+
+Only the setuid version is under regression testing.
+
+Run ```cmake .``` and ```make -j 4``` to configure and compile the toolset.
+
+Copy the executables from ```bin``` to e.g. ```/usr/local/bin``` and the
+manpages from ```man``` to e.g. ```/usr/local/man/1```
+
+
+## getting started
+
+very simple ws.conf example:
+
+```
+admins: [root]			# root sees all workspaces with ws_list
+clustername: My Green Cluster	# some name for the cluster
+dbgid: 85			# a user id, this is the owner of some directories
+dbuid: 85			# a group id, this is the owner of some directories
+default: ws1			# the workspace to use for everybody
+workspaces:
+  ws1:				# name of the workspace
+    database: /tmp/ws/ws1-db	# location of the DB
+    deleted: .removed		# name of the subdirectory used for expired workspaces
+    duration: 30		# max lifetime of a workspace in days
+    keeptime: 7			# days to keep deleted data after expiration
+    maxextensions: 3		# maximum number of times a user can ask for a extension
+    spaces: [/tmp/ws/ws1]	# pathes where workspaces are created, this is a list and path is picked randomly
+```
