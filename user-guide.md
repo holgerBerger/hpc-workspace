@@ -1,5 +1,8 @@
 # Workspace user guide
 
+for latest version (which might not fit your installation) see
+    https://github.com/holgerBerger/hpc-workspace/blob/master/user-guide.md
+
 
 ## motivation
 

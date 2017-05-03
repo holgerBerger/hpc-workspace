@@ -32,3 +32,10 @@ $ ws_release MyData
 
 For the administrator, the **workspace** is a way to make sure users do not store their data
 forever on your fast storage, but have to stage it to slower and cheaper storage.
+
+
+For admin guide see
+https://github.com/holgerBerger/hpc-workspace/blob/master/admin-guide.md
+
+For user guide see
+https://github.com/holgerBerger/hpc-workspace/blob/master/user-guide.md
