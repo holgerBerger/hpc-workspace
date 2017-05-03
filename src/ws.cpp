@@ -517,6 +517,9 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         BOOST_FOREACH(string grp, groupnames) {
             if( find(group_acl.begin(), group_acl.end(), grp) != group_acl.end() ) {
                 userok=true;
+                if (opt.count("debug")) {
+                    cerr << "debug: secondary group found in group acl, access granted." << endl;
+                }
                 break;
             }
         }
