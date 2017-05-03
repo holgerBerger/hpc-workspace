@@ -7,7 +7,8 @@ with markup.
 ## motivation
 
 The motivation for the workspace tools was the need to loadbalance a large number of users
-over a medium size number of scratch/working filesystems in an HPC environment.
+over a medium size number of scratch/working filesystems in an HPC environment by the operations
+team without any manual interaction.
 
 The basic idea is 
 
@@ -18,13 +19,16 @@ The basic idea is
 This approach allows the administrator a flexible allocation of resources to users.
 It offers a level of redirection to hide details from the user, it offers a stable
 user interface to the user, and it allows e.g. migration of users between different filesystems,
-although only over medium to large time scales.
+although only over medium to large time scales, and it offers a way to get a little grip on the
+lifetime of data. If noone takes care of the data anymore, it will get deleted.
 
 Administrators can assign different filesystems to users based on user and group
-and can loadbalance over several filesystems.
+and can optionally loadbalance over several filesystems.
 
 Typically a workspace will be created
-- on a fast filesystem for temporay data, probably no backups, not intended for long time storage
+- on a fast filesystem for temporay data, probably no backups, not intended for long time storage,
+  probably faster and smaller than the typical home filesystem, think of a parallel filesystem like 
+  Lustre or GPFS/SpectrumScale/BeeGfs.
 - for the duration of a job or a job campaign
 
 Typically a workspace will be deleted
@@ -360,7 +364,7 @@ options are
 this is default, and enables code to use ```setuid()``` in the code.
 If this is not set, code uses ```libcap``` to change capabilities.
 This allows a finer privilege controll, but does not work on all filesystems, e.g.
-NFS and LUSTRE are known not to work.
+NFS and Lustre are known not to work.
 It works on local filesystems like ext4, so it could be used for single hosts.
 
 GPFS/SpectrumScaleFs is not yet tested, so not yet known if it works or not.
