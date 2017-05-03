@@ -12,8 +12,8 @@ over a medium size number of scratch/working filesystems in an HPC environment.
 The basic idea is 
 
 - a workspace is a directory created on behalf of the user on demand
-- the lifetime is limited, the directory will be deleted automaticall at some point in time
-- the location is determined by administrator and can contain a random component
+- the lifetime is limited, the directory will be deleted automatically at some point in time
+- the location is determined by the administrator and can contain a random component
 
 This approach allows the administrator a flexible allocation of resources to users.
 It offers a level of redirection to hide details from the user, it offers a stable
@@ -28,6 +28,7 @@ Typically a workspace will be created
 - for the duration of a job or a job campaign
 
 Typically a workspace will be deleted
+
 - because the job or campaign ended, and the users releases the directory, or
 - because the maximum lifetime of the workspace is reached
 
@@ -47,15 +48,18 @@ The tool sets main components are user visible commands (*ws_allocate*, *ws_rele
 the configuration file ```/etc/ws.conf``` and the administrator's tools like the cleaner removing
 the workspaces and other helpers like a validation tool for the configuration file.
 
+
 All configuration is in ```/etc/ws.conf```.
 
 ## installation
 
 the workspace tools use CMake for configuration and building, make sure it is installed, you will
 also need a C++ compiler, tested is GCC (on ubuntu and redhat).
+
 Furthermore it uses the boost components ```system filesystem regex program_options```.
 It also needs terminfo or ncurses, and libyaml-cpp. You can use ```getyamlcpp.sh``` to get and compile
 a local libyaml-cpp into the source directory.
+
 
 Complete list is
 - c++ compiler (no c++1x needed so far) (g++ and clang++ tested)
@@ -74,6 +78,7 @@ The default is to use setuid executables for those parts of the tools needing it
 and *ws_restore*). You can enable a capability aware variant using ccmake, but this is not encouraged, most network
 filesystems and some linux distributions do not support capabilities. 
 
+
 Only the setuid version is under regression testing.
 
 Run ```cmake .``` and ```make -j 4``` to configure and compile the tool set.
@@ -83,7 +88,7 @@ manpages from ```man``` to e.g. ```/usr/local/man/1```
 
 ## further preparation
 
-You will need a uid and gid which will server as owner of
+You will need a uid and gid which will serve as owner of
 the directories above the workspaces and formost for the DB entry directory.
 
 You can reuse an existing user and group, but be aware that anybody able to 
@@ -129,7 +134,7 @@ and he would be able to specify a lifetime of 30 days, not longer, and he would 
 3 times before it expires.
 
 For testing, as a user call ```ws_allocate BLA 1``` this should print a path to stdout and some info to stderr,
-so it can used in something like
+so it can be used in something like
 ```
 SCR=$(ws_allocate BLA 1)
 cd $SCR
@@ -161,8 +166,10 @@ Name of the cluster, shows up in some outputs and in email warning before expira
 
 #### smtphost
 
+
 FQDN of SMTP server (no authentification supported), this is used to send reminder mails for
 expiring workspaces and to send calendar entries.
+
 
 #### mail_from
 
@@ -204,8 +211,8 @@ Best use a dedicated UID or a UID of another daemon.
 
 #### dbgid
 
-GID of the db directorty, and GID the setuid tools use as long as not requiring UID 0.
-Can be a shared UID, but be aware the user using that UID can mess with the DB.
+GID of the db directorty, and GID the setuid tools use as long as not requiring GID 0.
+Can be a shared GID, but be aware the user using that GID can mess with the DB.
 Best use a dedicated GID or a GID of another daemon.
 
 #### admins
@@ -222,7 +229,7 @@ A list of of users who can see any workspace when calling ```ws_list```, not jus
 #### keeptime
 
 Time in days to keep data after it was expired. This is an option for the cleaner.
-The cleaner will move expired workspace to a hidden location, but not delete it immediatly.
+The cleaner will move expired workspace to a hidden location, but not delete it immediately.
 Users or administrators can still recover the data.
 After *keeptime* days, it will be removed and can not be recovered anymore.
 
@@ -244,12 +251,14 @@ for most filesystems in most cases.
 #### database
 
 the directory where the DB is stored. The DB is simply a directory having one YAML file per workspace.
+
 This directory should be owned by *dbuid* and *dbgid*. 
+
 
 If your filesystem is slow for metadata, it might make sense
 to put the DB on e.g. a NFS filesystem, but the DB is not accessed without any reason and
 should not be performance relevant, only ```ws_list``` might feel faster if the filesystem
-with the DB is fast.
+with the DB is fast in terms of iops and metadata
 
 #### duration
 
@@ -271,7 +280,7 @@ A user in this list gets this workspace as default if not choosen otherwise with
 This overrides the global default named *default*.
 
 Having group and user default rules with conflicts or having users in several workspaces in the userdefault list
-is not defined, it is upon the administrator to take care such situation does not occur.
+is not defined, it is upon the administrator to take care that such a situation does not occur.
 
 #### user_acl
 
@@ -314,7 +323,7 @@ users!
 #### maxextensions
 
 This specifies how often a user can extend a workspace, either with ```ws_extend``` or ```ws_allocate -x```.
-An extension is consumed if the new duration is later the current duration (in other words, you can shorten
+An extension is consumed if the new duration ends later than the current duration (in other words, you can shorten
 the lifetime even if you habe no extensions left) and if the user is not root.
 Root can always extend any workspace.
 
@@ -324,8 +333,10 @@ Root can always extend any workspace.
 Option for migrations.
 This allows to flag a workspace as being non-allocatable, by giving the value ```no```.
 Default is ```yes```.
+
 In that case, no new workspaces can be created, this can be used to phase a workspace out,
 by moving the default of users to e.g. another filesystem.
+
 
 #### extendable
 
