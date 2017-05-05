@@ -1,4 +1,4 @@
-a **workspace** is a directory created in behalf of a user, associated with a expiration date, to prevent disks from uncontrolled filling.
+a **workspace** is a directory created on behalf of a user, associated with an expiration date, to prevent disks from uncontrolled filling.
 The project provides user and admin tools to manage those directories.
 
 Example for usage:

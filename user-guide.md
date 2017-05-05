@@ -7,7 +7,7 @@ for latest version (which might not fit your installation) see
 ## motivation
 
 *workspaces* are a concept allowing the operations team of a hpc resource to offload some
-tasks to the user, and allow the user to keep easyer track of jobs directories.
+tasks to the user, and allow the user to keep easier track of jobs directories.
 It also allows the operations team to manage and load balance several filesystems,
 and hiding this fact from the users.
 
@@ -20,7 +20,7 @@ The *workspace* is the place where big data remains during a job or during a job
 It is probably not the place to store source files, and it is not the place to archive data at.
 
 Any *workspace* will be deleted at some point in time, so better keep track of them.
-But this propertie makes sure the nasty user from the other side of the floor does not use
+But this property makes sure the nasty user from the other side of the floor does not use
 all the space for ages.
 
 ## creation of a workspace
@@ -50,7 +50,8 @@ choose the location using ```ws_allocate -F <location> <ID> <DURATION>```.
 
 **Important:** Creating a workspace a second time with any of above lines
 is a no-operation, it always returns the same path, so it is safe and encourage
-to use such a line in batch jobs, no matter if the job was running before or not.
+to use such a line in batch jobs which are part of a series of jobs working
+on the same data, no matter if the job was running before or not.
 
 You can use ```ws_find <ID>``` instead as well, if you feel more comfortable.
 
@@ -71,18 +72,18 @@ See ```man ws_list``` for a description of all options.
 ```ws_release <ID>``` releases a workspace.
 Releasing means that the ID can be reused and the directory is not accessible any more, 
 but it does not delete the data immediately.
-The data is probably kept for a while if there is enough space and can be recovered as long
-as it is not finaly deleted using the ```ws_restore``` command.
+The data is probably kept for a while if there is enough space and can be recovered using 
+the ```ws_restore``` command as long as it is not finaly deleted. 
 
 The real deletion will probably take place during the nighttime.
 
-**Please note:** data in a released workspace can still be account for the quota usage!
+**Please note:** data in a released workspace can still account for the quota usage!
 In case the data is limiting you, delete the data before releasing the workspace, or if already
-released, restore it using ```ws_restore```, delete it and release it again.
+released, restore it using ```ws_restore```, delete it and release the workspace again.
 
 ## extending workspaces
 
-As each workspace has a expiration date, it's lifetime is limited.
+As each workspace has an expiration date, it's lifetime is limited.
 The operations team can allow you a certain number of extensions of a workspace,
 you can see the amount of available extensions with ```ws_list```.
 
