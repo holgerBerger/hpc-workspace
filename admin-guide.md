@@ -158,7 +158,7 @@ Users should not rely on that, this could change over time.
 ```ls -ld /tmp/ws/ws1/user-BLA``` should reveal that the user is owner of the directory and allowed
 to read and write, otherwise it sould be private.
 
-**Note**: Make sure the ```database``` directory is owned by ```dbuid``` and ```dbguid``` !
+**Note**: Make sure the ```database``` directory is owned by ```dbuid``` and ```dbgid``` !
 
 ## full breakdown of all options
 
@@ -299,8 +299,8 @@ is denied and no workspace directory can be created.
 any ACL! It is possible to have no global *default* directive, but make sure every user
 shows up in the default user or group list of exactly one workspace!
 
-**Hint**: To enable access controll, one of *user_acl* or *group_acl* has to be existing
-and non-empty! An invalid entry can be used to enable access controll, like a non-existing user or group.
+**Hint**: To enable access control, one of *user_acl* or *group_acl* has to be existing
+and non-empty! An invalid entry can be used to enable access control, like a non-existing user or group.
 An empty list does not enable access control, the workspace can still be accessed with an empty list by all
 users!
 
@@ -318,8 +318,8 @@ By default, only the primary group is considered.
 any ACL! It is possible to have no global *default* directive, but make sure every user
 shows up in the default user or group list of exactly one workspace!
 
-**Hint**: To enable access controll, one of *user_acl* or *group_acl* has to be existing
-and non-empty! An invalid entry can be used to enable access controll, like a non-existing user or group.
+**Hint**: To enable access control, one of *user_acl* or *group_acl* has to be existing
+and non-empty! An invalid entry can be used to enable access control, like a non-existing user or group.
 An empty list does not enable access control, the workspace can still be accessed with an empty list by all
 users!
 
@@ -363,7 +363,7 @@ options are
 
 this is default, and enables code to use ```setuid()``` in the code.
 If this is not set, code uses ```libcap``` to change capabilities.
-This allows a finer privilege controll, but does not work on all filesystems, e.g.
+This allows a finer privilege control, but does not work on all filesystems, e.g.
 NFS and Lustre are known not to work.
 It works on local filesystems like ext4, so it could be used for single hosts.
 
@@ -383,7 +383,7 @@ lists.
 
 disabled by default, *not fully working*. Allows to call a LUA script to change the path in ```ws_allocate```.
 This allows to insert components into the path, luke putting all users into a common directory for a group.
-there is some issues with this option with most tools, *do not use*, it is not in use.
+there are some issues with this option with most tools, *do not use*, it is not in use.
 
 ## internals
 
@@ -397,7 +397,7 @@ with a fixed order of lines in the file format.
 Nevertheless, the new tools can read the old files, which is handy for migration from
 the old tools to the new tools.
 
-There is three tools needing priviliges, this is ```ws_allocate```, ```ws_release``` and
+There are three tools needing priviliges, these are ```ws_allocate```, ```ws_release``` and
 ```ws_restore```.
 
 All three have to change owners and permissions of files.
@@ -405,15 +405,15 @@ All three have to change owners and permissions of files.
 All other tools are either for root only (in ```sbin```) or do not need privilges (```ws_list```, 
 ```ws_extend```, ```ws_find```, ```ws_register```, ```ws_send_ical```).
 
-Basic setup is having at leats two directory trees, one for the DB and one for the data.
+Basic setup is having at least two directory trees, one for the DB and one for the data.
 They can reside on different filesystems, but do not have to.
 They should not be included one in the other.
 
 A typical setup could look like
 
 ```
-/tmp/ws -+- ws1-db -+              (owned by dbuid:dbguid, permissions drwxr-xr-x)
-         |          +- .removed    (owned by dbuid:dbguid, permissions drwx------)
+/tmp/ws -+- ws1-db -+              (owned by dbuid:dbgid, permissions drwxr-xr-x)
+         |          +- .removed    (owned by dbuid:dbgid, permissions drwx------)
          |
          +- ws1-----+              (owned by anybody, permissions drwxr-xr-x)
                     +- .removed    (owned by anybody, permissions drwx------)
@@ -421,7 +421,7 @@ A typical setup could look like
 
 this is the structure as in the previous example config file.
 
-```ws1-db``` is be the ```database``` entry in the config file,
+```ws1-db``` is the ```database``` entry in the config file,
 ```ws1``` would appear in the ```spaces``` list, and ```deleted: .removed```
 configures the location of expired entries for both the spaces and the DB.
 
@@ -434,7 +434,7 @@ convention of ```username-workspacename```, so several users can have a workspac
 If a workspace is expired or released, both are moved into the ```deleted``` directory
 (called ```.removed``` in this example) and get a timestamp appended to the name.
 So there can be several generations of a workspace with the same name from the same user
-exist in the restorable location.
+that exist in parallel in the restorable location.
 
 As the moved data is still owned by the user, but in a non accessible location, it still
 is accounting for the users quota. Users who want to free the space have to restore the
@@ -443,11 +443,11 @@ data with ```ws_restore```, delete it, and release it again.
 It is the cleaners task to iterate through the spaces to find if there is anything looking
 like a workspace not having a valid DB entry, and iterate through the deleted workspace to check
 how old they are, and if they should still be kept or be deleted.
-Furthermore it checks the DB entries if any of them are expired, and moved the entry and the directory
+Furthermore it checks the DB entries if any of them are expired, and moves the entry and the directory
 to the deleted directory if needed.
 
 All the tools fall back from ```rename()``` if needed, and can operate across filesystem-boundaries,
-but this is ofc a lot slower and should be avoided. Some filesystems like NEC ScaTeFS or Lustre with DNE can have failing
+but this is of course a lot slower and should be avoided. Some filesystems like NEC ScaTeFS or Lustre with DNE can have failing
 ```rename()``` within a filesystem, this is covered.
 
 
