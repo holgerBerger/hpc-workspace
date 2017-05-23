@@ -23,7 +23,7 @@ A
 can be extended if allowed by the administrator, who might limit the number
 of extensions.
 
-A reminder email can be send to address MAILADDRESS (or address from ~/.ws_user.conf)
+A reminder email can be sent to address MAILADDRESS (or address from ~/.ws_user.conf)
 DAYS before the 
 .B
 workspace 
@@ -84,16 +84,16 @@ for a list of available filesystems.
 mailaddress to send reminder mail to, can be combined with -x to add mailaddress to existing workspace.
 .TP
 \-r DAYS
-reminder email will be send DAYS days before the, can be combined with -x to add reminder to existing workspace.
+reminder email will be sent DAYS days before the
 .B
 workspace 
-will expire. This could be send in the night after the exact point in time, during a cleanup.
+will expire, can be combined with -x to add reminder to existing workspace. This could be sent in the night after the exact point in time, during a cleanup.
 See 
 .B ws_send_ical 
-for a way to send calender entries.
+for a way to send calendar entries.
 .TP
 \-g 
-a group-workspace will be created, that is a workspace that can be seen by others members of current group with 
+a group-workspace will be created, that is a workspace that can be seen by other members of current group with 
 .B ws_list -g
 and the workspace itself is created group readable.
 
@@ -107,7 +107,7 @@ myworkspace 10
 .SH FILES
 .B
 ~/.ws_user.conf 
-can contain a email address to send reminders to, if no \-m option is used.
+can contain an email address to send reminders to, if no \-m option is used.
 
 .TP
 It has the form
