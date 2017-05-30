@@ -12,7 +12,8 @@ Release the
 .B workspace 
 NAME for the calling user.
 This command will make the workspace data unavailable to the user, and make NAME usable for a new
-workspace. 
+.B workspace
+. 
 
 The idea of the 
 .B workspace 
@@ -30,7 +31,9 @@ which will mark the
 .B workspace 
 for deletion and make the data unavailable.
 
-Deletion is probably a task done once a night and not immediately.
+Deletion is probably a task done once a night and not immediately. Data left in workspaces after releasing them therefore still accounts for disk quota if enabled by the administrator. If the user is short on available quota it makes sense to manually remove the content inside the workspace directory using
+.B rm
+before releasing the workspace.
 
 If a
 .B workspace
@@ -45,7 +48,7 @@ as he probaly can restore a workspace for some time, if disk space is not low.
 display usage help text
 .TP
 \-F
-select the filesystem to create the workspace in, there is always a default for this.
+select the filesystem to release the workspace from, there is always a default for this.
 See 
 .B ws_list
 \-l
