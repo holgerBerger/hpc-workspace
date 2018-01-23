@@ -128,7 +128,7 @@ void commandline(po::variables_map &opt, string &name, string &target,
         // validate workspace name against nasty characters    
         static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
         if (!regex_match(name, e)) {
-            cerr << "Error: Illegal workspace name, use characters and numbers, -,. and - only!" << endl;
+            cerr << "Error: Illegal workspace name, use characters and numbers, -,. and _ only!" << endl;
             exit(1);
         }
     } else if (!opt.count("list")) {
