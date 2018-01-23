@@ -144,3 +144,5 @@ for fs in legal:
     # break
 if not found:
     print >> sys.stderr, "Error: no such workspace"
+    sys.exit(-1)
+
