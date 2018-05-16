@@ -181,6 +181,12 @@ int main(int argc, char **argv) {
     int reminder = 0;
     po::variables_map opt;
 
+    // we only support C locale, if the used local is not installed on the system
+    // ws_allocate fails
+    setenv("LANG","C",1);
+    std::setlocale(LC_ALL, "C");
+    std::locale::global(std::locale("C"));
+
     // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, argc, argv);
 

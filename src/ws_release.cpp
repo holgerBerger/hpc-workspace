@@ -129,6 +129,12 @@ int main(int argc, char **argv) {
     po::variables_map opt;
     YAML::Node config, userconfig;
 
+    // we only support C locale, if the used local is not installed on the system
+    // ws_release fails
+    setenv("LANG","C",1);
+    std::setlocale(LC_ALL, "C");
+    std::locale::global(std::locale("C"));
+
     // check commandline
     commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
 
