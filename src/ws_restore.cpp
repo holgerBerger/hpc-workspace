@@ -97,6 +97,7 @@ void commandline(po::variables_map &opt, string &name, string &target,
     if (opt.count("help")) {
         cout << "Usage:" << argv[0] << ": [options] workspace_name target_name | -l" << endl;
         cout << cmd_options << "\n";
+		cout << "attention: the workspace_name argument is as printed by " << argv[0] << " -l not as printed by ws_list!" << endl;
         exit(1);
     }
 
