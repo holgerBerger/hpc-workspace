@@ -213,8 +213,12 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
                    cerr << "Info: changed reminder setting." << endl;
               }
 
-              expiration = time(NULL)+duration*24*3600;
-              dbentry.use_extension(expiration, mailaddress, reminder);
+              if (duration != 0) {
+                expiration = time(NULL)+duration*24*3600;
+                dbentry.use_extension(expiration, mailaddress, reminder);
+              } else {
+                dbentry.use_extension(-1, mailaddress, reminder);
+              }
               extension = dbentry.getextension();
           } else {
               cerr << "Info: reusing workspace." << endl;

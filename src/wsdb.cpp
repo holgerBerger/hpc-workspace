@@ -93,12 +93,14 @@ void WsDB::use_extension(const long _expiration, const string _mailaddress, cons
     if (_mailaddress!="") mailaddress=_mailaddress;
     if (_reminder!=0) reminder=_reminder;
     // if root does this, we do not use an extension
-    if((getuid()!=0) && (_expiration > expiration)) extensions--;
+    if((getuid()!=0) && (_expiration!=-1) && (_expiration > expiration)) extensions--;
     if((extensions<0) && (getuid()!=0)) {
         cerr << "Error: no more extensions." << endl;
         exit(-1);
     }
-    expiration = _expiration;
+    if (_expiration!=-1) {
+        expiration = _expiration;
+    }
     write_dbfile();
 }
 
