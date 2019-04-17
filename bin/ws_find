@@ -33,6 +33,7 @@
 
 """
 
+from __future__ import print_function
 
 import os, os.path, pwd, grp, sys
 import glob, time
@@ -49,7 +50,7 @@ def read_python_conf():
                     sys.path.insert(0,value)
                     break
                 else:
-                    print >> sys.stderr, "Warning: Invalid pythonpath in ws.conf"
+                    print("Warning: Invalid pythonpath in ws.conf", file=sys.stderr)
 
 read_python_conf()
 
@@ -82,7 +83,7 @@ if(options.filesystem):
     if options.filesystem in config['workspaces']:
         filesystems = [options.filesystem]
     else:
-        print "Error: no such filesystem."
+        print("Error: no such filesystem.")
         sys.exit(-1)
 else:
     filesystems = config['workspaces'].keys()
@@ -109,13 +110,13 @@ for f in filesystems:
 
 # list workspaces (only allowed ones), exit after done
 if options.list:
-    print 'available filesystems:'
+    print('available filesystems:')
     for i in legal:
-        print i
+        print(i)
     sys.exit(0)
 
 if len(args)==0:
-    print >>sys.stderr, usage
+    print(usage, file=sys.stderr)
     sys.exit(-1)
 
 wsname = args[0]
@@ -139,10 +140,10 @@ for fs in legal:
              f.close()
         except IOError:
              continue
-    print wsdir
+    print(wsdir)
     found=True
     # break
 if not found:
-    print >> sys.stderr, "Error: no such workspace"
+    print("Error: no such workspace", file=sys.stderr)
     sys.exit(-1)
 
