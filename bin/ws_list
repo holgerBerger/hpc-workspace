@@ -52,7 +52,7 @@ def read_python_conf():
             value=l.split(":")[1].strip()
             if key == 'pythonpath':
                 if os.path.isdir(value):
-                    sys.path.append(value)
+                    sys.path.insert(0,value)
                     break
                 else:
                     print >> sys.stderr, "Warning: Invalid pythonpath in ws.conf"
