@@ -322,8 +322,8 @@ for fs in fslist:
                 #print "  mail needed"
                 if not dryrun:
                     if mailaddress != "":
-                       send_reminder(smtphost, clustername, dbentryfilename.split('-')[1],expiration,mailaddress)
-                       print "  SEND_REMINDER", dbentryfilename.split('-')[1],expiration,mailaddress
+                       send_reminder(smtphost, clustername, '-'.join(dbentryfilename.split('-')[:-1]),expiration,mailaddress)
+                       print "  SEND_REMINDER", '-'.join(dbentryfilename.split('-')[:-1]),expiration,mailaddress
                 else:
                     print "  MAIL", dbentryfilename.split('-')[1],expiration,mailaddress
 
