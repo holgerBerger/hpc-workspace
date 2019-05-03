@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
             if (!terse) {
                 std::vector<std::string> splitted;
                 boost::split(splitted, dn, boost::is_any_of("-"));
-                time_t t = atol(splitted[2].c_str());
+                time_t t = atol(splitted[splitted.size()-1].c_str());
                 cout << "\tunavailable since " << std::ctime(&t);
             }
         }
