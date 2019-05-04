@@ -132,7 +132,7 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
 /*
  *  create a workspace and its DB entry
  */
-void Workspace::allocate(const string name, const bool extensionflag, const int reminder, const string mailaddress, string user_option) {
+void Workspace::allocate(const string name, const bool extensionflag, const int reminder, const string mailaddress, string user_option, const string comment) {
     string wsdir, wsdir_nopostfix;
     int extension;
     long expiration;
@@ -212,12 +212,15 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
               if(reminder!=0) {
                    cerr << "Info: changed reminder setting." << endl;
               }
+			  if(comment!="") {
+				   cerr << "Info: changed comment." << endl;
+			  }
 
               if (duration != 0) {
                 expiration = time(NULL)+duration*24*3600;
-                dbentry.use_extension(expiration, mailaddress, reminder);
+                dbentry.use_extension(expiration, mailaddress, reminder, comment);
               } else {
-                dbentry.use_extension(-1, mailaddress, reminder);
+                dbentry.use_extension(-1, mailaddress, reminder, comment);
               }
               extension = dbentry.getextension();
           } else {
@@ -341,7 +344,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
             grp=getgrgid(getegid());
             primarygroup = string(grp->gr_name);
         }
-        WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress, primarygroup);
+        WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress, primarygroup, comment);
 
         syslog(LOG_INFO, "created for user <%s> DB <%s> with space <%s>.", username.c_str(), dbfilename.c_str(), wsdir.c_str());
     }

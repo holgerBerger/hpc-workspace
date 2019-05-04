@@ -95,7 +95,7 @@ public:
     Workspace(const whichclient clientcode, const po::variables_map opt, const int _duration, string filesystem);
 
     // allocate a new workspace, create workspace and DB entry
-    void allocate(const string name, const bool extensionsflag, const int reminder, const string mailaddress, string user_option);
+    void allocate(const string name, const bool extensionsflag, const int reminder, const string mailaddress, string user_option, const string comment);
 
     // release an existing workspace, move workspace and DB entry
     void release(string name);

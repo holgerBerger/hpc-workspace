@@ -62,6 +62,7 @@ private:
     int reminder;
     string mailaddress;
     string group;
+	string comment;
 
     void read_dbfile();
 
@@ -73,9 +74,9 @@ public:
     // constructor to create a new DB entry
     WsDB(const string filename, const string wsdir, const long expiration, const int extensions,
          const string acctcode, const int dbuid, const int dbgid,
-         const int reminder, const string mailaddress, const string group);
+         const int reminder, const string mailaddress, const string group, const string comment);
 
-    void use_extension(const long expiration, const string mailaddress, const int reminder);
+    void use_extension(const long expiration, const string mailaddress, const int reminder, const string comment);
 
 
     long int getexpiration() {

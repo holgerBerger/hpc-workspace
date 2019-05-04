@@ -69,10 +69,10 @@ using namespace std;
  */
 WsDB::WsDB(const string _filename, const string _wsdir, const long int _expiration,
            const int _extensions, const string _acctcode, const int _dbuid,
-           const int _dbgid, const int _reminder, const string _mailaddress, const string _group)
+           const int _dbgid, const int _reminder, const string _mailaddress, const string _group, const string _comment)
     :
     dbfilename(_filename), wsdir(_wsdir), expiration(_expiration), extensions(_extensions),
-    acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress), group(_group)
+    acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress), group(_group), comment(_comment)
 {
     write_dbfile();
 }
@@ -88,10 +88,11 @@ WsDB::WsDB(const string _filename, const int _dbuid, const int _dbgid) : dbfilen
 /*
  * write db file after consuming an extension if not root
  */
-void WsDB::use_extension(const long _expiration, const string _mailaddress, const int _reminder)
+void WsDB::use_extension(const long _expiration, const string _mailaddress, const int _reminder, const string _comment)
 {
     if (_mailaddress!="") mailaddress=_mailaddress;
     if (_reminder!=0) reminder=_reminder;
+    if (_comment!="") comment=_comment;
     // if root does this, we do not use an extension
     if((getuid()!=0) && (_expiration!=-1) && (_expiration > expiration)) extensions--;
     if((extensions<0) && (getuid()!=0)) {
@@ -121,6 +122,7 @@ void WsDB::write_dbfile()
     if (group.length()>0) {
         entry["group"] = group;
     }
+	entry["comment"] = comment;
     Workspace::raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here
@@ -164,6 +166,8 @@ void WsDB::read_dbfile()
         acctcode = entry["acctcode"].as<string>();
         reminder = entry["reminder"].as<int>();
         mailaddress = entry["mailaddress"].as<string>();
+		comment = entry["comment"].as<string>();
+		// FIXME group missing here?
     } catch (YAML::BadSubscript) {
         // fallback to old db format
         ifstream entry (dbfilename.c_str());

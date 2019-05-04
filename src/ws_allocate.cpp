@@ -52,7 +52,7 @@ using namespace std;
  *  bad characters
  */
 void commandline(po::variables_map &opt, string &name, int &duration, string &filesystem, 
-                    bool &extension, int &reminder, string &mailaddress, string &user,
+                    bool &extension, int &reminder, string &mailaddress, string &user, string &comment,
                     int argc, char**argv) {
     // define all options
 
@@ -68,6 +68,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
             ("extension,x", "extend workspace")
             ("username,u", po::value<string>(&user), "username")
             ("group,g", "group workspace")
+            ("comment,c", po::value<string>(&comment), "comment")
     ;
 
     po::options_description secret_options("Secret");
@@ -178,6 +179,7 @@ int main(int argc, char **argv) {
     string filesystem;
     string mailaddress("");
     string user_option;
+	string comment;
     int reminder = 0;
     po::variables_map opt;
 
@@ -188,7 +190,7 @@ int main(int argc, char **argv) {
     std::locale::global(std::locale("C"));
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
-    commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, argc, argv);
+    commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, comment, argc, argv);
 
     openlog("ws_allocate", 0, LOG_USER); // SYSLOG
 
@@ -196,6 +198,6 @@ int main(int argc, char **argv) {
     Workspace ws(WS_Allocate, opt, duration, filesystem);
     
     // allocate workspace
-    ws.allocate(name, extensionflag, reminder, mailaddress, user_option);
+    ws.allocate(name, extensionflag, reminder, mailaddress, user_option, comment);
     
 }

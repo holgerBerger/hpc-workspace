@@ -77,6 +77,8 @@ def printentry(entry, admin, terse, verbose):
         remaining = entry.expiration-time.time()
         print '%d days %d hours' % (remaining/(24*3600),(remaining%(24*3600))/3600)
     if not terse:
+        if entry.comment != "":
+            print 4*' ','comment              :', entry.comment
         print 4*' ','creation time        :', time.ctime(entry.creation)
         print 4*' ','expiration date      :', time.ctime(entry.expiration)
         for s in spaces:
@@ -239,6 +241,7 @@ for fs in legal:
                 entry.workspace = content['workspace']
                 entry.reminder = int(content['reminder'])
                 entry.mailaddress = content['mailaddress']
+                entry.comment = content['comment']
             except TypeError:  
                 # fallback to old file format
                 f=open(ws)
