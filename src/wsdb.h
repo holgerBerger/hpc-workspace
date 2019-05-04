@@ -63,7 +63,6 @@ private:
     string mailaddress;
     string group;
 
-    void write_dbfile();
     void read_dbfile();
 
 
@@ -83,6 +82,10 @@ public:
         return expiration;
     }
 
+	void setexpiration(long int expiration_) {
+		expiration = expiration_;
+	}
+
     int getextension() {
         return extensions;
     }
@@ -90,6 +93,8 @@ public:
     string getwsdir() {
         return wsdir;
     }
+
+    void write_dbfile();
 };
 
 #endif

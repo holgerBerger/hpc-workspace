@@ -380,6 +380,10 @@ void Workspace::release(string name) {
 
         string timestamp = lexical_cast<string>(time(NULL));
 
+	// set expiration to now so it gets deleted earlier after beeing released
+	dbentry.setexpiration(time(NULL));
+	dbentry.write_dbfile();
+
         string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" +
                               config["workspaces"][filesystem]["deleted"].as<string>() +
                               "/" + userprefix + name + "-" + timestamp;
