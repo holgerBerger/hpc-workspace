@@ -2,6 +2,7 @@
 #   simple list test
 testname=${0%%test.sh}
 printf "%-60s " ${testname%%/}
+sudo -u usera ../bin/ws_release -F ws2 workspace1
 sudo -u usera ../bin/ws_list -t  2> $testname/err.res > $testname/out.res
 ret=$?
 
