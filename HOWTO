@@ -115,4 +115,4 @@ REMARKS
   FIND_LIBRARY(YAML libyaml-cpp.so)
   to
   FIND_LIBRARY(YAML no-libyaml-cpp.so)
-
+- with boost 1.70, use yaml-cpp-0.6.2 or later
