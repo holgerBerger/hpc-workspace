@@ -107,9 +107,9 @@ def deldir(dir):
         fullname=os.path.join(dir,obj)
         if os.path.isdir(fullname) and not os.path.islink(fullname):
             deldir(fullname)
-            time.sleep(0.1)
+            time.sleep(0.01)
             os.rmdir(fullname)
-            time.sleep(0.1)
+            time.sleep(0.01)
         else:
             if os.path.isfile(fullname):
                 size=os.path.getsize(fullname)
@@ -119,9 +119,9 @@ def deldir(dir):
             time.sleep(max(0.001,size*0.00000000001))
             count+=1
             if count%10==0:
-                time.sleep(0.1)
+                time.sleep(0.05)
             if count%100==0:
-                time.sleep(0.2)
+                time.sleep(0.1)
                 count=0
 
 # getting old workspace database informations (path and expiration date)
