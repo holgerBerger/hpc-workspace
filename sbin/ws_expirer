@@ -353,6 +353,12 @@ for fs in fslist:
         if workspace == "" or expiration == 0:
             print "  FAILED", dbentryfilename
             continue
+        # take time of release from filename
+        released = dbentryfilename.split("-")[-1]
+        try:
+            expiration = int(released)
+        except ValueError:
+            pass 
         if time.time() > expiration + keeptime*24*3600:
             print "  deleting", dbentryfilename
             # remove the DB entry
