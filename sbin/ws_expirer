@@ -323,7 +323,7 @@ for fs in fslist:
                 swsname = os.path.basename(entry.name)[os.path.basename(entry.name).find('-')+1:]
                 if not dryrun:
                     if mailaddress != "":
-                        send_reminder(smtphost, clustername, swsname, expiration, mailaddress)
+                       send_reminder(smtphost, clustername, swsname, expiration, mailaddress)
                        print "  SEND_REMINDER", swsname, expiration, mailaddress
                 else:
                     print "  MAIL", swsname, expiration, mailaddress
