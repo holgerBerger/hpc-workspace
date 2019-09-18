@@ -342,6 +342,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         if (opt.count("group")) {
             struct group *grp;
             grp=getgrgid(getegid());
+            // grp should be ok here, was validated before
             primarygroup = string(grp->gr_name);
         }
         WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress, primarygroup, comment);
@@ -473,6 +474,10 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
     }
     // get current group
     grp=getgrgid(getegid());
+    if (grp==NULL) {
+        cerr << "Error: user has no group anymore!" << endl;
+        exit(-1);
+    }
     primarygroup=string(grp->gr_name);
 
     if (opt.count("debug")) {
@@ -963,6 +968,9 @@ std::vector<string> Workspace::get_valid_fslist() {
   }
   // get current group
   grp=getgrgid(getegid());
+  if(grp==NULL) {
+       cerr << "Error: user has no group anymore!" << endl;
+  }
   primarygroup=string(grp->gr_name);
 
   // iterate over all filesystems and search the ones allowed for current user
