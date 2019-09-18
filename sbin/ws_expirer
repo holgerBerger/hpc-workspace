@@ -320,7 +320,7 @@ for fs in fslist:
             print "  keeping", dbentryfilename
             if time.time() > (expiration - (reminder*(24*3600))):
                 #print "  mail needed"
-                swsname = os.path.basename(entry.name)[os.path.basename(entry.name).find('-')+1:]
+                swsname = os.path.basename(dbentryfilename)[os.path.basename(dbentryfilename).find('-')+1:]
                 if not dryrun:
                     if mailaddress != "":
                        send_reminder(smtphost, clustername, swsname, expiration, mailaddress)
