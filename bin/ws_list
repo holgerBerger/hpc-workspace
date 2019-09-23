@@ -241,7 +241,10 @@ for fs in legal:
                 entry.workspace = content['workspace']
                 entry.reminder = int(content['reminder'])
                 entry.mailaddress = content['mailaddress']
-                entry.comment = content['comment']
+                try:
+                    entry.comment = content['comment']
+                except:
+                    entry.comment = ""
             except TypeError:  
                 # fallback to old file format
                 f=open(ws)
