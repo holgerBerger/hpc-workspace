@@ -310,9 +310,12 @@ for fs in fslist:
 
             # FIXME this could fail on scatefs, should fallback to 'mv'
             if not dryrun:
-                os.rename(workspace, os.path.join(os.path.dirname(workspace),
-                                workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
-                print "  OS.RENMAE", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp)
+                try:
+                    os.rename(workspace, os.path.join(os.path.dirname(workspace),
+                                    workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
+                    print "  OS.RENAME", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp)
+                except:  
+                    print "  OS.RENAME FAILED", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp)
             else:
                 print "  MV", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp)
 
