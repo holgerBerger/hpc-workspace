@@ -222,7 +222,10 @@ for fs in legal:
                 if not mode & stat.S_IXUSR:
                     continue
                 else:
-                    content = yaml.load(open(ws))
+                    try:
+                        content = yaml.load(open(ws))
+                    except IOError:
+                        continue
                     wsgroup = content['group']
                     if group != wsgroup:
                         continue
@@ -232,7 +235,10 @@ for fs in legal:
         else:
             entry = struct()
             entry.name = ws
-            content = yaml.load(open(ws))
+            try:
+                content = yaml.load(open(ws))
+            except IOError:
+                continue
             entry.creation = os.path.getctime(ws)
             try:
                 entry.expiration = int(content['expiration'])
