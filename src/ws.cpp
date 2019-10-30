@@ -794,7 +794,7 @@ void Workspace::restore(const string name, const string target, const string use
         if (ret == 0) {
             unlink(dbfilename.c_str());
             syslog(LOG_INFO, "restore for user <%s> from <%s> to <%s> done, removed DB entry <%s>.", username.c_str(), wssourcename.c_str(), targetwsdir.c_str(), dbfilename.c_str());
-            cerr << "Info: restore successfull, database entry removed." << endl;
+            cerr << "Info: restore successful, database entry removed." << endl;
         } else {
             syslog(LOG_INFO, "restore for user <%s> from <%s> to <%s> failed, kept DB entry <%s>.", username.c_str(), wssourcename.c_str(), targetwsdir.c_str(), dbfilename.c_str());
             cerr << "Error: moving data failed, database entry kept!" << endl;
