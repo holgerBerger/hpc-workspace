@@ -16,7 +16,7 @@
     - more options for administrator (configured and root)
         + list expired/moved workspaces
 
-    (c) Holger Berger 2013, 2014, 2015, 2016, 2017
+    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
 
@@ -115,7 +115,7 @@ if os.geteuid()==0 or os.getuid()==0:
     admin = True
 
 # option configuration
-parser = OptionParser()
+parser = OptionParser(usage="Usage: %prog [options] [pattern]")
 parser.add_option('-F', '--filesystem', dest='filesystem', help='filesystem to list workspaces from')
 parser.add_option('-g', action="store_true", dest='groupws', default=False, help='also list group workspaces')
 parser.add_option('-l', action="store_true", dest='filesystemlist', default=False, help='list available filesystems')
@@ -197,23 +197,29 @@ for f in legal:
 sort = options.sort_remaining or options.sort_creation or options.sort_name
 entrylist = []
 for fs in legal:
+
+    if len(args) == 1:
+        filepattern = args[0]
+    else:
+        filepattern = "*"
+
     if admin:
         if not options.expired:
             if options.user:
-                pattern = os.path.join(config['workspaces'][fs]['database'],options.user+'-*')
+                pattern = os.path.join(config['workspaces'][fs]['database'],options.user+'-'+filepattern)
             else:
-                pattern = os.path.join(config['workspaces'][fs]['database'],'*-*')
+                pattern = os.path.join(config['workspaces'][fs]['database'],'*-'+filepattern)
         else:
             if options.user:
                 pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],
-                                                                                                options.user+'-*')
+                                                                                                options.user+'-'+filepattern)
             else:
-                pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],'*-*')
+                pattern = os.path.join(config['workspaces'][fs]['database'],config['workspaces'][fs]['deleted'],'*-'+filepattern)
     else:
         if options.groupws:
-            pattern = os.path.join(config['workspaces'][fs]['database'],'*-*')
+            pattern = os.path.join(config['workspaces'][fs]['database'],'*-'+filepattern)
         else:
-            pattern = os.path.join(config['workspaces'][fs]['database'],user+'-*')
+            pattern = os.path.join(config['workspaces'][fs]['database'],user+'-'+filepattern)
 
     for ws in glob.glob(pattern):
         if options.groupws:
