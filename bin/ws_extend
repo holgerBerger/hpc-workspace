@@ -4,7 +4,7 @@ if [ $# -eq 2 ]
 then
     ws_allocate -x $1 $2
 else
-    if [ $# -eq 4 ]
+    if [ $# -eq 4 -a $1 = "-F" ]
     then
     	ws_allocate -x $1 $2 $3 $4
     else
