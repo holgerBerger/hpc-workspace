@@ -1,11 +1,11 @@
-.TH ws_list 1 "March 2013" "USER COMMANDS"
+.TH ws_list 1 "October 2019" "USER COMMANDS"
 
 .SH NAME
 ws_list \- list workspaces
 
 .SH SYNOPSIS
 .B ws_list
-[\-h] [\-F FILESYSTEM] [\-g] [\-l] [\-s] [\-v] [\-s] [\-r] [\-N] [\-R] [\-C] 
+[\-h] [\-F FILESYSTEM] [\-g] [\-l] [\-s] [\-v] [\-s] [\-r] [\-N] [\-R] [\-C] [PATTERN]
 
 .SH DESCRIPTION
 List 
@@ -13,7 +13,7 @@ List
 of the calling user.
 The output can be restricted to 
 .B workspaces
-in a certain FILESYSTEM, and can be sorted according to different criterias.
+in a certain FILESYSTEM, matching a certain PATTERN, and can be sorted according to different criterias.
 
 
 The idea of the 
@@ -89,7 +89,8 @@ list all workspaces, sorted by remaining time, shortest first:
 .TP
 list all workspaces, sorted by creation time, oldest last:
 .B ws_list -R -r
-
+list a specific workspace
+.B ws_list my_workspace
 
 .SH AUTHOR
 Written by Holger Berger
