@@ -178,6 +178,12 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
               dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+user_option+"-"+name;
           } else {
               dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+username+"-"+name;
+              if(extensionflag) {
+                  if(!fs::exists(dbfilename)) {
+                      cerr << "Error: workspace does not exist, can not be extended!" << endl;
+                      exit(-1);
+                  }
+              }
           }
       }
 
@@ -244,6 +250,12 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
                 dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+user_option+"-"+name;
             } else {
                 dbfilename=config["workspaces"][filesystem]["database"].as<string>() + "/"+username+"-"+name;
+                if(extensionflag) {
+                      if(!fs::exists(dbfilename)) {
+                          cerr << "Error: workspace does not exist, can not be extended!" << endl;
+                          exit(-1);
+                      }
+                }
             }
         }
 
