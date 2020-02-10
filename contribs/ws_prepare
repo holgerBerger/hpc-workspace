@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 # provided by Yvan Arnaud to prepare workspace according to config
 
@@ -56,7 +56,7 @@ else:
 print("preparing directories from",filename)
 
 try:
-    workspaces=config["workspaces"].keys()
+    workspaces=list(config["workspaces"].keys())
     print("workspaces:",)
     for i in workspaces: print(i,)
     print()
@@ -94,12 +94,12 @@ for ws in workspaces:
             print(" ERROR: no target for deletion defined in workspace", ws)
         if not os.path.exists(sp):
             print(" INFO: workspace directory <%s> does not exist. It will be created." % sp)
-            os.makedirs(sp, 0755)
+            os.makedirs(sp, 0o755)
         else:
             print(" WARNING: workspace directory <%s> does already exist!" % sp)
         if not os.path.exists(os.path.join(sp,config["workspaces"][ws]["deleted"])):
             print(" INFO: deleted workspace directory <%s> does not exist. It will be created." % os.path.join(sp,config["workspaces"][ws]["deleted"]))
-            os.makedirs(os.path.join(sp,config["workspaces"][ws]["deleted"]), 0755)
+            os.makedirs(os.path.join(sp,config["workspaces"][ws]["deleted"]), 0o755)
         else:
             print(" WARNING: deleted workspace directory <%s> does already exist!" % os.path.join(sp,config["workspaces"][ws]["deleted"]))
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
 """
     workspace++
@@ -16,7 +16,7 @@
     - more options for administrator (configured and root)
         + list expired/moved workspaces
 
-    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019
+    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
 

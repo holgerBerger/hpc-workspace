@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 """
     workspace++
@@ -10,8 +10,8 @@
     to be called from a cronjob to expire workspaces, does delete the data as well
     Reads new YAML configuration files and new YAML workspace database.
 
-    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019
-    (c) Bernd Krischok 2017
+    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
+    (c) Bernd Krischok 2017, 2020
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
     and Adrian Reber
@@ -31,6 +31,7 @@
 
 """
 
+from __future__ import print_function
 import os,sys
 import glob
 import time
@@ -50,7 +51,7 @@ def read_python_conf():
                     sys.path.append(value)
                     break
                 else:
-                    print >> sys.stderr, "Warning: Invalid pythonpath in ws.conf"
+                    print("Warning: Invalid pythonpath in ws.conf", file=sys.stderr)
 
 read_python_conf()
 import yaml
@@ -102,12 +103,12 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
         s.sendmail(sender, recipients, msg.as_string())
         s.quit()
     except:  # something went wrong 
-        print "could not send reminder email, may be invalid address?", recipients
+        print("could not send reminder email, may be invalid address?", recipients)
 
 # slow recursive deleter, to avoid high meta data pressure on servers
 def deldir(dir):
     global count
-    print "   deldir",dir
+    print("   deldir",dir)
     if not os.path.exists(dir): return
     for obj in os.listdir(dir):
         fullname=os.path.join(dir,obj)
@@ -183,7 +184,7 @@ def processOpts():
                           help="dryrun or really clean (default is dryrun)")
     (options, args) = parser.parse_args()
     if not options:
-       print "*** FATAL: No options defined. ***"
+       print("*** FATAL: No options defined. ***")
        sys.exit(1)
 
     return options
@@ -191,7 +192,7 @@ def processOpts():
 
 
 if os.getuid()!=0:
-    print >> sys.stderr, "Error: you are not root."
+    print("Error: you are not root.", file=sys.stderr)
     sys.exit(-1)
 
 # load config file
@@ -203,7 +204,7 @@ clustername = config['clustername']
 
 start = time.time()
 
-print "start of expirer run", time.ctime()
+print("start of expirer run", time.ctime())
 
 dryrun = True
 
@@ -219,7 +220,7 @@ else:
    fslist=opts.fslist
 
 if fslist == []:
-   print "Error: no workspace defined"
+   print("Error: no workspace defined")
    sys.exit(2)
 
 if not opts.cleaner:
@@ -228,9 +229,9 @@ else:
    dryrun = False
 
 if not dryrun:
-   print "really cleaning ..."
+   print("really cleaning ...")
 else:
-   print "simulate cleaning ... (dryrun)"
+   print("simulate cleaning ... (dryrun)")
 
 
 #dryrun = True
@@ -242,41 +243,41 @@ for fs in fslist:
         dbdir = config["workspaces"][fs]["database"]
         spaces = config["workspaces"][fs]["spaces"]	
         dbentries = glob.glob(os.path.join(dbdir,"*-*"))
-        dbentrynames = map(os.path.basename, dbentries)
+        dbentrynames = list(map(os.path.basename, dbentries))
         dbentriesws=get_dbentriesws(dbentries)
-        dbentryworkspaces=map(os.path.basename, dbentriesws)
+        dbentryworkspaces=list(map(os.path.basename, dbentriesws))
         workspacedelprefix = config["workspaces"][fs]["deleted"]
-        print " checking for stray workspaces for", fs, dbdir, spaces
+        print(" checking for stray workspaces for", fs, dbdir, spaces)
         for space in spaces:
                 for ws in glob.glob(os.path.join(space,"*-*")):
                         #if os.path.basename(ws) not in dbentrynames:
                         if os.path.basename(ws) not in dbentryworkspaces:
-                                print "  stray workspace", ws
+                                print("  stray workspace", ws)
                                 # FIXME delete it
                                 # FIXME this could fail on scatefs, should fallback to 'mv'
                                 timestamp=str(int(time.time()))
                                 if not dryrun:
                                     os.rename(ws, os.path.join(os.path.dirname(ws), workspacedelprefix,os.path.basename(ws)+"-"+timestamp))
-                                    print "  OS.RENAME", ws, os.path.join(os.path.dirname(ws), workspacedelprefix,os.path.basename(ws)+"-"+timestamp)
+                                    print("  OS.RENAME", ws, os.path.join(os.path.dirname(ws), workspacedelprefix,os.path.basename(ws)+"-"+timestamp))
                                 else:
-                                    print "  MV" , ws, os.path.join(os.path.dirname(ws), workspacedelprefix,os.path.basename(ws)+"-"+timestamp)
+                                    print("  MV" , ws, os.path.join(os.path.dirname(ws), workspacedelprefix,os.path.basename(ws)+"-"+timestamp))
                         else:
-                                print "  valid workspace", ws
+                                print("  valid workspace", ws)
 
         # second for removed workspaces
         dbdelentries = glob.glob(os.path.join(dbdir,config["workspaces"][fs]["deleted"],"*-*"))
-        dbdelentrynames = map(os.path.basename, dbdelentries)
+        dbdelentrynames = list(map(os.path.basename, dbdelentries))
         for space in spaces:
                 for ws in glob.glob(os.path.join(space,config["workspaces"][fs]["deleted"],"*-*")):	
                         if os.path.basename(ws) not in dbdelentrynames:
-                                print "  stray removed workspace", ws
+                                print("  stray removed workspace", ws)
                                 if not dryrun:
                                     deldir(os.path.join(os.path.dirname(ws), workspacedelprefix, os.path.basename(ws)))
-                                    print "  DELDIR", os.path.join(os.path.dirname(ws), workspacedelprefix, os.path.basename(ws))
+                                    print("  DELDIR", os.path.join(os.path.dirname(ws), workspacedelprefix, os.path.basename(ws)))
                                 else:
-                                    print "  RM", os.path.join(os.path.dirname(ws), workspacedelprefix, os.path.basename(ws))
+                                    print("  RM", os.path.join(os.path.dirname(ws), workspacedelprefix, os.path.basename(ws)))
                         else:
-                                print "  valid removed workspace", ws
+                                print("  valid removed workspace", ws)
 
 
 # expire the workspaces by moving them into deleted spaces, dbentry + workspace itself
@@ -286,7 +287,7 @@ for fs in fslist:
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     workspacedelprefix = config["workspaces"][fs]["deleted"]
     dbdir = config["workspaces"][fs]["database"]
-    print " checking for workspaces to be expired for", fs, dbdir, spaces
+    print(" checking for workspaces to be expired for", fs, dbdir, spaces)
     for dbentryfilename in glob.glob(os.path.join(dbdir,"*-*")):
         reminder = 0
         mailaddress = ""
@@ -303,39 +304,39 @@ for fs in fslist:
         expiration = int(dbentry['expiration'])
         workspace = dbentry['workspace']
         if workspace == "" or expiration == 0:
-            print "  FAILED", dbentryfilename
+            print("  FAILED", dbentryfilename)
             continue
         if time.time() > expiration:
-            print "  expiring", dbentryfilename
+            print("  expiring", dbentryfilename)
             timestamp=str(int(time.time()))
             if not dryrun:
                 os.rename(dbentryfilename, os.path.join(dbdeldir, os.path.basename(dbentryfilename))+"-"+timestamp)
-                print "  OS.RENAME", dbentryfilename, os.path.join(dbdeldir, os.path.basename(dbentryfilename))+"-"+timestamp
+                print("  OS.RENAME", dbentryfilename, os.path.join(dbdeldir, os.path.basename(dbentryfilename))+"-"+timestamp)
             else:
-                print "  MV", dbentryfilename, os.path.join(dbdeldir, os.path.basename(dbentryfilename))+"-"+timestamp
+                print("  MV", dbentryfilename, os.path.join(dbdeldir, os.path.basename(dbentryfilename))+"-"+timestamp)
 
             # FIXME this could fail on scatefs, should fallback to 'mv'
             if not dryrun:
                 try:
                     os.rename(workspace, os.path.join(os.path.dirname(workspace),
                                     workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
-                    print "  OS.RENAME", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp)
+                    print("  OS.RENAME", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
                 except:  
-                    print "  OS.RENAME FAILED", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp)
+                    print("  OS.RENAME FAILED", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
             else:
-                print "  MV", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp)
+                print("  MV", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
 
         else:
-            print "  keeping", dbentryfilename
+            print("  keeping", dbentryfilename)
             if time.time() > (expiration - (reminder*(24*3600))):
                 #print "  mail needed"
                 swsname = os.path.basename(dbentryfilename)[os.path.basename(dbentryfilename).find('-')+1:]
                 if not dryrun:
                     if mailaddress != "":
                        send_reminder(smtphost, clustername, swsname, expiration, mailaddress)
-                       print "  SEND_REMINDER", swsname, expiration, mailaddress
+                       print("  SEND_REMINDER", swsname, expiration, mailaddress)
                 else:
-                    print "  MAIL", swsname, expiration, mailaddress
+                    print("  MAIL", swsname, expiration, mailaddress)
 
 
 
@@ -344,7 +345,7 @@ for fs in fslist:
 for fs in fslist:
     spaces = config["workspaces"][fs]["spaces"]
     dbdir = config["workspaces"][fs]["database"]
-    print " checking for expired workspaces for", fs, dbdir, spaces
+    print(" checking for expired workspaces for", fs, dbdir, spaces)
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     keeptime = config["workspaces"][fs]["keeptime"]
     workspacedelprefix = config["workspaces"][fs]["deleted"]
@@ -360,7 +361,7 @@ for fs in fslist:
            expiration = int(dbentry['expiration'])
            workspace = dbentry['workspace']
         if workspace == "" or expiration == 0:
-            print "  FAILED", dbentryfilename
+            print("  FAILED", dbentryfilename)
             continue
         # take time of release from filename
         released = dbentryfilename.split("-")[-1]
@@ -369,31 +370,31 @@ for fs in fslist:
         except ValueError:
             pass 
         if time.time() > expiration + keeptime*24*3600:
-            print "  deleting", dbentryfilename
+            print("  deleting", dbentryfilename)
             # remove the DB entry
             if not dryrun:
                 os.unlink(dbentryfilename)
-                print " OS.UNLINK", dbentryfilename
+                print(" OS.UNLINK", dbentryfilename)
             else:
-                print "  RM",dbentryfilename
+                print("  RM",dbentryfilename)
             # remove the workspace directory
             if not dryrun:
                 deldir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
-                print "  DELDIR", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename))
+                print("  DELDIR", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
             else:
-                print "  RM", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename))
+                print("  RM", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
             try:
                 if not dryrun:
                     os.rmdir(os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
-                    print "  OS.RMDIR", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename))
+                    print("  OS.RMDIR", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
                 else:
-                    print "  RM", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename))
+                    print("  RM", os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)))
             except:
-              print "  does not exist"
+              print("  does not exist")
         else:
-            print "  moved but restorable",dbentryfilename
+            print("  moved but restorable",dbentryfilename)
 
 
 
 end = time.time()
-print "end of expirer run after ",end-start,"seconds at",time.ctime()
+print("end of expirer run after ",end-start,"seconds at",time.ctime())
