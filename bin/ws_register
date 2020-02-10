@@ -36,6 +36,7 @@
 
 """
 
+from __future__ import print_function
 
 import os, os.path, pwd, grp, sys
 import glob, time
@@ -52,7 +53,7 @@ def read_python_conf():
                     sys.path.insert(0,value)
                     break
                 else:
-                    print >> sys.stderr, "Warning: Invalid pythonpath in ws.conf"
+                    print("Warning: Invalid pythonpath in ws.conf", file=sys.stderr)
 
 read_python_conf()
 
@@ -79,7 +80,7 @@ parser.add_option('-F', '--filesystem', dest='filesystem', help='filesystem to s
 (options, args) = parser.parse_args()
 
 if len(args)==0:
-    print >> sys.stderr, usage
+    print(usage, file=sys.stderr)
     sys.exit(-1)
 
 dirname = args[0]
@@ -90,7 +91,7 @@ if(options.filesystem):
     if options.filesystem in config['workspaces']:
         filesystems = [options.filesystem]
     else:
-        print >> sys.stderr, "Error: no such filesystem."
+        print("Error: no such filesystem.", file=sys.stderr)
         sys.exit(-1)
 else:
     filesystems = config['workspaces'].keys()
@@ -145,5 +146,5 @@ for fs in legal:
             if not f in keeplist:
                 os.unlink(f)
             else:
-                print "keep",f
+                print("keep",f)
 

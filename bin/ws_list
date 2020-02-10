@@ -35,6 +35,8 @@
 
 """
 
+from __future__ import print_function
+
 import os, os.path, pwd, grp, sys, stat
 import glob, time
 from optparse import OptionParser
@@ -55,7 +57,7 @@ def read_python_conf():
                     sys.path.insert(0,value)
                     break
                 else:
-                    print >> sys.stderr, "Warning: Invalid pythonpath in ws.conf"
+                    print("Warning: Invalid pythonpath in ws.conf", file=sys.stderr)
 
 read_python_conf()
 
@@ -66,29 +68,29 @@ import yaml
 def printentry(entry, admin, terse, verbose):
     if verbose: terse = False
     if admin:
-        print "id:", os.path.basename(entry.name)
+        print("id:", os.path.basename(entry.name))
     else:
-        print "id:", os.path.basename(entry.name)[os.path.basename(entry.name).find('-')+1:]
-    print 4*' ','workspace directory  :', entry.workspace    
-    print 4*' ','remaining time       :',
+        print("id:", os.path.basename(entry.name)[os.path.basename(entry.name).find('-')+1:])
+    print(4*' ','workspace directory  :', entry.workspace)
+    print(4*' ','remaining time       :', end=' ')
     if time.time() > entry.expiration:
-        print 'expired'
+        print('expired')
     else:
         remaining = entry.expiration-time.time()
-        print '%d days %d hours' % (remaining/(24*3600),(remaining%(24*3600))/3600)
+        print('%d days %d hours' % (remaining/(24*3600),(remaining%(24*3600))/3600))
     if not terse:
         if entry.comment != "":
-            print 4*' ','comment              :', entry.comment
-        print 4*' ','creation time        :', time.ctime(entry.creation)
-        print 4*' ','expiration date      :', time.ctime(entry.expiration)
+            print(4*' ','comment              :', entry.comment)
+        print(4*' ','creation time        :', time.ctime(entry.creation))
+        print(4*' ','expiration date      :', time.ctime(entry.expiration))
         for s in spaces:
             if entry.workspace.startswith(s):
-                print 4*' ','filesystem name      :', space2fs[s]
-    print 4*' ','available extensions :', entry.extensions
+                print(4*' ','filesystem name      :', space2fs[s])
+    print(4*' ','available extensions :', entry.extensions)
     if verbose:
-        print 4*' ','acctcode             :', entry.acctcode
-        print 4*' ','reminder             :', time.ctime(entry.expiration-entry.reminder*(24*3600))
-        print 4*' ','mailaddress          :', entry.mailaddress
+        print(4*' ','acctcode             :', entry.acctcode)
+        print(4*' ','reminder             :', time.ctime(entry.expiration-entry.reminder*(24*3600)))
+        print(4*' ','mailaddress          :', entry.mailaddress)
 
 # we have to find out if the calling user is admin before we can process commandline,
 # so we have to determine user and read config first, and parse commandline last
@@ -138,7 +140,7 @@ if(options.filesystem):
     if options.filesystem in config['workspaces']:
         filesystems = [options.filesystem]
     else:
-        print >> sys.stderr, "Error: no such filesystem."
+        print("Error: no such filesystem.",file=sys.stderr)
         sys.exit(-1)
 else:
     filesystems = config['workspaces'].keys()
@@ -166,7 +168,7 @@ for f in filesystems:
 
 # list workspaces (only allowed ones), exit after done
 if options.filesystemlist:
-    print 'available filesystems:'
+    print('available filesystems:')
     check_default=True
     mydefault=""
     for i in legal:
@@ -179,11 +181,11 @@ if options.filesystemlist:
         if 'default' in config: mydefault=config['default']
 
     for i in legal:
-        print i,
+        print(i,end='')
         if i==mydefault: 
-            print " (default)" 
+            print(" (default)")
         else: 
-            print
+            print()
     sys.exit(0)
 
 # create mapping from spaces to filesystems
@@ -237,7 +239,7 @@ for fs in legal:
                         continue
 
         if options.short:
-            print os.path.basename(ws)[os.path.basename(ws).find('-')+1:]
+            print(os.path.basename(ws)[os.path.basename(ws).find('-')+1:])
         else:
             entry = struct()
             entry.name = ws
