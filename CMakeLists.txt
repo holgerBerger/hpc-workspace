@@ -123,3 +123,20 @@ TARGET_LINK_LIBRARIES( ws_allocate "-L ${LINKER_VAR}" ${Boost_LIBRARIES} ${LUALI
 TARGET_LINK_LIBRARIES( ws_release "-L ${LINKER_VAR}" ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${EXTRA_STATIC_LIBS})
 TARGET_LINK_LIBRARIES( ws_restore "-L ${LINKER_VAR}" ${Boost_LIBRARIES} ${LUALIB} ${CAP} yaml-cpp ${TLIB} ${EXTRA_STATIC_LIBS})
 
+
+# Get install target
+set(PROGRAM_PERMISSIONS_DEFAULT
+    OWNER_WRITE OWNER_READ OWNER_EXECUTE
+    GROUP_READ GROUP_EXECUTE
+    WORLD_READ WORLD_EXECUTE)
+install (FILES bin/ws_extend bin/ws_find bin/ws_list bin/ws_register bin/ws_send_ical DESTINATION bin PERMISSIONS ${PROGRAM_PERMISSIONS_DEFAULT})
+install(TARGETS
+      ws_allocate ws_release ws_restore
+      DESTINATION bin
+      PERMISSIONS ${PROGRAM_PERMISSIONS_DEFAULT} SETUID)
+install (FILES sbin/ws_expirer sbin/ws_restore sbin/ws_validate_config DESTINATION sbin PERMISSIONS ${PROGRAM_PERMISSIONS_DEFAULT})
+
+# Install man pages
+INSTALL(FILES man/ws_allocate.1 man/ws_find.1 man/ws_register.1
+              man/ws_restore.1 man/ws_extend.1 man/ws_list.1 man/ws_release.1
+              man/ws_send_ical.1             DESTINATION share/man/man1)
