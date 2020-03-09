@@ -67,7 +67,7 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
     msg = MIMEMultipart('mixed')
     recipients = [ mailaddress ]
     try:
-        sender = config["mail_from"]
+        sender = config['mail_from']
     except:
         sender = "wsadmin"
     msg['From'] = sender
