@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 """
     workspace++
@@ -67,9 +67,9 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
     msg = MIMEMultipart('mixed')
     recipients = [ mailaddress ]
     try:
-        sender = config[mail_from]
+        sender = config["mail_from"]
     except:
-        sender = "wsadmin" 
+        sender = "wsadmin"
     msg['From'] = sender
     msg['To'] = mailaddress
     msg['Subject'] = 'Workspace %s will expire at %s' % (wsname, time.ctime(expiration))
