@@ -1,85 +1,93 @@
-# Workspace administrators guide
+# Workspace Administrators Guide
 
-You can read this guide at
-https://github.com/holgerBerger/hpc-workspace/blob/master/admin-guide.md 
-with markup.
+You can read this guide at 
+https://github.com/holgerBerger/hpc-workspace/blob/master/admin-guide.md with 
+markup.
 
-## motivation
+## Motivation
 
-The motivation for the workspace tools was the need to loadbalance a large number of users
-over a medium size number of scratch/working filesystems in an HPC environment by the operations
-team without any manual interaction.
+The motivation for these workspace tools was the need to loadbalance a large 
+number of users over a medium size number of scratch/working filesystems in an 
+HPC environment by the operations team without any manual interaction.
 
-The basic idea is 
+The basic idea is
 
 - a workspace is a directory created on behalf of the user on demand
-- the lifetime is limited, the directory will be deleted automatically at some point in time
-- the location is determined by the administrator and can contain a random component
+- the lifetime is limited, the directory will be deleted automatically at some 
+  point in time
+- the location is determined by the administrator and can contain a random 
+  component
 
-This approach allows the administrator a flexible allocation of resources to users.
-It offers a level of redirection to hide details from the user, it offers a stable
-user interface to the user, and it allows e.g. migration of users between different filesystems,
-although only over medium to large time scales, and it offers a way to get a little grip on the
-lifetime of data. If noone takes care of the data anymore, it will get deleted.
+This approach allows the administrator a flexible allocation of resources to 
+users. It offers a level of redirection to hide details from the user, it 
+offers a stable user interface to the user,  it allows e.g. migration of users 
+between different filesystems, although only over medium to large time scales, 
+and it offers a way to get a little grip on the lifetime of data. If no one 
+takes care of the data anymore, it will get deleted.
 
-Administrators can assign different filesystems to users based on user and group
-and can optionally loadbalance over several filesystems.
+Administrators can assign different filesystems to users based on user and 
+group and can optionally loadbalance over several filesystems.
 
 Typically a workspace will be created
-- on a fast filesystem for temporay data, probably no backups, not intended for long time storage,
-  probably faster and smaller than the typical home filesystem, think of a parallel filesystem like 
-  Lustre or GPFS/SpectrumScale/BeeGfs.
-- for the duration of a job or a job campaign
+- on a fast filesystem for temporary data, probably no backups, not intended 
+  for long time storage, probably faster and smaller than the typical home 
+  filesystem, think of a parallel filesystem like Lustre or 
+  GPFS/SpectrumScale/BeeGfs.
+- for the duration of a job or a job campaign.
 
 Typically a workspace will be deleted
 
 - because the job or campaign ended, and the users releases the directory, or
 - because the maximum lifetime of the workspace is reached
 
-A friendly user or a user short on quota probably wants to remove the data before releasing 
-the workspace to regain quota.
+A friendly user or a user short on quota probably wants to remove the data 
+before releasing the workspace to regain quota.
 
-The workspace tool set offers the possibility to keep expired data for some time
-in a restorable state, and users can restore the data without administrator intervention
-using the ```ws_restore``` command.
+The workspace tool set offers the possibility to keep expired data for some 
+time in a restorable state, and users can restore the data without 
+administrator intervention using the ```ws_restore``` command.
 
 Most operations are logged to syslog.
 
 
-## basic components
+## Basic components
 
-The tool sets main components are user visible commands (*ws_allocate*, *ws_release*, *ws_list* and others),
-the configuration file ```/etc/ws.conf``` and the administrator's tools like the cleaner removing
-the workspaces and other helpers like a validation tool for the configuration file.
+The tool set's main components are user-visible commands (`ws_allocate`, 
+`ws_release`, `ws_list` and others), the configuration file ```/etc/ws.conf``` 
+and the administrator's tools like the cleaner removing the workspaces and 
+other helpers like a validation tool for the configuration file.
 
 
 All configuration is in ```/etc/ws.conf```.
 
-## installation
+## Installation
 
-the workspace tools use CMake for configuration and building, make sure it is installed, you will
-also need a C++ compiler, tested is GCC (on ubuntu and redhat).
+The workspace tools use CMake for configuration and building, make sure it is 
+installed, you will also need a C++ compiler, compiling with GCC has been 
+tested (on Ubuntu and Redhat).
 
-Furthermore it uses the boost components ```system filesystem regex program_options```.
-It also needs terminfo or ncurses, and libyaml-cpp. You can use ```getyamlcpp.sh``` to get and compile
-a local libyaml-cpp into the source directory.
+Furthermore it uses the boost components ```system filesystem regex 
+program_options```. It also needs terminfo or ncurses, and libyaml-cpp. You can 
+use ```getyamlcpp.sh``` to get and compile a local libyaml-cpp into the source 
+directory.
 
 
-Complete list is
-- c++ compiler (no c++1x needed so far) (g++ and clang++ tested)
+The complete list of dependencies is:
+- C++ compiler (no c++1x needed so far) (g++ and clang++ tested)
 - boost_system
 - boost_filesystem
 - boost_regex
 - boost_program_options
 - yaml-cpp
-- python2.6
+- python3
 - pyyaml
 - terminfo or ncurses
 - libcap2 (if using capabilities)
 - lua5.1 (if using LUA callouts)
 
-The default is to use setuid executables for those parts of the tools needing it (*ws_allocate*, *ws_release*
-and *ws_restore*). You can enable a capability aware variant using ccmake, but this is not encouraged, most network
+The default is to use setuid executables for those parts of the tools that need 
+it (`ws_allocate`, `ws_release` and `ws_restore`). You can enable a 
+capability-aware variant using ccmake, but this is not encouraged, most network 
 filesystems and some linux distributions do not support capabilities. 
 
 
@@ -88,328 +96,368 @@ Only the setuid version is under regression testing.
 Run ```cmake .``` and ```make -j 4``` to configure and compile the tool set.
 
 Copy the executables from ```bin``` to e.g. ```/usr/local/bin``` and the
-manpages from ```man``` to e.g. ```/usr/local/man/1```
+manpages from ```man``` to e.g. ```/usr/local/man/1```.
 
-## further preparation
+Finally, a cron job has to be set up tha calls the `ws_expirer` script at 
+regular intervals, only then will old workspaces be cleaned up. The 
+`ws_expirer` setup is detailed below.
 
-You will need a uid and gid which will serve as owner of
-the directories above the workspaces and formost for the DB entry directory.
+## Further preparation
 
-You can reuse an existing user and group, but be aware that anybody able to 
-use that user can manipulate other peoples DB entries, and that the setuid
-tools spend most of their time with the privileges of that user.
-So it makes sense to have a dedicated user and group id, but it is not
-a hard requirement, you could also reuse a user and group of another daemon
-or tool.
+You will need a uid and gid which will serve as owner of the directories above 
+the workspaces and formost for the DB entry directory.
 
-It is good practice to create the ```/etc/ws.conf``` and validate it with ```sbin/ws_validate_config```.
+You can reuse an existing user and group, but be aware that anybody able to use 
+that user can manipulate other peoples' DB entries, and that the setuid tools 
+spend most of their time with the privileges of that user. Therefore it makes 
+sense to have a dedicated user and group ID, but it is not a hard requirement, 
+you could also reuse a user and group of another daemon or tool.
 
-It is also good practice to use ```contribs/ws_prepare``` to create the filesystem structure according to the config file.
+It is good practice to create the ```/etc/ws.conf``` and validate it with 
+```sbin/ws_validate_config```.
+
+It is also good practice to use ```contribs/ws_prepare``` to create the 
+filesystem structure according to the config file.
 
 
-## getting started
+## Getting started
 
-A very simple ws.conf example:
+A very simple example `ws.conf` file:
 
-```
+```yaml
 admins: [root]			# users listed here can sees all workspaces with ws_list
 clustername: My Green Cluster	# some name for the cluster
 smtphost: mail.mydomain.com     # (my smtp server for sending mails)
 dbgid: 85			# a user id, this is the owner of some directories
 dbuid: 85			# a group id, this is the owner of some directories
-default: ws1			# the workspace to use for everybody
+default: ws1			# the workspace location to use for everybody
 duration: 10                    # (max duration in days, default for all workspaces )
 maxextensions: 1                # (maximum number of times a user can ask for a extension)
 workspaces:
-  ws1:				# name of the workspace
-    database: /tmp/ws/ws1-db	# location of the DB
+  ws1:				# name of the workspace location
+    database: /tmp/ws/ws1-db	# DB directory
     deleted: .removed		# name of the subdirectory used for expired workspaces
     duration: 30		# max lifetime of a workspace in days
     keeptime: 7			# days to keep deleted data after expiration
     maxextensions: 3		# maximum number of times a user can ask for a extension
-    spaces: [/tmp/ws/ws1]	# pathes where workspaces are created, this is a list and path is picked randomly
+    spaces: [/tmp/ws/ws1]	# paths where workspaces are created, this is a list and path is picked randomly
 ```
 
-(Note: the 3 lines with () around the comment are required by the validator, but are not really needed in an otherwise
-correct and complete file.)
+**Note:** the 3 lines with () around the comment are required by the validator, 
+but are not really needed in an otherwise correct and complete file.
 
-In this example, any user would get a directory below ```/tmp/ws/ws1``` if calling ```ws_allocate```, 
-and he would be able to specify a lifetime of 30 days, not longer, and he would be able to extend the workspace
-3 times before it expires.
+In this example, any workspace would be created in a directory in 
+```/tmp/ws/ws1``` whenever a user calls ```ws_allocate```, and he would be able 
+to specify a lifetime of 30 days, not longer, and he would be able to extend 
+the workspace 3 times before it expires.
 
-For testing, as a user call ```ws_allocate BLA 1``` this should print a path to stdout and some info to stderr,
-so it can be used in something like
-```
+When the `ws_allocate` command is called, for example with ```ws_allocate BLA 
+1```, it will print the path to the newly created workspace to `stdout` and 
+some additional info to `stderr`. This allows using `ws_allocate` in scripts 
+like the following example:
+```bash
 SCR=$(ws_allocate BLA 1)
 cd $SCR
 ```
 
-```ws_list -t``` should now show something like
-```
+and ```ws_list -t``` should then show something like
+
+```yaml
 id: BLA
      workspace directory  : /tmp/ws/ws1/user-BLA
      remaining time       : 0 days 23 hours
      available extensions : 3
 ```
 
-As you can see, the username is prefixed to the workspace ID in the path of the workspace.
-Users should not rely on that, this could change over time.
+As you can see, the username is prefixed to the workspace ID in the path of the 
+workspace. Users should not rely on that, this could change over time.
 
-```ls -ld /tmp/ws/ws1/user-BLA``` should reveal that the user is owner of the directory and allowed
-to read and write, otherwise it sould be private.
+```ls -ld /tmp/ws/ws1/user-BLA``` will reveal that the user who created the 
+workspace is the owner of the directory and has read and write permissions, 
+otherwise it should be private.
 
-**Note**: Make sure the ```database``` directory is owned by ```dbuid``` and ```dbgid``` !
+**Note**: Make sure the ```database``` directory is owned by ```dbuid``` and 
+```dbgid``` !
 
-## full breakdown of all options
+## Full breakdown of all options
 
-### global options
+### Global options
 
-#### clustername
+#### `clustername`
 
-Name of the cluster, shows up in some outputs and in email warning before expiration.
+Name of the cluster, shows up in some outputs and in email warning before 
+expiration.
 
-#### smtphost
+#### `smtphost`
 
-
-FQDN of SMTP server (no authentification supported), this is used to send reminder mails for
+FQDN of SMTP server (no authentification supported), this is used to send 
+reminder mails for
 expiring workspaces and to send calendar entries.
 
 
-#### mail_from
+#### `mail_from`
 
-Used as sender in any mails, should be of form ```user@domain```
+Used as sender in any mails, should be of form ```user@domain```.
 
-#### default
+#### `default`
 
-Important option, this determines which workspace to use if not otherwise
-specified.
+Important option, this determines which workspace location to use if not 
+otherwise specified.
 
-If there is several or one workspaces, any user will get a workspace directory
-from the one specified here, unless overwritten by a default clause
-in a workspace or selected by user with ```-F```.
+If there is more than one workspace location (i.e. more than one entry in 
+`workspaces`), then the location specified here will be used for all workspaces 
+by all users. A user may still manually choose the location with ```-F```.
 
-#### duration
+#### `duration`
 
-maximum lifetime in days of a workspace, can be overwritten in 
-each workspace.
+Maximum lifetime in days of a workspace, can be overwritten in each workspace 
+location.
 
-#### maxextensions
+#### `maxextensions`
 
-maximum number of times a user can extend a workspace, can be overwritten
-in each workspace.
+Maximum number of times a user can extend a workspace, can be overwritten in 
+each workspace location.
 
-#### pythonpath
+#### `pythonpath`
 
-this is a path that is prepended to the PYTHONPATH for the python tools.
-Some of the workspace tools are written in python and use yaml.
-This path is appended to the python module search path before yaml is loaded.
-To read this line, a very simple YAML parser is embedded to find this line,
-and the real yaml parser reads the rest of the file.
-This option is handy in case your yaml installation is not in the default location.
+This is a path that is prepended to the PYTHONPATH for the Python tools. Some 
+of the workspace tools are written in Python and use the PyYAML package. This 
+path is appended to the Python module search path before `yaml` is imported. To 
+read this line, a very simple YAML parser is embedded to find this line, and 
+the real YAML parser reads the rest of the file.
 
-#### dbuid
+This option is handy in case your YAML installation is not in the default 
+location.
 
-UID of the db directorty, and UID the setuid tools use as long as not requiring UID 0.
-Can be a shared UID, but be aware the user using that UID can mess with the DB.
+#### `dbuid`
+
+UID of the database directory, and the UID that will be used by all setuid 
+tools use (as long as UID 0 is not required). Can be a shared UID, but be aware 
+the user using that UID can mess with the DB.
 Best use a dedicated UID or a UID of another daemon.
 
-#### dbgid
+#### `dbgid`
 
-GID of the db directorty, and GID the setuid tools use as long as not requiring GID 0.
-Can be a shared GID, but be aware the user using that GID can mess with the DB.
-Best use a dedicated GID or a GID of another daemon.
+GID of the database directory, and the GID that will be used by all setuid 
+tools use (as long as GID 0 is not required). Can be a shared GID, but be aware 
+the user using that GID can mess with the DB. Best use a dedicated GID or a GID 
+of another daemon.
 
-#### admins
+#### `admins`
 
-A list of of users who can see any workspace when calling ```ws_list```, not just their own.
+A list of of users who can see any workspace when calling ```ws_list```, not 
+just their own.
 
+### Workspace-location-specific options
 
+In the config entry `workspaces`, multiple workspace location entries may be 
+specified, each with its own set of options. The following options may be 
+specified on a per-workspace-location basis:
 
+#### `keeptime`
 
+Time in days to keep data after it was expired. This is an option for the 
+cleaner. The cleaner will move the expired workspace to a hidden location 
+(specified by the `deleted` entry below), but not delete it immediately. Users 
+or administrators can still recover the data. After `keeptime` days, it will be 
+removed and can not be recovered anymore.
 
+#### `spaces`
 
-### workspace options
+A list of directories that make up the workspace location. The directory for 
+new workspaces will be picked randomly from the directories in this list.
 
-#### keeptime
-
-Time in days to keep data after it was expired. This is an option for the cleaner.
-The cleaner will move expired workspace to a hidden location, but not delete it immediately.
-Users or administrators can still recover the data.
-After *keeptime* days, it will be removed and can not be recovered anymore.
-
-#### spaces
-
-A list of directories where the users directories will be created.
-Among the members of the list, the actual directory will be picked randomly.
-
-This can be used to distribute load and space over several filesystems or fileservers or 
-metadata domains like DNE in recent Lustre versions.
-
-
-#### deleted
-
-the name of the subdirectory within the space and the DB directory where the expired data is kept.
-This is always within the space to prevent copies of the data, but to allow rename operation to succeed
-for most filesystems in most cases.
-
-#### database
-
-the directory where the DB is stored. The DB is simply a directory having one YAML file per workspace.
-
-This directory should be owned by *dbuid* and *dbgid*. 
+This can be used to distribute load and storage space over several filesystems 
+or fileservers or metadata domains like DNE in recent Lustre versions.
 
 
-If your filesystem is slow for metadata, it might make sense
-to put the DB on e.g. a NFS filesystem, but the DB is not accessed without any reason and
-should not be performance relevant, only ```ws_list``` might feel faster if the filesystem
-with the DB is fast in terms of iops and metadata
+#### `deleted`
 
-#### duration
+The name of the subdirectory, both inside the workspace location and inside the 
+DB directory, where the expired data is kept. This is always inside the space 
+to prevent copies of the data, but to allow rename operation to succeed for 
+most filesystems in most cases.
 
-maximum lifetime in days of a workspace a user can specify.
+#### `database`
 
-#### groupdefault
+The directory where the DB is stored. The DB is simply a directory having one 
+YAML file per workspace.
 
-A user being member of the group within that list gets this workspace as default,
-so it is picked if the user does not choose another workspace with ```ws_allocate -F``` option.
-This overrides the global default named *default*.
-
-Having a group in the groupdefault list of several workspaces is not defined, but it is
-not subject of any tests, administrator has to take care to prevent that situation.
+This directory should be owned by `dbuid` and `dbgid`, see the corresponding 
+entries in the global configuration.
 
 
-##### userdefault
+If your filesystem is slow for metadata, it might make sense to put the DB on 
+e.g. a NFS filesystem, but the DB is not accessed without any reason and should 
+not be performance-relevant, only ```ws_list``` might feel faster if the 
+filesystem with the DB is fast in terms of iops and metadata.
 
-A user in this list gets this workspace as default if not choosen otherwise with ```ws_allocate -F``` option.
-This overrides the global default named *default*.
+#### `duration`
 
-Having group and user default rules with conflicts or having users in several workspaces in the userdefault list
-is not defined, it is upon the administrator to take care that such a situation does not occur.
+Maximum allowed lifetime of a workspace in days. User may not specify a longer 
+duration for his workspaces than this value.
 
-#### user_acl
+#### `groupdefault`
 
-This is a list of users being allowed to choose this workspace.
-If this list and *group_acl* are empty, the entry is considered to be non-existing, and access restrictions do not apply.
+Lists which groups use this location by default. Any user that is a member of 
+one of the groups in this list will have their workspaces allocated in this 
+workspace location. This overrides the `default` in the global config. A user 
+may still manually pick a different workspace location with the ```ws_allocate 
+-F``` option.
 
-As soon as the list exists and is not empty, this list joined with *group_acl* is matched against
-the user and his group. If the user is not matching any of the two lists, access to the workspace
-is denied and no workspace directory can be created.
+**Caution:** if a group is listed in the `groupdefault` list of several 
+workspace locations, this results in undefined behavior. This condition is not 
+tested for, the administrator has to ensure that this does not happen.
 
-**Attention**: the global *default* workspace can be used by any user, this overrides
-any ACL! It is possible to have no global *default* directive, but make sure every user
-shows up in the default user or group list of exactly one workspace!
 
-**Hint**: To enable access control, one of *user_acl* or *group_acl* has to be existing
-and non-empty! An invalid entry can be used to enable access control, like a non-existing user or group.
-An empty list does not enable access control, the workspace can still be accessed with an empty list by all
+##### `userdefault`
+
+Lists users which use this location by default. Any user in this list will have 
+their workspaces allocated in this workspace location. This overrides the 
+`default` in the global config. A user may still manually pick a different 
+workspace location with the ```ws_allocate -F``` option.
+
+**Caution:** if a user is listed in the `userdefault` list of several workspace 
+locations, this results in undefined behavior. This condition is not tested 
+for, the administrator has to ensure that this does not happen.
+
+#### `user_acl`
+
+List of users who are allowed to choose this workspace location. If this list 
+and `group_acl` are both empty, all users may choose this location.
+
+As soon as the list exists and is not empty, this list joined with `group_acl` 
+is matched against the user and his group. If the user is not in either of the 
+two lists, he may not create a workspace in this location.
+
+**Caution:** the global `default` workspace can be used by any user, this 
+overrides any ACL! It is possible to have no global `default` directive, but in 
+that case the administrator needs to ensure that every user show up in the 
+`userdefault` or `group default` list of exactly one workspace!
+
+**Hint**: To enable access control, at least one of `user_acl` or `group_acl` 
+has to be existing and non-empty! An invalid entry can be used to enable access 
+control, like a non-existing user or group. An empty list does not enable 
+access control, the workspace can still be accessed with an empty list by all 
 users!
 
-#### group_acl
+#### `group_acl`
 
-This is the list of groups being allowed to choose this workspace.
-If this list and *user_acl* is empty, the entry is considered to be non-existing, and access restrictions do not apply.
+List of groups who are allowed to choose this workspace location.  If this list 
+and `user_acl` are both empty, all users may choose this location.
 
-See *user_acl* for further logic.
+See `user_acl` for further logic.
 
-If the compile option *CHECK_ALL_GROUPS* is enabled, secondary groups are checked as well.
-By default, only the primary group is considered.
+If the compile option `CHECK_ALL_GROUPS` is enabled, secondary groups are 
+checked as well. By default, only the primary group is considered.
 
-**Attention**: the global *default* workspace can be used by any user, this overrides
-any ACL! It is possible to have no global *default* directive, but make sure every user
-shows up in the default user or group list of exactly one workspace!
+**Caution:** if the global `default` option is set, the location specified 
+there may be used by any user, this overrides any ACL! Also, if no global 
+`default` directive is set, then the administrator **has to** ensure that every 
+user show up in the `userdefault` or `group default` list of exactly one 
+workspace!
 
-**Hint**: To enable access control, one of *user_acl* or *group_acl* has to be existing
-and non-empty! An invalid entry can be used to enable access control, like a non-existing user or group.
-An empty list does not enable access control, the workspace can still be accessed with an empty list by all
+**Hint**: to enable access control, at least one of `user_acl` or `group_acl` 
+has to be existing and non-empty! An invalid entry can be used to enable access 
+control, like a non-existing user or group. An empty list does not enable 
+access control, the workspace can still be accessed with an empty list by all 
 users!
 
 
-#### maxextensions
+#### `maxextensions`
 
-This specifies how often a user can extend a workspace, either with ```ws_extend``` or ```ws_allocate -x```.
-An extension is consumed if the new duration ends later than the current duration (in other words, you can shorten
-the lifetime even if you habe no extensions left) and if the user is not root.
+This specifies how often a user can extend a workspace, either with 
+```ws_extend``` or ```ws_allocate -x```. An extension is consumed if the new 
+duration ends later than the current duration (in other words, you can shorten 
+the lifetime even if you have no extensions left) and if the user is not root. 
 Root can always extend any workspace.
 
 
-#### allocatable
+#### `allocatable`
 
-Option for migrations.
-This allows to flag a workspace as being non-allocatable, by giving the value ```no```.
-Default is ```yes```.
+Default is ```yes```. If set to ```no```, the location is non-allocatable, 
+meaning no new workspaces can be created in this location.
 
-In that case, no new workspaces can be created, this can be used to phase a workspace out,
-by moving the default of users to e.g. another filesystem.
-
-
-#### extendable
-
-see above, same logic. It is possible to speed up on ongoing migration by forcing
-a quicker expiration of workspaces by taking users the right to extend workspaces.
-
-#### restorable
-
-see above, same logic. Is is possible to prevent restoration from this workspace,
-this also enhances migration speed of data.
+This option, together with the `extendable` and `restorable` options below, is 
+intended to facilitate migration and maintenance, i.e. to phase out a 
+workspace, or when moving the default of users, e.g. to another filesystem.
 
 
-## compile options
+#### `extendable`
+
+Analog to `allocatable` option above. If set to `no`, existing workspaces in 
+this location cannot be extended anymore.
+
+#### `restorable`
+
+Anaolog to `allocatable` option above. If set to `no`, workspaces cannot be 
+restored to this location anymore.
+
+
+## Compile options
 
 You can use ```ccmake .``` to change options.
 
-options are
+The following options are possible:
 
 ### SETUID
 
-this is default, and enables code to use ```setuid()``` in the code.
-If this is not set, code uses ```libcap``` to change capabilities.
-This allows a finer privilege control, but does not work on all filesystems, e.g.
-NFS and Lustre are known not to work.
-It works on local filesystems like ext4, so it could be used for single hosts.
+This is default, and enables code to use ```setuid()``` in the code. If this is 
+not set, code uses ```libcap``` to change capabilities. This allows a finer 
+privilege control.
 
-GPFS/SpectrumScaleFs is not yet tested, so not yet known if it works or not.
+**Caution:** does not work on all filesystems:
+
+* NFS and Lustre are known **not** to work.
+* It works on local filesystems like ext4, so it could be used for single hosts.
+* GPFS/SpectrumScaleFs is not yet tested, so not yet known if it works or not.
 
 ### STATIC
 
-disabled by default, allows static linking if enabled. This can be handy for systems where the compute
-nodes do not have all libraries available.
+Disabled by default. Allows static linking if enabled. This can be handy for 
+systems where the compute nodes do not have all libraries available.
 
 ### CHECK_ALL_GROUPS
 
-disabled by default, checks secondary groups as well when going though *group_acl* and *groupdefault*
-lists.
+Disabled by default. Checks secondary groups as well when going though 
+`group_acl` and `groupdefault` lists.
 
 ### LUACALLOUT
 
-disabled by default, *not fully working*. Allows to call a LUA script to change the path in ```ws_allocate```.
-This allows to insert components into the path, luke putting all users into a common directory for a group.
-there are some issues with this option with most tools, *do not use*, it is not in use.
+**Caution:** does not work fully. Do not use for productive setups!
 
-## internals
+Disabled by default. Allows calling a LUA script to change the path in 
+```ws_allocate```. This allows  inserting components into the path, like 
+putting all users into a common directory for a group. There are some issues 
+with this option with most tools.
 
-The rewrite in C++ (old codebase was python) allowed to get rid of some dirty setuid hack,
-and offered the chance to enhance the DB format for new functionality.
-A DB file is now a YAML file, all entries are tagged, basically it is a multiline key-value
-file, using YAML syntax.
+## Internals
 
-This allows easy extension of the DB format, which was a bit harder with the old format,
-with a fixed order of lines in the file format.
-Nevertheless, the new tools can read the old files, which is handy for migration from
-the old tools to the new tools.
+The rewrite of some parts in C++ (the old codebase was Python) allowed getting 
+rid of some dirty setuid hacks, and offered the chance to enhance the DB format 
+for new functionality. A DB file is now a YAML file, all entries are tagged, 
+basically it is a multiline key-value file, using YAML syntax.
 
-There are three tools needing priviliges, these are ```ws_allocate```, ```ws_release``` and
-```ws_restore```.
+This allows easy extension of the DB format, which was a bit harder with the 
+old format, with a fixed order of lines in the file format. Nevertheless, the 
+new tools can read the old files, which is handy for migration from the old 
+tools to the new tools.
+
+There are three tools that need privileges, these are ```ws_allocate```, 
+```ws_release``` and ```ws_restore```.
 
 All three have to change owners and permissions of files.
 
-All other tools are either for root only (in ```sbin```) or do not need privilges (```ws_list```, 
-```ws_extend```, ```ws_find```, ```ws_register```, ```ws_send_ical```).
+All other tools are either for root only (in ```sbin```) or do not need 
+privileges (```ws_list```, ```ws_extend```, ```ws_find```, ```ws_register```, 
+```ws_send_ical```).
 
-Basic setup is having at least two directory trees, one for the DB and one for the data.
-They can reside on different filesystems, but do not have to.
-They should not be included one in the other.
+The basic setup consists of at least two directory trees, one for the DB and 
+one for the data. These trees have to be separate and neither may be a 
+subdirectory of the other. They may reside on different filesystems, but do not 
+have to.
 
-A typical setup could look like
+A typical setup could look like this:
 
 ```
 /tmp/ws -+- ws1-db -+              (owned by dbuid:dbgid, permissions drwxr-xr-x)
@@ -419,44 +467,90 @@ A typical setup could look like
                     +- .removed    (owned by anybody, permissions drwx------)
 ```
 
-this is the structure as in the previous example config file.
+This is the structure that would result from the example config file shown 
+above.
 
-```ws1-db``` is the ```database``` entry in the config file,
-```ws1``` would appear in the ```spaces``` list, and ```deleted: .removed```
-configures the location of expired entries for both the spaces and the DB.
+In this case, ```ws1-db``` is the database location, corresponding to the 
+```database``` entry in the config file, ```ws1``` corresponds to the single 
+entry in the ```spaces``` list, and the `.removed` directories are the 
+locations of expired entries for both the spaces and the DB, corresponding to 
+the ```deleted: .removed``` config file entry.
 
-If a workspace is created, an empty user owned and writable directory is created in 
-```ws1```, and a file with the DB entry will be created in ```ws1-db```, owned
-by ```dbuid:dbgid``` but world readable. Both the directory and the file have the naming
-convention of ```username-workspacename```, so several users can have a workspace with the same name.
+Whenever a workspace is created, an empty directory is created in ```ws1```, 
+this directory is owned by and writable for the user who created the workspace. 
+Aditionally, a file with the DB entry will be created in ```ws1-db```, owned by 
+```dbuid:dbgid``` but readable by all users. Both the directory and the file 
+have the naming convention of ```username-workspacename```, so several users 
+can have a workspace with the same name.
+
+If a workspace is expired or released, both its workspace directory and the DB 
+entry file are moved into the corresponding ```deleted``` directories (called 
+```.removed``` in this example) and get a timestamp with the time of deletion 
+appended to the name. This ensures that there can be several generations of a 
+workspace with the same name from the same user that exist in parallel in the 
+restorable location.
+
+**Caution:** since the moved data is still owned by the user, only in a 
+non-accessible location, it is still counted towards the user's quota. Users 
+who want to free the space have to restore the data with ```ws_restore```, 
+delete it, and release it again.
+
+It is the task of the cleaner, a part of the `ws_expirer` script, to iterate 
+through the spaces to find if there is anything looking like a workspace not 
+having a valid DB entry, and iterate through the deleted workspaces to check 
+how old they are, and whether they should still be kept or be deleted. 
+Furthermore it checks the DB entries if any of them are expired, and moves the 
+entry and the directory to the deleted directory if needed. The cleaner is only 
+enabled if the `--cleaner` (or `-c`) option is specified when calling 
+`ws_expirer`.
+
+Some filesystems like NEC ScaTeFS or Lustre with DNE can cause the Python 
+builtin ```os.rename()``` to fail. Therefore all the tools fall back from 
+```os.rename()``` to the Linux command `mv` if needed, and can operate across 
+filesystem-boundaries, but this is of course a lot slower and should be avoided.
 
 
-If a workspace is expired or released, both are moved into the ```deleted``` directory
-(called ```.removed``` in this example) and get a timestamp appended to the name.
-So there can be several generations of a workspace with the same name from the same user
-that exist in parallel in the restorable location.
+## Setting up the ws_expirer
 
-As the moved data is still owned by the user, but in a non accessible location, it still
-is accounting for the users quota. Users who want to free the space have to restore the
-data with ```ws_restore```, delete it, and release it again.
+The `ws_expirer` is the script which takes care of expired Workspaces. To set 
+it up, create a daily cron job that runs the `ws_expirer` script:
 
-It is the cleaners task to iterate through the spaces to find if there is anything looking
-like a workspace not having a valid DB entry, and iterate through the deleted workspace to check
-how old they are, and if they should still be kept or be deleted.
-Furthermore it checks the DB entries if any of them are expired, and moves the entry and the directory
-to the deleted directory if needed.
+```
+10 1 * * * /usr/sbin/ws_expirer -c
+```
 
-All the tools fall back from ```rename()``` if needed, and can operate across filesystem-boundaries,
-but this is of course a lot slower and should be avoided. Some filesystems like NEC ScaTeFS or Lustre with DNE can have failing
-```rename()``` within a filesystem, this is covered.
+Note the required `-c` option. This option enables the cleaner. If it were left 
+out, `ws_expirer` would be running in "dry-run" mode, which is a testing 
+feature, and would not perform any file operations.
 
+However, it might be better to create a dedicated script for the cron job. That 
+script, in addition to calling `ws_expirer`, may contain any additional steps 
+like creating log files. An example for this is shown below.
 
+### Example with logging and cleanup
 
+You can of course add logging of the `ws_expirer` outputs simply by writing the 
+outputs in a log file:
 
+```
+10 1 * * * /usr/sbin/ws_expirer -c > /var/log/workspace/expirer-`date +%d.%m.%y`
+```
+However this will create a lot of log files over time.
 
+The following example consists of a script that logs the `ws_expirer` output 
+and cleans up old log files.
 
+#### Content of crontab:
 
+```
+10 1 * * * /usr/sbin/ws-expirer.date
+```
 
+#### Content of `ws-expirer.date` script:
 
+```
+#!/bin/bash
+/usr/sbin/ws_expirer -c > /var/log/workspace/expirer-`date +%d.%m.%y`
 
-TO BE CONTINUED
+find /var/log/workspace -type f -ctime +80 -exec rm {} \;
+```
