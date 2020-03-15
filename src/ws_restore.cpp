@@ -102,7 +102,7 @@ void commandline(po::variables_map &opt, string &name, string &target,
     }
 
     if (opt.count("version")) {
-        cout << "workspace version " << GIT_COMMIT_HASH << endl;
+        cout << "workspace version " << WS_VERSION << endl;
         exit(1);
     }
 

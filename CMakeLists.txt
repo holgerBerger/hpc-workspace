@@ -88,14 +88,21 @@ ENDIF (YAML)
 get_directory_property(LINKER_VAR LINK_DIRECTORIES)
 message(STATUS "LINKER_VAR: ${LINKER_VAR}")
 
-# git commit hash macro
-execute_process(
-  COMMAND git log -1 --format=%h
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE GIT_COMMIT_HASH
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-add_definitions("-DGIT_COMMIT_HASH=\"${GIT_COMMIT_HASH}\"")
+IF (IS_DIRECTORY "${PROJECT_SOURCE_DIR}/.git")
+    SET (IS_GIT_REPOSITORY ON)
+    # git commit hash macro
+    execute_process(
+       COMMAND git log -1 --format=%h
+       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+       OUTPUT_VARIABLE WS_VERSION
+       OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+ELSE ()
+    SET (IS_GIT_REPOSITORY OFF)
+    # set to version number of the latest release
+    SET (WS_VERSION 1.0.0)
+ENDIF ()
+add_definitions("-DWS_VERSION=\"${WS_VERSION}\"")
 
 SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${workspace_BINARY_DIR}/bin)
 
