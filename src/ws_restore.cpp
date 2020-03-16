@@ -159,6 +159,123 @@ bool check_name(const string name, const string username, const string real_user
     }
 }
 
+// get list of valid filesystems for current user
+std::vector<string> get_valid_fslist() {
+  vector<string> fslist;
+
+  YAML::Node config;
+  // read config
+  try {
+      config = YAML::LoadFile("/etc/ws.conf");
+  } catch (YAML::BadFile) {
+      cerr << "Error: no config file!" << endl;
+      exit(-1);
+  }
+
+  // get user name, group names etc
+  vector<string> groupnames;
+
+  string username = Workspace::getusername(); // FIXME is this correct? what if username given on commandline?
+
+  struct group *grp;
+  int ngroups = 128;
+  gid_t gids[128];
+  int nrgroups;
+  string primarygroup;
+
+  nrgroups = getgrouplist(username.c_str(), geteuid(), gids, &ngroups);
+  if(nrgroups<=0) {
+      cerr << "Error: user in too many groups!" << endl;
+  }
+  for(int i=0; i<nrgroups; i++) {
+      grp=getgrgid(gids[i]);
+      if(grp) groupnames.push_back(string(grp->gr_name));
+  }
+  // get current group
+  grp=getgrgid(getegid());
+  if(grp==NULL) {
+       cerr << "Error: user has no group anymore!" << endl;
+  }
+  primarygroup=string(grp->gr_name);
+
+  // iterate over all filesystems and search the ones allowed for current user
+  YAML::Node node = config["workspaces"];
+  for(YAML::const_iterator it = node.begin(); it!=node.end(); ++it ) {
+      std::string cfilesystem = it->first.as<std::string>();
+      // check ACLs
+      vector<string>user_acl;
+      vector<string>group_acl;
+
+      // read ACL lists
+      if ( config["workspaces"][cfilesystem]["user_acl"]) {
+          BOOST_FOREACH(string v,
+                        config["workspaces"][cfilesystem]["user_acl"].as<vector<string> >())
+              user_acl.push_back(v);
+      }
+      if ( config["workspaces"][cfilesystem]["group_acl"]) {
+          BOOST_FOREACH(string v,
+                        config["workspaces"][cfilesystem]["group_acl"].as<vector<string> >())
+              group_acl.push_back(v);
+      }
+
+      // check ACLs
+      bool userok=true;
+      if(user_acl.size()>0 || group_acl.size()>0) userok=false;
+
+      if( find(group_acl.begin(), group_acl.end(), primarygroup) != group_acl.end() ) {
+          userok=true;
+      }
+#ifdef CHECK_ALL_GROUPS
+      BOOST_FOREACH(string grp, groupnames) {
+          if( find(group_acl.begin(), group_acl.end(), grp) != group_acl.end() ) {
+              userok=true;
+              break;
+          }
+      }
+#endif
+      if( find(user_acl.begin(), user_acl.end(), username) != user_acl.end() ) {
+          userok=true;
+      }
+      if(userok || getuid()==0) {
+          fslist.push_back(cfilesystem);
+      }
+  }
+  return fslist;
+}
+
+// get restorable workspaces as names
+vector<string> getRestorable(string filesystem, string username)
+{
+    YAML::Node config;
+    // read config
+    try {
+        config = YAML::LoadFile("/etc/ws.conf");
+    } catch (YAML::BadFile) {
+        cerr << "Error: no config file!" << endl;
+        exit(-1);
+    }
+
+    string dbprefix = config["workspaces"][filesystem]["database"].as<string>() + "/" +
+                      config["workspaces"][filesystem]["deleted"].as<string>();
+
+    vector<string> namelist;
+
+    fs::directory_iterator end;
+    for (fs::directory_iterator it(dbprefix); it!=end; ++it) {
+#if BOOST_VERSION < 105000
+        if (boost::starts_with(it->path().filename(), username + "-" )) {
+            namelist.push_back(it->path().filename());
+        }
+#else
+        if (boost::starts_with(it->path().filename().string(), username + "-" )) {
+            namelist.push_back(it->path().filename().string());
+        }
+#endif
+    }
+
+    return namelist;
+}
+
 int main(int argc, char **argv) {
     po::variables_map opt;
     string name, target, filesystem, acctcode, username;
@@ -175,34 +292,51 @@ int main(int argc, char **argv) {
     // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, target, filesystem, listflag, terse, username, argc, argv);
 
-    // get workspace object
-    Workspace ws(WS_Release, opt, duration, filesystem);
-
-    // construct db-entry username  name
-    string real_username = ws.getusername();
-    if (username == "") {
-        username = real_username;
-    } else if (real_username != username) {
-        if (real_username != "root") {
-            cerr << "Error: only root can do that. 2" << endl;
-            username = real_username;
-            exit(-1);
-        }
-    }
-
     openlog("ws_restore", 0, LOG_USER); // SYSLOG
 
     if (listflag) {
-        BOOST_FOREACH(string dn, ws.getRestorable(username)) {
-            cout << dn << endl;
-            if (!terse) {
-                std::vector<std::string> splitted;
-                boost::split(splitted, dn, boost::is_any_of("-"));
-                time_t t = atol(splitted[splitted.size()-1].c_str());
-                cout << "\tunavailable since " << std::ctime(&t);
+        
+        BOOST_FOREACH(string fs, get_valid_fslist()) {
+            std::cout << fs << ":" << std::endl;
+
+            // construct db-entry username  name
+            string real_username = Workspace::getusername();
+            if (username == "") {
+                username = real_username;
+            } else if (real_username != username) {
+                if (real_username != "root") {
+                    cerr << "Error: only root can do that. 2" << endl;
+                    username = real_username;
+                    exit(-1);
+                }
+            }
+            BOOST_FOREACH(string dn, getRestorable(fs, username)) {
+                cout << dn << endl;
+                if (!terse) {
+                    std::vector<std::string> splitted;
+                    boost::split(splitted, dn, boost::is_any_of("-"));
+                    time_t t = atol(splitted[splitted.size()-1].c_str());
+                    cout << "\tunavailable since " << std::ctime(&t);
+                }
+            }
+
+        }
+
+    } else {
+        // get workspace object
+        Workspace ws(WS_Release, opt, duration, filesystem);
+
+        // construct db-entry username  name
+        string real_username = ws.getusername();
+        if (username == "") {
+            username = real_username;
+        } else if (real_username != username) {
+            if (real_username != "root") {
+                cerr << "Error: only root can do that. 2" << endl;
+                username = real_username;
+                exit(-1);
             }
         }
-    } else {
         if (check_name(name, username, real_username)) {
             if (ruh()) {
                 ws.restore(name, target, username);

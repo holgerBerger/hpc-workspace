@@ -728,32 +728,6 @@ string Workspace::getfilesystem()
 
 
 /*
- * get list of restorable workspaces, as names
- */
-vector<string> Workspace::getRestorable(string username)
-{
-    string dbprefix = config["workspaces"][filesystem]["database"].as<string>() + "/" +
-                      config["workspaces"][filesystem]["deleted"].as<string>();
-
-    vector<string> namelist;
-
-    fs::directory_iterator end;
-    for (fs::directory_iterator it(dbprefix); it!=end; ++it) {
-#if BOOST_VERSION < 105000
-        if (boost::starts_with(it->path().filename(), username + "-" )) {
-            namelist.push_back(it->path().filename());
-        }
-#else
-        if (boost::starts_with(it->path().filename().string(), username + "-" )) {
-            namelist.push_back(it->path().filename().string());
-        }
-#endif
-    }
-
-    return namelist;
-}
-
-/*
  * restore a workspace, argument is name of workspace DB entry including username and timestamp, form user-name-timestamp
  */
 void Workspace::restore(const string name, const string target, const string username) {
