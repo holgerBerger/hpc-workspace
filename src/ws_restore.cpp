@@ -102,7 +102,12 @@ void commandline(po::variables_map &opt, string &name, string &target,
     }
 
     if (opt.count("version")) {
+#ifdef IS_GIT_REPOSITORY
+        cout << "workspace build from git commit hash " << GIT_COMMIT_HASH
+             << " on top of release " << WS_VERSION << endl;
+#else
         cout << "workspace version " << WS_VERSION << endl;
+#endif
         exit(1);
     }
 
