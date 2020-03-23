@@ -124,7 +124,7 @@ parser.add_option('-l', action="store_true", dest='filesystemlist', default=Fals
 parser.add_option('-s', action="store_true", dest='short', default=False, help='only show names of workspaces')
 if admin:
     parser.add_option('-u', action="store", dest='user', help='only show workspaces of selected user')
-    parser.add_option('-e', action="store_true", dest='expired', default=False, 
+    parser.add_option('-e', action="store_true", dest='expired', default=False,
             help='show expired workspaces, can be combined with -F and -u to reduce output, no sorting supported')
 parser.add_option('-N', action="store_true", dest='sort_name', default=False, help='sort by name')
 parser.add_option('-C', action="store_true", dest='sort_creation', default=False, help='sort by creation')
@@ -136,7 +136,7 @@ parser.add_option('-a', action="store_true", dest='all', default=False, help='fo
 (options, args) = parser.parse_args()
 
 # all filesystems or a selected one?
-if(options.filesystem): 
+if(options.filesystem):
     if options.filesystem in config['workspaces']:
         filesystems = [options.filesystem]
     else:
@@ -149,7 +149,7 @@ else:
 legal=[]
 for f in filesystems:
     userok=True
-    if (('user_acl' in config['workspaces'][f] and len(config['workspaces'][f]['user_acl'])>0 ) or 
+    if (('user_acl' in config['workspaces'][f] and len(config['workspaces'][f]['user_acl'])>0 ) or
         ('group_acl' in config['workspaces'][f] and len(config['workspaces'][f]['group_acl'])>0)):
         userok=False
     if 'group_acl' in config['workspaces'][f]:
@@ -182,9 +182,9 @@ if options.filesystemlist:
 
     for i in legal:
         print(i,end='')
-        if i==mydefault: 
+        if i==mydefault:
             print(" (default)")
-        else: 
+        else:
             print()
     sys.exit(0)
 
@@ -248,33 +248,37 @@ for fs in legal:
             except IOError:
                 continue
             entry.creation = os.path.getctime(ws)
-            try:
-                entry.expiration = int(content['expiration'])
-                entry.extensions = content['extensions']
-                entry.acctcode = content['acctcode']
-                entry.workspace = content['workspace']
-                entry.reminder = int(content['reminder'])
-                entry.mailaddress = content['mailaddress']
+
+            if content:
                 try:
-                    entry.comment = content['comment']
-                except:
-                    entry.comment = ""
-            except TypeError:  
-                # fallback to old file format
-                f=open(ws)
-                entry.expiration = int(f.readline())
-                entry.workspace = f.readline()[:-1]
-                entry.acctcode = f.readline()[:-1].split(":")[1]
-                entry.extensions = int(f.readline()[:-1].split(":")[1])
-                entry.reminder = 0
-                entry.mailaddress = ""
-                f.close()
-            if sort:
-                # store for sorting
-                entrylist.append(entry)    
-            else: 
-                # this is the quick way, unsorted output if fastest, data printed as it comes in
-                printentry(entry, admin, options.terse, options.verbose)
+                    entry.expiration = int(content['expiration'])
+                    entry.extensions = content['extensions']
+                    entry.acctcode = content['acctcode']
+                    entry.workspace = content['workspace']
+                    entry.reminder = int(content['reminder'])
+                    entry.mailaddress = content['mailaddress']
+                    try:
+                        entry.comment = content['comment']
+                    except:
+                        entry.comment = ""
+                except TypeError:
+                    # fallback to old file format
+                    f=open(ws)
+                    entry.expiration = int(f.readline())
+                    entry.workspace = f.readline()[:-1]
+                    entry.acctcode = f.readline()[:-1].split(":")[1]
+                    entry.extensions = int(f.readline()[:-1].split(":")[1])
+                    entry.reminder = 0
+                    entry.mailaddress = ""
+                    f.close()
+                if sort:
+                    # store for sorting
+                    entrylist.append(entry)
+                else:
+                    # this is the quick way, unsorted output if fastest, data printed as it comes in
+                    printentry(entry, admin, options.terse, options.verbose)
+            else:
+                print("ws-db file is empty:", ws ,  file=sys.stderr)
 
 # list sorted
 if sort:
