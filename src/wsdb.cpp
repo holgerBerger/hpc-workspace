@@ -122,6 +122,9 @@ void WsDB::write_dbfile()
     if (group.length()>0) {
         entry["group"] = group;
     }
+    if (released > 0) {
+        entry["released"] = released;
+    }
 	entry["comment"] = comment;
     Workspace::raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID

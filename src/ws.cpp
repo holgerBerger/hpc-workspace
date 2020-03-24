@@ -398,6 +398,8 @@ void Workspace::release(string name) {
 
 	// set expiration to now so it gets deleted earlier after beeing released
 	dbentry.setexpiration(time(NULL));
+    // set released flag so released workspaces can be distinguished from expired ones
+    dbentry.setreleased(time(NULL));
 	dbentry.write_dbfile();
 
         string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" +

@@ -395,7 +395,14 @@ for fs in fslist:
             expiration = int(released)
         except ValueError:
             pass 
-        if time.time() > expiration + keeptime*24*3600:
+
+        # check if the entry was released or was expired
+        try:
+            was_released = dbentry['released'] 
+        except:
+            was_released = 0
+
+        if time.time() > expiration + keeptime*24*3600 or time.time() > was_releaded + 3600:
             print("  deleting", dbentryfilename)
 
             if not dryrun:

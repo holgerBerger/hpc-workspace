@@ -63,6 +63,7 @@ private:
     string mailaddress;
     string group;
 	string comment;
+    long released;
 
     void read_dbfile();
 
@@ -86,6 +87,10 @@ public:
 	void setexpiration(long int expiration_) {
 		expiration = expiration_;
 	}
+
+    void setreleased(long int released_) {
+        released = released_;
+    }
 
     int getextension() {
         return extensions;
