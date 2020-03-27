@@ -4,9 +4,9 @@
 echo cleaning tmp
 rm -rf /tmp/ws
 echo removing users and groups
-deluser usera
-deluser userb
-deluser userc
-delgroup groupa
-delgroup groupb
-delgroup groupc
+userdel usera
+userdel userb
+userdel userc
+groupdel groupa
+groupdel groupb
+groupdel groupc
