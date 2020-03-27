@@ -7,13 +7,14 @@ rm -rf /tmp/ws
 echo "copying ws.conf"
 cp input/ws.conf.1 /etc/ws.conf
 echo "creating users and groups"
-addgroup groupa
-addgroup groupb
-addgroup groupc
-adduser --quiet --gecos "" --disabled-password useradmin
-adduser --quiet --gecos "" --ingroup groupa --disabled-password usera
-adduser --quiet --gecos "" --ingroup groupb --disabled-password userb
-adduser --quiet --gecos "" --ingroup groupc --disabled-password userc
+
+# Create user and groups in a portable way
+groupadd groupa
+groupadd groupb
+groupadd groupc
+useradd --groups groupa usera
+useradd --groups groupb userb
+useradd --groups groupc userc
 usermod -a -G groupa userc
 
 echo create workspaces etc
