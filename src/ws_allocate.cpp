@@ -38,6 +38,9 @@
 #include <string>
 #include <syslog.h>
 
+// YAML
+#include <yaml-cpp/yaml.h>
+
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 
@@ -133,32 +136,27 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
     // reminder check, if we have a reminder number, we need either a mailaddress argument or config file
     // with mailaddress in user home
     if(reminder!=0) {
-        if (reminder > duration) {
-            cerr << "Info: reminder in the past, ignored." << endl;
-            reminder = 0;
-        } else {
-            if (!opt.count("mailaddress")) {
-                YAML::Node user_home_config;  // load yaml file from home here, not used anywhere else so far
-                ifstream infile;
-                infile.open((Workspace::getuserhome()+"/.ws_user.conf").c_str());
-                // get first line, this is either a mailaddress or something like key: value
-                getline(infile, mailaddress);
-                // check if file looks like yaml
-                if (mailaddress.find(":",0) != string::npos) {
-                    user_home_config = YAML::LoadFile((Workspace::getuserhome()+"/.ws_user.conf").c_str());
-                    try {
-                        mailaddress = user_home_config["mail"].as<std::string>();
-                    } catch (...) {
-                        mailaddress = "";
-                    }
+        if (!opt.count("mailaddress")) {
+            YAML::Node user_home_config;  // load yaml file from home here, not used anywhere else so far
+            ifstream infile;
+            infile.open((Workspace::getuserhome()+"/.ws_user.conf").c_str());
+            // get first line, this is either a mailaddress or something like key: value
+            getline(infile, mailaddress);
+            // check if file looks like yaml
+            if (mailaddress.find(":",0) != string::npos) {
+                user_home_config = YAML::LoadFile((Workspace::getuserhome()+"/.ws_user.conf").c_str());
+                try {
+                    mailaddress = user_home_config["mail"].as<std::string>();
+                } catch (...) {
+                    mailaddress = "";
                 }
-                if(mailaddress.length()>0) {
-                    cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;
-                } else {
-                    cerr << "Info: could not read email from users config ~/.ws_user.conf." << endl;
-                    cerr << "Info: reminder will be ignored" << endl;
-                    reminder = 0;
-                }
+            }
+            if(mailaddress.length()>0) {
+                cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;
+            } else {
+                mailaddress = Workspace::getusername();
+                cerr << "Info: could not read email from users config ~/.ws_user.conf." << endl;
+                cerr << "Info: reminder email will be sent to local user account" << endl;
             }
         }
     }
@@ -193,6 +191,22 @@ int main(int argc, char **argv) {
     setenv("LANG","C",1);
     std::setlocale(LC_ALL, "C");
     std::locale::global(std::locale("C"));
+    
+    // read config (for reminder default only)
+    YAML::Node config;
+    try {
+        config = YAML::LoadFile("/etc/ws.conf");
+    } catch (YAML::BadFile) {
+        cerr << "Error: no config file!" << endl;
+        exit(-1);
+    }
+
+    try {
+    	reminder = config["reminderdefault"].as<int>();
+    } catch (YAML::BadConversion) {
+	reminder = 0;
+    }
+
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, comment, argc, argv);
