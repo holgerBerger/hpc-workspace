@@ -122,7 +122,10 @@ void WsDB::write_dbfile()
     if (group.length()>0) {
         entry["group"] = group;
     }
-	entry["comment"] = comment;
+    if (released > 0) {
+        entry["released"] = released;
+    }
+    entry["comment"] = comment;
     Workspace::raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here

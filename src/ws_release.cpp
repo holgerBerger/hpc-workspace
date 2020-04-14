@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
     // get workspace object
     Workspace ws(WS_Release, opt, duration, filesystem);
     
-    // allocate workspace
+    // release workspace
     ws.release(name);
     
 }
