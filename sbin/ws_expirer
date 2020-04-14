@@ -247,8 +247,8 @@ else:
 # cleanup stray directories, this removes stuff that was released (no DB entry any more)
 # from spaces, and checks if anything is left over in removed state for whatever reasons
 for fs in fslist:
-    # first for visible workspaces
-	try:
+        # first for visible workspaces
+        try:
             dbdir = config["workspaces"][fs]["database"]
         except KeyError:
             print("  FAILED to access", fs, "in config file")
@@ -269,7 +269,7 @@ for fs in fslist:
                                 # FIXME this could fail on scatefs, should fallback to 'mv'
                                 timestamp=str(int(time.time()))
                                 if not dryrun:
-				    try:
+                                    try:
                                         os.rename(ws, os.path.join(os.path.dirname(ws), workspacedelprefix,os.path.basename(ws)+"-"+timestamp))
                                         print("  OS.RENAME", ws, os.path.join(os.path.dirname(ws), workspacedelprefix,os.path.basename(ws)+"-"+timestamp))
                                     except os.error:
