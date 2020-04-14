@@ -12,9 +12,9 @@ echo "creating users and groups"
 groupadd groupa
 groupadd groupb
 groupadd groupc
-useradd --groups groupa usera
-useradd --groups groupb userb
-useradd --groups groupc userc
+useradd --groups groupa -g groupa usera
+useradd --groups groupb -g groupa userb
+useradd --groups groupc -g groupc userc
 usermod -a -G groupa userc
 
 echo create workspaces etc
