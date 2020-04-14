@@ -6,6 +6,7 @@ smtphost: localhosti		# mandantory, a host accepting smtp connections to send em
 mail_from: noreply@mydomain.de	# sender address for reminders
 default: lustre			# mandantory, the default workspace to choose
 duration: 10			# mantantory, the max duration in days, if not specified in workspace
+reminderdefault: 0      # optional, if set, users will always get mail, in doubt local mail to username
 maxextensions: 1 		# mandantory, the number of extensions, if not specified in workspace
 pythonpath: /path/to/my/python	# optional, path which is appended to python search path for ws_list and other pythons scripts to find yaml
 dbuid: 9999			# mandantory
