@@ -70,13 +70,21 @@ void commandline(po::variables_map &opt, string &name, int &duration,
 		;
 	}
 
+    po::options_description secret_options("Secret");
+    secret_options.add_options()
+        ("debug", "show debugging information")
+        ;
+
     // define options without names
     po::positional_options_description p;
     p.add("name", 1);
 
+    po::options_description all_options;
+    all_options.add(cmd_options).add(secret_options);
+
     // parse commandline
     try{
-        po::store(po::command_line_parser(argc, argv).options(cmd_options).positional(p).run(), opt);
+        po::store(po::command_line_parser(argc, argv).options(all_options).positional(p).run(), opt);
         po::notify(opt);
     } catch (...) {
         cout << "Usage:" << argv[0] << ": [options] workspace_name" << endl;
