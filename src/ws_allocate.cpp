@@ -161,6 +161,12 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
                 cerr << "Info: reminder email will be sent to local user account" << endl;
             }
         }
+    } else {
+        // check if mail address was set with -m but not -r
+        if(opt.count("mailaddress")) {
+            cerr << "Error: You can't use the mailaddress (-m) without the reminder (-r) option." << endl;
+            exit(1);
+        }
     }
 
     // validate workspace name against nasty characters    
