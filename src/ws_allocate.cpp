@@ -114,8 +114,10 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
         exit(1);
     }
 
-    if(opt.count("username") && !(opt.count("extension") || getuid()==0 )) {
+    // this allows user to extend foreign workspaces
+    if(opt.count("username") && !( opt.count("extension") || getuid()==0 ) ) {
         cerr << "Info: Ignoring username option." << endl;
+		user="";
     }
 
     if(opt.count("extension")) {
