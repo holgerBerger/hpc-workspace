@@ -169,13 +169,9 @@ void WsDB::read_dbfile()
         acctcode = entry["acctcode"].as<string>();
         reminder = entry["reminder"].as<int>();
         mailaddress = entry["mailaddress"].as<string>();
-		// this is needed as DBs before created before b7aa2e64b63e616fece9a23f76807dabcd12f815 
+		// DBs created before b7aa2e64b63e616fece9a23f76807dabcd12f815
 		// lack the comment field, and this falls through into old path
-		try {
-			comment = entry["comment"].as<string>();
-		} catch (YAML::TypedBadConversion<std::string>) {
-			comment = "";
-		}
+        comment = entry["comment"].as<string>("");
 		// FIXME group missing here?
     } catch (YAML::BadSubscript) {
         // fallback to old db format, python version
