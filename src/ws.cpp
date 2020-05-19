@@ -34,6 +34,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
@@ -51,11 +52,6 @@ typedef int cap_value_t;
 const int CAP_DAC_OVERRIDE = 0;
 const int CAP_CHOWN = 1;
 #endif
-
-// C++ stuff
-#include <iostream>
-#include <string>
-#include <vector>
 
 // YAML
 #include <yaml-cpp/yaml.h>
