@@ -95,8 +95,9 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     // read config
     try {
         config = YAML::LoadFile("/etc/ws.conf");
-    } catch (YAML::BadFile) {
-        cerr << "Error: no config file!" << endl;
+    } catch (const YAML::BadFile& e) {
+        cerr << "Error: Could not read config file!" << endl;
+        cerr << e.what() << endl;
         exit(-1);
     }
     db_uid = config["dbuid"].as<int>();
@@ -112,7 +113,7 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     raise_cap(CAP_DAC_OVERRIDE);
     try {
         userconfig = YAML::LoadFile("/etc/ws_private.conf");
-    } catch (YAML::BadFile) {
+    } catch (const YAML::BadFile&) {
         // we do not care
     }
 
