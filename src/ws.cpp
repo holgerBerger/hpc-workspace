@@ -809,6 +809,7 @@ void Workspace::drop_cap(cap_value_t cap_arg, int dbuid)
 
     if (cap_set_flag(caps, CAP_PERMITTED, 1, cap_list, CAP_SET) == -1) {
         cerr << "Error: problem with capabilities." << endl;
+        exit(1);
     }
 
     if (cap_set_proc(caps) == -1) {
@@ -816,6 +817,7 @@ void Workspace::drop_cap(cap_value_t cap_arg, int dbuid)
         cap_t cap = cap_get_proc();
         cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
         cap_free(cap);
+        exit(1);
     }
 
     cap_free(caps);
@@ -823,6 +825,7 @@ void Workspace::drop_cap(cap_value_t cap_arg, int dbuid)
     // seteuid(0);
     if(seteuid(dbuid)) {
         cerr << "Error: can not change uid." << endl;
+        exit(1);
     }
 #endif
 }
@@ -843,6 +846,7 @@ void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid)
 
     if (cap_set_flag(caps, CAP_PERMITTED, 2, cap_list, CAP_SET) == -1) {
         cerr << "Error: problem with capabilities." << endl;
+        exit(1);
     }
 
     if (cap_set_proc(caps) == -1) {
@@ -850,6 +854,7 @@ void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid)
         cap_t cap = cap_get_proc();
         cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
         cap_free(cap);
+        exit(1);
     }
 
     cap_free(caps);
@@ -857,6 +862,7 @@ void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid)
     // seteuid(0);
     if(seteuid(dbuid)) {
         cerr << "Error: can not change uid." << endl;
+        exit(1);
     }
 #endif
 
@@ -876,6 +882,7 @@ void Workspace::lower_cap(int cap, int dbuid)
     cap_list[0] = cap;
     if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_CLEAR) == -1) {
         cerr << "Error: problem with capabilities." << endl;
+        exit(1);
     }
 
     if (cap_set_proc(caps) == -1) {
@@ -883,6 +890,7 @@ void Workspace::lower_cap(int cap, int dbuid)
         cap_t cap = cap_get_proc();
         cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
         cap_free(cap);
+        exit(1);
     }
 
     cap_free(caps);
@@ -891,6 +899,7 @@ void Workspace::lower_cap(int cap, int dbuid)
 
     if(seteuid(dbuid)) {
         cerr << "Error: can not change uid." << endl;
+        exit(1);
     }
 #endif
 }
@@ -909,6 +918,7 @@ void Workspace::raise_cap(int cap)
     cap_list[0] = cap;
     if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_SET) == -1) {
         cerr << "Error: problem with capabilities." << endl;
+        exit(1);
     }
 
     if (cap_set_proc(caps) == -1) {
@@ -916,12 +926,14 @@ void Workspace::raise_cap(int cap)
         cap_t cap = cap_get_proc();
         cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
         cap_free(cap);
+        exit(1);
     }
 
     cap_free(caps);
 #else
     if (seteuid(0)) {
         cerr << "Error: can not change uid." << endl;
+        exit(1);
     }
 #endif
 }
