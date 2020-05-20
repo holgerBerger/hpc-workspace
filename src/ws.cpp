@@ -107,16 +107,11 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
     // read private config
     raise_cap(CAP_DAC_OVERRIDE);
-
-
-    // read private config
-    raise_cap(CAP_DAC_OVERRIDE);
     try {
         userconfig = YAML::LoadFile("/etc/ws_private.conf");
     } catch (const YAML::BadFile&) {
         // we do not care
     }
-
     // lower again, nothing needed
     lower_cap(CAP_DAC_OVERRIDE, db_uid);
 
