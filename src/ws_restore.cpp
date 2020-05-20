@@ -172,8 +172,9 @@ std::vector<string> get_valid_fslist() {
   // read config
   try {
       config = YAML::LoadFile("/etc/ws.conf");
-  } catch (YAML::BadFile) {
-      cerr << "Error: no config file!" << endl;
+  } catch (const YAML::BadFile& e) {
+      cerr << "Error: Could not read config file!" << endl;
+      cerr << e.what() << endl;
       exit(-1);
   }
 
@@ -255,8 +256,9 @@ vector<string> getRestorable(string filesystem, string username)
     // read config
     try {
         config = YAML::LoadFile("/etc/ws.conf");
-    } catch (YAML::BadFile) {
-        cerr << "Error: no config file!" << endl;
+    } catch (const YAML::BadFile& e) {
+        cerr << "Error: Could not read config file!" << endl;
+        cerr << e.what() << endl;
         exit(-1);
     }
 

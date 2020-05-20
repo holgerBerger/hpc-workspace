@@ -204,16 +204,13 @@ int main(int argc, char **argv) {
     YAML::Node config;
     try {
         config = YAML::LoadFile("/etc/ws.conf");
-    } catch (YAML::BadFile) {
-        cerr << "Error: no config file!" << endl;
+    } catch (const YAML::BadFile& e) {
+        cerr << "Error: Could not read config file!" << endl;
+        cerr << e.what() << endl;
         exit(-1);
     }
 
-    try {
-    	reminder = config["reminderdefault"].as<int>();
-    } catch (YAML::BadConversion) {
-	reminder = 0;
-    }
+    reminder = config["reminderdefault"].as<int>(0);
 
 
     // check commandline, get flags which are used to create ws object or for workspace allocation

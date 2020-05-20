@@ -34,6 +34,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
@@ -51,11 +52,6 @@ typedef int cap_value_t;
 const int CAP_DAC_OVERRIDE = 0;
 const int CAP_CHOWN = 1;
 #endif
-
-// C++ stuff
-#include <iostream>
-#include <string>
-#include <vector>
 
 // YAML
 #include <yaml-cpp/yaml.h>
@@ -99,8 +95,9 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     // read config
     try {
         config = YAML::LoadFile("/etc/ws.conf");
-    } catch (YAML::BadFile) {
-        cerr << "Error: no config file!" << endl;
+    } catch (const YAML::BadFile& e) {
+        cerr << "Error: Could not read config file!" << endl;
+        cerr << e.what() << endl;
         exit(-1);
     }
     db_uid = config["dbuid"].as<int>();
@@ -110,16 +107,11 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
     // read private config
     raise_cap(CAP_DAC_OVERRIDE);
-
-
-    // read private config
-    raise_cap(CAP_DAC_OVERRIDE);
     try {
         userconfig = YAML::LoadFile("/etc/ws_private.conf");
-    } catch (YAML::BadFile) {
+    } catch (const YAML::BadFile&) {
         // we do not care
     }
-
     // lower again, nothing needed
     lower_cap(CAP_DAC_OVERRIDE, db_uid);
 
