@@ -815,11 +815,11 @@ void Workspace::drop_cap(cap_value_t cap_arg, int dbuid)
     // cap_list[0] = CAP_DAC_OVERRIDE;
     // cap_list[1] = CAP_CHOWN;
 
-    if (cap_set_flag(caps, CAP_PERMITTED, 1, cap_list, CAP_SET) == -1) {
+    if (cap_set_flag(caps, CAP_PERMITTED, 1, cap_list, CAP_SET) != 0) {
         cerr << "Error: problem with capabilities." << endl;
     }
 
-    if (cap_set_proc(caps) == -1) {
+    if (cap_set_proc(caps) != 0) {
         cerr << "Error: problem dropping capabilities." << endl;
         cap_t cap = cap_get_proc();
         cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
@@ -849,11 +849,11 @@ void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid)
     // cap_list[0] = CAP_DAC_OVERRIDE;
     // cap_list[1] = CAP_CHOWN;
 
-    if (cap_set_flag(caps, CAP_PERMITTED, 2, cap_list, CAP_SET) == -1) {
+    if (cap_set_flag(caps, CAP_PERMITTED, 2, cap_list, CAP_SET) != 0) {
         cerr << "Error: problem with capabilities." << endl;
     }
 
-    if (cap_set_proc(caps) == -1) {
+    if (cap_set_proc(caps) != 0) {
         cerr << "Error: problem dropping capabilities." << endl;
         cap_t cap = cap_get_proc();
         cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
@@ -882,11 +882,11 @@ void Workspace::lower_cap(int cap, int dbuid)
     caps = cap_get_proc();
 
     cap_list[0] = cap;
-    if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_CLEAR) == -1) {
+    if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_CLEAR) != 0) {
         cerr << "Error: problem with capabilities." << endl;
     }
 
-    if (cap_set_proc(caps) == -1) {
+    if (cap_set_proc(caps) != 0) {
         cerr << "Error: problem lowering capabilities." << endl;
         cap_t cap = cap_get_proc();
         cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
@@ -915,11 +915,11 @@ void Workspace::raise_cap(int cap)
     caps = cap_get_proc();
 
     cap_list[0] = cap;
-    if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_SET) == -1) {
+    if (cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_list, CAP_SET) != 0) {
         cerr << "Error: problem with capabilities." << endl;
     }
 
-    if (cap_set_proc(caps) == -1) {
+    if (cap_set_proc(caps) != 0) {
         cerr << "Error: problem raising capabilities." << endl;
         cap_t cap = cap_get_proc();
         cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
