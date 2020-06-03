@@ -272,7 +272,9 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
             lua_pushstring(L, username.c_str() );
             lua_call(L, 2, 1);
             prefix = string("/")+lua_tostring(L, -1);
-            cerr << "Info: prefix=" << prefix << endl;
+            if (opt.count("debug")) {
+                cerr << "Info: prefix=" << prefix << endl;
+            }
             lua_pop(L,1);
         }
 #endif
@@ -314,9 +316,12 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         }
 
         raise_cap(CAP_CHOWN);
+        /*
+        // removed 3.6.2020, what was it good for??
         if(prefix.length()>0) {  // in case we have a prefix, we change owner of that one
             chown(wsdir_nopostfix.c_str(), tuid, tgid);
         }
+        */
 
         if(chown(wsdir.c_str(), tuid, tgid)) {
             lower_cap(CAP_CHOWN, db_uid);
