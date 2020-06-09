@@ -39,6 +39,11 @@ function _ws_workspace_list() {
     printf "%s" "$ws_names"
 }
 
+function _ws_restore_list() {
+    local restore_targets="$(ws_restore -l -b)"
+    printf "%s" "$restore_targets"
+}
+
 # ws_find completion
 function _complete_ws_find() {
     case "${COMP_WORDS[$COMP_CWORD]}" in
@@ -93,4 +98,27 @@ function _complete_ws_release() {
     COMPREPLY=($(compgen -W "$(ws_list -s)" -- "${COMP_WORDS[$COMP_CWORD]}"))
 }
 complete -F _complete_ws_release ws_release
+
+
+# ws_restore completion with available workspace names
+function _complete_ws_restore() {
+    case "${COMP_WORDS[$COMP_CWORD]}" in
+        -*)
+            COMPREPLY=($(compgen -W "--brief --filesystem --help --list --name --target --username --version" -- "${COMP_WORDS[$COMP_CWORD]}"))
+            ;;
+        *)
+            prev="${COMP_WORDS[$COMP_CWORD - 1]}"
+            local restore_targets="$(_ws_restore_list)"
+            if [[ "$prev" == "-F" || "$prev" == "--filesystem" ]] ; then
+                local file_systems="$(_ws_filesystem_list)"
+                COMPREPLY=($(compgen -W "$file_systems" -- "${COMP_WORDS[$COMP_CWORD]}"))
+            elif [[ "$prev" == "--name" || " $restore_targets " =~ " $prev " ]] ; then
+                COMPREPLY=($(compgen -W "$(ws_list -s)" -- "${COMP_WORDS[$COMP_CWORD]}"))
+            else
+                COMPREPLY=($(compgen -W "$restore_targets" -- "${COMP_WORDS[$COMP_CWORD]}"))
+            fi
+            ;;
+    esac
+}
+complete -F _complete_ws_restore ws_restore
 
