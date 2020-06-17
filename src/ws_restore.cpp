@@ -52,6 +52,14 @@
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
+#ifndef SETUID
+#include <sys/capability.h>
+#else
+typedef int cap_value_t;
+const int CAP_DAC_OVERRIDE = 0;
+const int CAP_CHOWN = 1;
+#endif
+
 #include "ws.h"
 #include "ruh.h"
 
@@ -77,14 +85,22 @@ void commandline(po::variables_map &opt, string &name, string &target,
             ("username,u", po::value<string>(&username), "username")
     ;
 
+    po::options_description secret_options("Secret");
+    secret_options.add_options()
+        ("debug", "show debugging information")
+        ;
+
     // define options without names
     po::positional_options_description p;
     p.add("name", 1);
     p.add("target", 2);
 
+    po::options_description all_options;
+    all_options.add(cmd_options).add(secret_options);
+
     // parse commandline
     try{
-        po::store(po::command_line_parser(argc, argv).options(cmd_options).positional(p).run(), opt);
+        po::store(po::command_line_parser(argc, argv).options(all_options).positional(p).run(), opt);
         po::notify(opt);
     } catch (...) {
         cout << "Usage:" << argv[0] << ": [options] workspace_name target_name | -l" << endl;
@@ -295,6 +311,21 @@ int main(int argc, char **argv) {
     setenv("LANG","C",1);
     std::setlocale(LC_ALL, "C");
 	std::locale::global(std::locale("C"));
+
+    // read config
+    try {
+        config = YAML::LoadFile("/etc/ws.conf");
+    } catch (const YAML::BadFile& e) {
+        cerr << "Error: Could not read config file!" << endl;
+        cerr << e.what() << endl;
+        exit(-1);
+    }
+
+    int db_uid = config["dbuid"].as<int>();
+
+    // lower capabilities to minimum
+    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
+
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, target, filesystem, listflag, terse, username, argc, argv);

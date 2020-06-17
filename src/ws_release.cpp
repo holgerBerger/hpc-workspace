@@ -38,6 +38,14 @@
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
 
+#ifndef SETUID
+#include <sys/capability.h>
+#else
+typedef int cap_value_t;
+const int CAP_DAC_OVERRIDE = 0;
+const int CAP_CHOWN = 1;
+#endif
+
 #include "ws.h"
 
 namespace po = boost::program_options;
@@ -148,6 +156,20 @@ int main(int argc, char **argv) {
     setenv("LANG","C",1);
     std::setlocale(LC_ALL, "C");
     std::locale::global(std::locale("C"));
+	
+    // read config
+    try {
+        config = YAML::LoadFile("/etc/ws.conf");
+    } catch (const YAML::BadFile& e) {
+        cerr << "Error: Could not read config file!" << endl;
+        cerr << e.what() << endl;
+        exit(-1);
+    }
+
+    int db_uid = config["dbuid"].as<int>();
+
+    // lower capabilities to minimum
+    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
 
     // check commandline
     commandline(opt, name, duration, filesystem, extensionflag, argc, argv);
