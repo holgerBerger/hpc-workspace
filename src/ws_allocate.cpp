@@ -169,13 +169,13 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
                 cerr << "Info: reminder email will be sent to local user account" << endl;
             }
         }
-    } /* else {
+    } else {
         // check if mail address was set with -m but not -r
-        if(opt.count("mailaddress")) {
+        if(opt.count("mailaddress") && !opt.count("extension")) {
             cerr << "Error: You can't use the mailaddress (-m) without the reminder (-r) option." << endl;
             exit(1);
         } 
-    } */
+    }
 
     // validate workspace name against nasty characters    
     static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
