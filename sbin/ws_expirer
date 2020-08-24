@@ -12,6 +12,7 @@
 
     (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
     (c) Bernd Krischok 2017, 2020
+    (c) Christoph Niethammer 2020
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel, Martin Hecht
     and Adrian Reber
@@ -36,6 +37,7 @@ import glob
 import time
 import smtplib
 import os.path
+import shutil
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import socket
@@ -113,15 +115,24 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
     except:  # something went wrong
         print("Could not send reminder email. Other reason.", recipients)
 
+# fast recursive deleter, using new python mechanisms
+def fastdeldir(dir):
+    print("   deldir(fast)", dir)
+    if not os.path.exists(dir):
+        print("Error: Path to delete does not exist: %s" % dir)
+        return
+    shutil.rmtree(dir)
 
 # slow recursive deleter, to avoid high meta data pressure on servers
-def deldir(dir):
+def slowdeldir(dir):
     global count
-    print("   deldir",dir)
+    print("   deldir(slow)",dir)
+    os.chmod(dir, 0o000)
     if not os.path.exists(dir): return
     for obj in os.listdir(dir):
         fullname=os.path.join(dir,obj)
         if os.path.isdir(fullname) and not os.path.islink(fullname):
+            os.chmod(dir, 0o000)
             deldir(fullname)
             time.sleep(0.01)
             os.rmdir(fullname)
@@ -159,10 +170,15 @@ def get_dbentriesws(dbfullpathlist):
        try:
           dbentry = yaml.load(open(dbentryfilename))
           workspace = dbentry['workspace']
+          W.append(workspace)
        except:
-          dbentry = get_old_db_entry_informations(dbentryfilename)
-          workspace = dbentry['workspace']
-       W.append(workspace)
+          try:
+             dbentry = get_old_db_entry_informations(dbentryfilename)
+             workspace = dbentry['workspace']
+             W.append(workspace)
+          except:
+             print("Empty DB entry?",dbentryfilename)
+             pass
     return W
 
 # Options Parsing ...
@@ -211,6 +227,9 @@ if os.getuid()!=0:
 # load config file
 config = yaml.load(open('/etc/ws.conf'))
 
+# choose one of the two
+deldir=slowdeldir
+deldir=fastdeldir
 
 smtphost = config['smtphost']
 clustername = config['clustername']
@@ -247,9 +266,9 @@ else:
 # cleanup stray directories, this removes stuff that was released (no DB entry any more)
 # from spaces, and checks if anything is left over in removed state for whatever reasons
 for fs in fslist:
-        # first for visible workspaces
+    # first for visible workspaces
         try:
-            dbdir = config["workspaces"][fs]["database"]
+           dbdir = config["workspaces"][fs]["database"]
         except KeyError:
             print("  FAILED to access", fs, "in config file")
             continue
@@ -287,10 +306,9 @@ for fs in fslist:
                         if os.path.basename(ws) not in dbdelentrynames:
                                 print("  stray removed workspace", ws)
                                 if not dryrun:
-                                    deldir(os.path.join(os.path.dirname(ws), workspacedelprefix, os.path.basename(ws)))
-                                    print("  DELDIR", os.path.join(os.path.dirname(ws), workspacedelprefix, os.path.basename(ws)))
+                                    deldir(ws)
                                 else:
-                                    print("  RM", os.path.join(os.path.dirname(ws), workspacedelprefix, os.path.basename(ws)))
+                                    print("  DELDIR", ws)
                         else:
                                 print("  valid removed workspace", ws)
 
@@ -395,7 +413,14 @@ for fs in fslist:
             expiration = int(released)
         except ValueError:
             pass 
-        if time.time() > expiration + keeptime*24*3600:
+
+        # check if the entry was released or was expired
+        try:
+            was_released = dbentry['released'] 
+        except:
+            was_released = time.time() + 3600000    # time in future never reached
+
+        if time.time() > expiration + keeptime*24*3600 or time.time() > was_released + 3600:
             print("  deleting", dbentryfilename)
 
             if not dryrun:
@@ -410,9 +435,9 @@ for fs in fslist:
                     os.rmdir(os.path.join(os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename)))
                     print("  OS.RMDIR", os.path.join(os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename)))
                 except:
-                    print("  does not exist")
+                    pass
             else:
-                print("  RM", dbentryfilename)
+                print("  DELDIR", dbentryfilename)
                 print("  RM", os.path.join(os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename)))
 
         else:
