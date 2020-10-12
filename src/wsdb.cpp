@@ -72,7 +72,7 @@ WsDB::WsDB(const string _filename, const string _wsdir, const long int _expirati
            const int _dbgid, const int _reminder, const string _mailaddress, const string _group, const string _comment)
     :
     dbfilename(_filename), wsdir(_wsdir), expiration(_expiration), extensions(_extensions),
-    acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress), group(_group), comment(_comment)
+    acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress), group(_group), comment(_comment), released(time(NULL))
 {
     write_dbfile();
 }
