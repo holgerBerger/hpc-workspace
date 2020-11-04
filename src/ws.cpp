@@ -967,6 +967,7 @@ std::vector<string> Workspace::get_valid_fslist() {
   grp=getgrgid(getegid());
   if(grp==NULL) {
        cerr << "Error: user has no group anymore!" << endl;
+       exit(-1);
   }
   primarygroup=string(grp->gr_name);
 

@@ -216,7 +216,8 @@ std::vector<string> get_valid_fslist() {
   // get current group
   grp=getgrgid(getegid());
   if(grp==NULL) {
-       cerr << "Error: user has no group anymore!" << endl;
+      cerr << "Error: user has no group anymore!" << endl;
+      exit(-1);
   }
   primarygroup=string(grp->gr_name);
 
