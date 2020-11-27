@@ -68,11 +68,13 @@ except KeyError:
 
 try:
     print('default workspace:',config["default"])
+    defaultws=config["default"]
     if config["default"] not in workspaces:
         print('ERROR: default workspace is not defined as workspace in the file')
         sys.exit(1)
 except KeyError:
     print('WARNING: no default workspace defined, please add <"default": "name"> clause to toplevel')
+    defaultws="____"
 
 
 
@@ -135,3 +137,5 @@ for ws in workspaces:
         print(' ERROR: no workspace keeptime set!')
         sys.exit(1)
 
+    if ws==defaultws and (len(config["workspaces"][ws]["user_acl"])>0 or len(config["workspaces"][ws]["group_acl"])>0):
+        print(" WARNING: default workspace has ACLs! there is a risk not all users can access their default workspace")
