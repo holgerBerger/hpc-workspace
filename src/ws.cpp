@@ -155,27 +155,35 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         searchlist.push_back(opt["filesystem"].as<string>());
     } else {
         searchlist = get_valid_fslist();
+		auto df = find(searchlist.begin(), searchlist.end(), filesystem);
+        if(df!=searchlist.end()) {
+			auto tmp=searchlist[0];
+			searchlist[0]=*df;
+			*df=tmp;
+			if (opt.count("debug")) {
+				cerr << "debug: moved default filesystem to front:" << filesystem << endl;
+			}
+		}
     }
+
     BOOST_FOREACH(string cfilesystem, searchlist) {
       // construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
+      if (opt.count("debug")) {
+		  cerr << "debug: searching valid filesystems " << cfilesystem << endl;
+	  }
 
       if(extensionflag && user_option.length()>0) {
           dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+user_option+"-"+name;
           if(!fs::exists(dbfilename)) {
               cerr << "Error: workspace does not exist, can not be extended!" << endl;
               exit(-1);
+			  // FIXME looks wrong? exit in loops?
           }
-      } else {
+      } else { 
           if(user_option.length()>0 && (getuid()==0)) {
               dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+user_option+"-"+name;
-          } else {
+          } else { 
               dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+username+"-"+name;
-              if(extensionflag) {
-                  if(!fs::exists(dbfilename)) {
-                      cerr << "Error: workspace does not exist, can not be extended!" << endl;
-                      exit(-1);
-                  }
-              }
           }
       }
 
@@ -978,6 +986,10 @@ std::vector<string> Workspace::get_valid_fslist() {
       vector<string>user_acl;
       vector<string>group_acl;
 
+      if (opt.count("debug")) {
+          cerr << "debug: find_valid_fs:" << cfilesystem << endl;
+      }
+
       // read ACL lists
       if ( config["workspaces"][cfilesystem]["user_acl"]) {
           BOOST_FOREACH(string v,
@@ -992,10 +1004,18 @@ std::vector<string> Workspace::get_valid_fslist() {
 
       // check ACLs
       bool userok=true;
-      if(user_acl.size()>0 || group_acl.size()>0) userok=false;
+      if(user_acl.size()>0 || group_acl.size()>0) {
+          if (opt.count("debug")) {
+              cerr << "debug: find_valid_fs, has ACL, access denied." << endl;
+          }
+          userok=false;
+      }
 
       if( find(group_acl.begin(), group_acl.end(), primarygroup) != group_acl.end() ) {
           userok=true;
+          if (opt.count("debug")) {
+              cerr << "debug: find_valid_fs, in group ACL, access granted." << endl;
+          }
       }
 #ifdef CHECK_ALL_GROUPS
       BOOST_FOREACH(string grp, groupnames) {
@@ -1007,9 +1027,19 @@ std::vector<string> Workspace::get_valid_fslist() {
 #endif
       if( find(user_acl.begin(), user_acl.end(), username) != user_acl.end() ) {
           userok=true;
+          if (opt.count("debug")) {
+              cerr << "debug: find_valid_fs, in user ACL, access granted." << endl;
+          }
       }
       if(userok || getuid()==0) {
+          if (opt.count("debug")) {
+              cerr << "debug: find_valid_fs, granted" << endl;
+          }
           fslist.push_back(cfilesystem);
+      } else {
+          if (opt.count("debug")) {
+              cerr << "debug: find_valid_fs, denied" << endl;
+          }
       }
   }
   return fslist;
