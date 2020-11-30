@@ -163,6 +163,8 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 			if (opt.count("debug")) {
 				cerr << "debug: moved default filesystem to front:" << filesystem << endl;
 			}
+		} else {
+			cerr << "warn: you seem to have no access to your default workspace!?" << endl;
 		}
     }
 
