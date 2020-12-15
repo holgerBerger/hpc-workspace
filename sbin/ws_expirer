@@ -278,7 +278,7 @@ for fs in fslist:
         dbentriesws=get_dbentriesws(dbentries)
         dbentryworkspaces=list(map(os.path.basename, dbentriesws))
         workspacedelprefix = config["workspaces"][fs]["deleted"]
-        print(" checking for stray workspaces for", fs, dbdir, spaces)
+        print("PHASE: checking for stray workspaces for", fs, dbdir, spaces)
         for space in spaces:
                 for ws in glob.glob(os.path.join(space,"*-*")):
                         #if os.path.basename(ws) not in dbentrynames:
@@ -324,7 +324,7 @@ for fs in fslist:
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     workspacedelprefix = config["workspaces"][fs]["deleted"]
     dbdir = config["workspaces"][fs]["database"]
-    print(" checking for workspaces to be expired for", fs, dbdir, spaces)
+    print("PHASE: checking for workspaces to be expired for", fs, dbdir, spaces)
     for dbentryfilename in glob.glob(os.path.join(dbdir,"*-*")):
         reminder = 0
         mailaddress = ""
@@ -341,13 +341,14 @@ for fs in fslist:
         try:
           expiration = int(dbentry["expiration"])
         except Exception:
+          print("   ERROR in parsing expiration <",dbentry["expiration"],"> for",dbentryfilename)
           continue
         workspace = dbentry["workspace"]
         if workspace == "" or expiration == 0:
-            print("  FAILED", dbentryfilename)
+            print("  FAILED to parse DB for", dbentryfilename)
             continue
         if time.time() > expiration:
-            print("  expiring", dbentryfilename)
+            print("  expiring", dbentryfilename,"  (expired",time.ctime(expiration),")")
             timestamp=str(int(time.time()))
             if not dryrun:
                 os.rename(dbentryfilename, os.path.join(dbdeldir, os.path.basename(dbentryfilename))+"-"+timestamp)
@@ -367,7 +368,7 @@ for fs in fslist:
                 print("  MV", workspace, os.path.join(os.path.dirname(workspace), workspacedelprefix,os.path.basename(dbentryfilename)+"-"+timestamp))
 
         else:
-            print("  keeping", dbentryfilename)
+            print("  keeping", dbentryfilename, "  (expires ",time.ctime(expiration),")")
             if time.time() > (expiration - (reminder*(24*3600))):
                 #print "  mail needed"
                 swsname = os.path.basename(dbentryfilename)[os.path.basename(dbentryfilename).find('-')+1:]
@@ -389,9 +390,10 @@ for fs in fslist:
         print("  FAILED to access", fs, "in config file")
         continue
     dbdir = config["workspaces"][fs]["database"]
-    print(" checking for expired workspaces for", fs, dbdir, spaces)
+    print("PHASE: checking for expired workspaces for", fs, dbdir, spaces)
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     keeptime = config["workspaces"][fs]["keeptime"]
+    print("  keeptime:",keeptime)
     workspacedelprefix = config["workspaces"][fs]["deleted"]
     for dbentryfilename in glob.glob(os.path.join(dbdeldir,"*-*-*")):
         workspace = ""
@@ -405,14 +407,15 @@ for fs in fslist:
            expiration = int(dbentry['expiration'])
            workspace = dbentry['workspace']
         if workspace == "" or expiration == 0:
-            print("  FAILED", dbentryfilename)
+            print("  FAILED to parse DB for", dbentryfilename)
             continue
         # take time of release from filename
         released = dbentryfilename.split("-")[-1]
         try:
             expiration = int(released)
         except ValueError:
-            pass 
+            print("   ERROR in parsing expiration <",released,"> for",dbentryfilename)
+            continue
 
         # check if the entry was released or was expired
         try:
@@ -420,8 +423,12 @@ for fs in fslist:
         except:
             was_released = time.time() + 3600000    # time in future never reached
 
-        if time.time() > expiration + keeptime*24*3600 or time.time() > was_released + 3600:
-            print("  deleting", dbentryfilename)
+        if (time.time() > (expiration + keeptime*24*3600)) or (time.time() > (was_released + 3600)):
+            if time.time() > (was_released + 3600):
+                print("  deleting", dbentryfilename, "  (was released",time.ctime(was_released),")")
+            else:
+                print("  deleting", dbentryfilename, "  (expired",time.ctime(expiration),")")
+
 
             if not dryrun:
                 # remove the DB entry
@@ -441,7 +448,7 @@ for fs in fslist:
                 print("  RM", os.path.join(os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename)))
 
         else:
-            print("  moved but restorable",dbentryfilename)
+            print("  (keeping further restorable",dbentryfilename,"until",time.ctime(expiration + keeptime*24*3600),")")
 
 
 
