@@ -103,7 +103,7 @@ group = grp.getgrgid(gid)[0]
 groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
 
 # load config file
-config = yaml.load(open('/etc/ws.conf'))
+config = yaml.safe_load(open('/etc/ws.conf'))
 
 # check admin state
 admin = False
@@ -231,7 +231,7 @@ for fs in legal:
                     continue
                 else:
                     try:
-                        content = yaml.load(open(ws))
+                        content = yaml.safe_load(open(ws))
                     except IOError:
                         continue
                     wsgroup = content['group']
@@ -244,7 +244,7 @@ for fs in legal:
             entry = struct()
             entry.name = ws
             try:
-                content = yaml.load(open(ws))
+                content = yaml.safe_load(open(ws))
             except IOError:
                 continue
             entry.creation = os.path.getctime(ws)
