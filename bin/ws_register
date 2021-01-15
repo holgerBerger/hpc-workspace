@@ -69,7 +69,7 @@ groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
 
 
 # load config file
-config = yaml.load(open('/etc/ws.conf'))
+config = yaml.safe_load(open('/etc/ws.conf'))
 
 
 usage="Usage: ws_restore [options] directory"
@@ -130,7 +130,7 @@ for fs in legal:
     if not os.path.isdir(dirname+"/"+fs):
         os.mkdir(dirname+"/"+fs)
     for fname in glob.glob(dbfilename):
-        f=yaml.load(open(fname)) 
+        f=yaml.safe_load(open(fname)) 
         try:
             wsname=f['workspace']
         except TypeError:

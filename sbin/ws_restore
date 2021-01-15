@@ -42,7 +42,7 @@ if os.getuid()!=0:
     sys.exit(-1)
 
 # load config file
-config = yaml.load(open('/etc/ws.conf'))
+config = yaml.safe_load(open('/etc/ws.conf'))
 
 if len(sys.argv)==1:
     print("Usage: ws_restore <workspace>", file=sys.stderr)
@@ -59,7 +59,7 @@ for fs in config["workspaces"]:
             print("Error: workspace with same name %s exists, resolve it by hand!", file=sys.stderr)
             sys.exit(-1)
         else:
-            entry = yaml.load(open(dbentry))
+            entry = yaml.safe_load(open(dbentry))
             try:
                 wsentry = os.path.join( os.path.dirname(entry["workspace"]), config["workspaces"][fs]["deleted"] , workspaceid )
             except TypeError:

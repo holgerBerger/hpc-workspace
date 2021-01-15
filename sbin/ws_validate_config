@@ -39,7 +39,7 @@ if len(sys.argv)>1 and sys.argv[1] in ['-h','--help']:
 
 filename = sys.argv[1] if len(sys.argv)>1 else '/etc/ws.conf'
 
-config = yaml.load(open(filename))
+config = yaml.safe_load(open(filename))
 
 print('validating config from',filename)
 

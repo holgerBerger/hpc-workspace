@@ -168,7 +168,7 @@ def get_dbentriesws(dbfullpathlist):
     W=[]
     for dbentryfilename in dbfullpathlist:
        try:
-          dbentry = yaml.load(open(dbentryfilename))
+          dbentry = yaml.safe_load(open(dbentryfilename))
           workspace = dbentry['workspace']
           W.append(workspace)
        except:
@@ -225,7 +225,7 @@ if os.getuid()!=0:
     sys.exit(-1)
 
 # load config file
-config = yaml.load(open('/etc/ws.conf'))
+config = yaml.safe_load(open('/etc/ws.conf'))
 
 # choose one of the two
 deldir=slowdeldir
@@ -331,7 +331,7 @@ for fs in fslist:
         workspace = ""
         expiration = 0
         try:
-           dbentry = yaml.load(open(dbentryfilename))
+           dbentry = yaml.safe_load(open(dbentryfilename))
            reminder = int(dbentry['reminder'])
            mailaddress = dbentry['mailaddress']
         except:
@@ -399,7 +399,7 @@ for fs in fslist:
         workspace = ""
         expiration = 0
         try:
-           dbentry = yaml.load(open(dbentryfilename))
+           dbentry = yaml.safe_load(open(dbentryfilename))
            expiration = int(dbentry['expiration'])
            workspace = dbentry['workspace']
         except:

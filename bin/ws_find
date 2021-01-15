@@ -65,7 +65,7 @@ groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
 
 
 # load config file
-config = yaml.load(open('/etc/ws.conf'))
+config = yaml.safe_load(open('/etc/ws.conf'))
 
 
 usage="Usage: ws_find [options] [workspacename]"
@@ -126,7 +126,7 @@ found=False
 for fs in legal:
     dbfilename='%s/%s-%s' % (config["workspaces"][fs]['database'], user, wsname)
     try:
-        f=yaml.load(open(dbfilename))
+        f=yaml.safe_load(open(dbfilename))
     except IOError:
         continue
     try:

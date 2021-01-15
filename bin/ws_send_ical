@@ -177,7 +177,7 @@ group = grp.getgrgid(gid)[0]
 groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
 
 # load config file
-config = yaml.load(open('/etc/ws.conf'))
+config = yaml.safe_load(open('/etc/ws.conf'))
 
 smtphost  = config['smtphost']
 resource = config['clustername']
@@ -228,7 +228,7 @@ if options.mailadress == None:
             attendees = ""
         if ":" in attendees:
             try:
-                user_config = yaml.load(open(os.path.expanduser("~/.ws_user.conf")))
+                user_config = yaml.safe_load(open(os.path.expanduser("~/.ws_user.conf")))
                 attendees = user_config["mail"]
             except:
                 attendees = ""
@@ -291,7 +291,7 @@ for fs in legal:
     for    ws in glob.glob(pattern):
         entry = struct()
         entry.name = ws
-        content = yaml.load(open(ws))
+        content = yaml.safe_load(open(ws))
         entry.creation = os.path.getctime(ws)
         try:
             entry.expiration = int(content['expiration'])
