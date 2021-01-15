@@ -48,7 +48,7 @@ if options.capabilities:
         print("WARNING: ws_release was not found. Could not set capability on ws_release.")
 
 if os.path.exists(filename):
-    config = yaml.load(open(filename))
+    config = yaml.safe_load(open(filename))
 else:
     print("ERROR: no config file available")
     sys.exit(1)
