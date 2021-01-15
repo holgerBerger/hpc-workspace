@@ -1023,6 +1023,9 @@ std::vector<string> Workspace::get_valid_fslist() {
 #ifdef CHECK_ALL_GROUPS
       BOOST_FOREACH(string grp, groupnames) {
           if( find(group_acl.begin(), group_acl.end(), grp) != group_acl.end() ) {
+			  if (opt.count("debug")) {
+				  cerr << "debug: find_valid_fs, in group ACL, access granted (secondary)." << endl;
+			  }
               userok=true;
               break;
           }
