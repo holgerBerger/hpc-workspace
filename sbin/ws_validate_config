@@ -137,5 +137,14 @@ for ws in workspaces:
         print(' ERROR: no workspace keeptime set!')
         sys.exit(1)
 
-    if ws==defaultws and (len(config["workspaces"][ws]["user_acl"])>0 or len(config["workspaces"][ws]["group_acl"])>0):
-        print(" WARNING: default workspace has ACLs! there is a risk not all users can access their default workspace")
+    try:
+        if ws==defaultws and len(config["workspaces"][ws]["user_acl"]):
+            print(" WARNING: default workspace has ACLs! there is a risk not all users can access their default workspace")
+    except:
+        pass
+
+    try:
+        if ws==defaultws and len(config["workspaces"][ws]["group_acl"])>0:
+            print(" WARNING: default workspace has ACLs! there is a risk not all users can access their default workspace")
+    except:
+        pass
