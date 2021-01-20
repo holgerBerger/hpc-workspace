@@ -270,6 +270,7 @@ for fs in legal:
                     entry.extensions = int(f.readline()[:-1].split(":")[1])
                     entry.reminder = 0
                     entry.mailaddress = ""
+                    entry.comment = ""
                     f.close()
                 if sort:
                     # store for sorting
