@@ -124,7 +124,7 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
 /*
  *  create a workspace and its DB entry
  */
-void Workspace::allocate(const string name, const bool extensionflag, const int reminder, const string mailaddress, string user_option, const string comment) {
+void Workspace::allocate(const string name, const bool extensionflag, const int reminder, const string mailaddress, string user_option, const string groupname, const string comment) {
     string wsdir, wsdir_nopostfix;
     int extension;
     long expiration;
@@ -325,6 +325,14 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
             tgid = pws->pw_gid;
         }
 
+		if (groupname!="") {
+			struct group *grp;
+            grp=getgrnam(groupname.c_str());
+			if (grp) {
+				tgid=grp->gr_gid;
+			}
+		}
+
         raise_cap(CAP_CHOWN);
         /*
         // removed 3.6.2020, what was it good for??
@@ -344,8 +352,11 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         raise_cap(CAP_DAC_OVERRIDE);
 		mode_t mode = S_IRUSR | S_IWUSR | S_IXUSR;
         // group workspaces can be read and listed by group
-		if (opt.count("group")) {
+		if (opt.count("group") || groupname!="") {
 			mode |= S_IRGRP | S_IXGRP;
+		}
+		if (groupname!="") {
+			mode |= S_IWGRP | S_ISGID;
 		}
         if(chmod(wsdir.c_str(), mode)) {
             lower_cap(CAP_DAC_OVERRIDE, db_uid);
@@ -364,6 +375,11 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
             // grp should be ok here, was validated before
             primarygroup = string(grp->gr_name);
         }
+
+		if (groupname!="") {
+			primarygroup = groupname;
+		}
+
         WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress, primarygroup, comment);
 
         syslog(LOG_INFO, "created for user <%s> DB <%s> with space <%s>.", username.c_str(), dbfilename.c_str(), wsdir.c_str());
@@ -491,7 +507,12 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
     }
     for(int i=0; i<nrgroups; i++) {
         grp=getgrgid(gids[i]);
-        if(grp) groupnames.push_back(string(grp->gr_name));
+        if(grp) {
+			groupnames.push_back(string(grp->gr_name));
+			if (opt.count("debug")) {
+				cerr << "Debug: secondary group " << string(grp->gr_name) << endl; 
+			}
+		}
     }
     // get current group
     grp=getgrgid(getegid());
@@ -503,6 +524,13 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
 
     if (opt.count("debug")) {
         cerr << "debug: primarygroup=" << primarygroup << endl;
+    }
+
+    if(wc==WS_Allocate && opt["groupname"].as<string>()!="") {
+        if ( find(groupnames.begin(), groupnames.end(), opt["groupname"].as<string>()) == groupnames.end() ) {
+            cerr << "Error: invalid group specified!" << endl;
+            exit(-1);
+        }
     }
 
     // if the user specifies a filesystem, he must be allowed to use it
@@ -763,6 +791,9 @@ void Workspace::restore(const string name, const string target, const string use
         targetwsdir = targetdbentry.getwsdir();
     } else {
         cerr << "Error: target workspace does not exist!" << endl;
+      	if (opt.count("debug")) {
+			cerr << "Debug: target=" << targetdbfilename << endl;
+		}
         exit(1);
     }
 

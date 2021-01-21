@@ -5,7 +5,7 @@ ws_allocate \- create a workspace directory and return its path
 
 .SH SYNOPSIS
 .B ws_allocate
-[\-h] [\-x] [\-g] [\-F FILESYSTEM] [\-r DAYS] [\-m MAILADDRESS] [\-c COMMENT] NAME DURATION
+[\-h] [\-x] [\-g] [\-G GROUPNAME] [\-F FILESYSTEM] [\-r DAYS] [\-m MAILADDRESS] [\-c COMMENT] NAME DURATION
 
 .SH DESCRIPTION
 Create a 
@@ -100,7 +100,9 @@ for a way to send calendar entries.
 a group-workspace will be created, that is a workspace that can be seen by other members of current group with 
 .B ws_list -g
 and the workspace itself is created group readable.
-
+.TP
+\-G GROUPNAME
+use the GROUPNAME as group for the workspace, make the workspace group writable and set the group sticky bit.
 
 .SH EXAMPLES
 .TP

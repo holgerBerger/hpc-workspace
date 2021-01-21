@@ -173,6 +173,8 @@ void WsDB::read_dbfile()
 		// lack the comment field, and this falls through into old path
         comment = entry["comment"].as<string>("");
 		// FIXME group missing here?
+		group = entry["group"].as<string>("");
+		// FIXME empty group or current group if no group in DB?
     } catch (const YAML::BadSubscript&) {
         // fallback to old db format, python version
         ifstream entry (dbfilename.c_str());
