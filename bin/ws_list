@@ -235,7 +235,7 @@ for fs in legal:
                     except IOError:
                         continue
                     wsgroup = content['group']
-                    if group != wsgroup:
+                    if wsgroup not in groups:
                         continue
 
         if options.short:
