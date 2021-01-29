@@ -19,8 +19,8 @@ The basic idea is
   component
 
 This approach allows the administrator a flexible allocation of resources to 
-users. It offers a level of redirection to hide details from the user, it 
-offers a stable user interface to the user,  it allows e.g. migration of users 
+users. It offers a level of redirection to hide details from the user, it
+offers a stable user interface to the user, it allows e.g. migration of users
 between different filesystems, although only over medium to large time scales, 
 and it offers a way to get a little grip on the lifetime of data. If no one 
 takes care of the data anymore, it will get deleted.
@@ -37,7 +37,7 @@ Typically a workspace will be created
 
 Typically a workspace will be deleted
 
-- because the job or campaign ended, and the users releases the directory, or
+- because the job or campaign ended, and the user releases the directory, or
 - because the maximum lifetime of the workspace is reached
 
 A friendly user or a user short on quota probably wants to remove the data 
@@ -98,8 +98,8 @@ Run ```cmake .``` and ```make -j 4``` to configure and compile the tool set.
 Copy the executables from ```bin``` to e.g. ```/usr/local/bin``` and the
 manpages from ```man``` to e.g. ```/usr/local/man/1```.
 
-Finally, a cron job has to be set up tha calls the `ws_expirer` script at 
-regular intervals, only then will old workspaces be cleaned up. The 
+Finally, a cron job has to be set up that calls the `ws_expirer` script at
+regular intervals, only then will old workspaces be cleaned up. The
 `ws_expirer` setup is detailed below.
 
 ## Further preparation
@@ -125,13 +125,13 @@ filesystem structure according to the config file.
 A very simple example `ws.conf` file:
 
 ```yaml
-admins: [root]			# users listed here can sees all workspaces with ws_list
+admins: [root]			# users listed here can see all workspaces with ws_list
 clustername: My Green Cluster	# some name for the cluster
 smtphost: mail.mydomain.com     # (my smtp server for sending mails)
-dbgid: 85			# a user id, this is the owner of some directories
-dbuid: 85			# a group id, this is the owner of some directories
-default: ws1			# the workspace location to use for everybody
-duration: 10                    # (max duration in days, default for all workspaces )
+dbuid: 85			# a user id, this is the owner of some directories
+dbgid: 85			# a group id, this is the group of some directories
+default: ws1			# the default workspace location to use for everybody
+duration: 10                    # (maximum duration in days, default for all workspaces)
 maxextensions: 1                # (maximum number of times a user can ask for a extension)
 workspaces:
   ws1:				# name of the workspace location
@@ -197,7 +197,7 @@ expiring workspaces and to send calendar entries.
 
 #### `mail_from`
 
-Used as sender in any mails, should be of form ```user@domain```.
+Used as sender in any mail, should be of the form ```user@domain```.
 
 #### `default`
 
@@ -211,12 +211,12 @@ by all users. A user may still manually choose the location with ```-F```.
 #### `duration`
 
 Maximum lifetime in days of a workspace, can be overwritten in each workspace 
-location.
+location specific section.
 
 #### `maxextensions`
 
 Maximum number of times a user can extend a workspace, can be overwritten in 
-each workspace location.
+each workspace location specific section.
 
 #### `pythonpath`
 
@@ -232,16 +232,16 @@ location.
 #### `dbuid`
 
 UID of the database directory, and the UID that will be used by all setuid 
-tools use (as long as UID 0 is not required). Can be a shared UID, but be aware 
+tools (as long as UID 0 is not required). Can be a shared UID, but be aware
 the user using that UID can mess with the DB.
-Best use a dedicated UID or a UID of another daemon.
+It is strongly suggested to use a dedicated UID or an UID of another daemon.
 
 #### `dbgid`
 
 GID of the database directory, and the GID that will be used by all setuid 
-tools use (as long as GID 0 is not required). Can be a shared GID, but be aware 
-the user using that GID can mess with the DB. Best use a dedicated GID or a GID 
-of another daemon.
+tools (as long as GID 0 is not required). Can be a shared GID, but be aware
+users assigned to that GID can mess with the DB. It is strongly suggested
+to use a dedicated GID or a GID of another daemon.
 
 #### `admins`
 
@@ -258,9 +258,9 @@ specified on a per-workspace-location basis:
 
 Time in days to keep data after it was expired. This is an option for the 
 cleaner. The cleaner will move the expired workspace to a hidden location 
-(specified by the `deleted` entry below), but not delete it immediately. Users 
-or administrators can still recover the data. After `keeptime` days, it will be 
-removed and can not be recovered anymore.
+(specified by the `deleted` entry below), but does not delete it immediately.
+Users or administrators can still recover the data. After `keeptime` days,
+it will be removed and can not be recovered anymore.
 
 #### `spaces`
 
@@ -332,7 +332,7 @@ two lists, he may not create a workspace in this location.
 
 **Caution:** the global `default` workspace can be used by any user, this 
 overrides any ACL! It is possible to have no global `default` directive, but in 
-that case the administrator needs to ensure that every user show up in the 
+that case the administrator needs to ensure that every user shows up in the
 `userdefault` or `group default` list of exactly one workspace!
 
 **Hint**: To enable access control, at least one of `user_acl` or `group_acl` 
@@ -390,7 +390,7 @@ this location cannot be extended anymore.
 
 #### `restorable`
 
-Anaolog to `allocatable` option above. If set to `no`, workspaces cannot be 
+Analog to `allocatable` option above. If set to `no`, workspaces cannot be
 restored to this location anymore.
 
 
