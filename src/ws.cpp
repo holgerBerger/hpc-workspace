@@ -502,8 +502,9 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
     int nrgroups;
 
     nrgroups = getgrouplist(username.c_str(), geteuid(), gids, &ngroups);
-    if(nrgroups<=0) {
+    if(nrgroups == -1) {
         cerr << "Error: user in too many groups!" << endl;
+        exit(-1);
     }
     for(int i=0; i<nrgroups; i++) {
         grp=getgrgid(gids[i]);
