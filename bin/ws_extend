@@ -1,13 +1,13 @@
 #!/bin/bash
 
-if [ $# -eq 2 ]
+if [ "$#" -eq 2 ]
 then
-    ws_allocate -x $1 $2
+    ws_allocate -x "$1" "$2"
     exit $?
 else
-    if [ $# -eq 4 -a $1 = "-F" ]
+    if [ "$#" -eq 4 -a "$1" = "-F" ]
     then
-    	ws_allocate -x $1 $2 $3 $4
+        ws_allocate -x "$1" "$2" "$3" "$4"
         exit $?
     else
         echo "Usage: ws_extend [-F filesystem] workspace days"
