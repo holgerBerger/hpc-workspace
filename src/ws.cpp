@@ -501,9 +501,10 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
     gid_t gids[128];
     int nrgroups;
 
-    nrgroups = getgrouplist(username.c_str(), geteuid(), gids, &ngroups);
-    if(nrgroups<=0) {
+    nrgroups = getgrouplist(username.c_str(), getgid(), gids, &ngroups);
+    if(nrgroups == -1) {
         cerr << "Error: user in too many groups!" << endl;
+        exit(-1);
     }
     for(int i=0; i<nrgroups; i++) {
         grp=getgrgid(gids[i]);
@@ -515,7 +516,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
 		}
     }
     // get current group
-    grp=getgrgid(getegid());
+    grp=getgrgid(getgid());
     if (grp==NULL) {
         cerr << "Error: user has no group anymore!" << endl;
         exit(-1);
