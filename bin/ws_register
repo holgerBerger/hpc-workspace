@@ -18,6 +18,7 @@
 
     (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
     (c) Bernd Krisckok 2017
+    (c) Christoph Niethammer 2021
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
 
@@ -40,7 +41,8 @@ from __future__ import print_function
 
 import os, os.path, pwd, grp, sys
 import glob, time
-from optparse import OptionParser
+import argparse
+import pathlib
 
 # read a single line from ws.conf of the form: pythonpath: /path/to/python
 def read_python_conf():
@@ -71,19 +73,13 @@ groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
 # load config file
 config = yaml.safe_load(open('/etc/ws.conf'))
 
+parser = argparse.ArgumentParser(description='Creates/updates symbolic links to workspaces in a directory')
+parser.add_argument('directory', metavar='directory', type=pathlib.Path, help='directory in which links shall be created/updated')
+parser.add_argument('-F', '--filesystem', help='filesystem to search workspaces in')
+options = parser.parse_args()
 
-usage="Usage: ws_restore [options] directory"
 
-# option configuration
-parser = OptionParser(usage=usage)
-parser.add_option('-F', '--filesystem', dest='filesystem', help='filesystem to search workspaces in')
-(options, args) = parser.parse_args()
-
-if len(args)==0:
-    print(usage, file=sys.stderr)
-    sys.exit(-1)
-
-dirname = args[0]
+dirname = str(options.directory)
 
 
 # all filesystems or a selected one?
