@@ -516,7 +516,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
 		}
     }
     // get current group
-    grp=getgrgid(getegid());
+    grp=getgrgid(getgid());
     if (grp==NULL) {
         cerr << "Error: user has no group anymore!" << endl;
         exit(-1);
