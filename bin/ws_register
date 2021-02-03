@@ -12,7 +12,7 @@
     Reads new YAML configuration files and new YAML workspace database.
 
     differences to old workspace version
-    - usage if YAML file format
+    - usage of YAML file format
     - more options for administrator (configured and root)
             + list expired/moved workspaces
 
@@ -48,8 +48,8 @@ import pathlib
 def read_python_conf():
     for l in open("/etc/ws.conf","r"):
         if 'pythonpath' in l:
-            key=l.split(":")[0].strip()
-            value=l.split(":")[1].strip()
+            key = l.split(":")[0].strip()
+            value = l.split(":")[1].strip()
             if key == 'pythonpath':
                 if os.path.isdir(value):
                     sys.path.insert(0,value)
@@ -64,10 +64,7 @@ import yaml
 
 # who are we?
 uid = os.getuid()
-gid = os.getgid()
-user = pwd.getpwuid(uid)[0]
-group = grp.getgrgid(gid)[0]
-groups = [grp.getgrgid(gid_tmp)[0] for gid_tmp in os.getgroups()]
+username = pwd.getpwuid(uid).pw_name
 
 
 # load config file
@@ -83,7 +80,7 @@ dirname = str(options.directory)
 
 
 # all filesystems or a selected one?
-if(options.filesystem): 
+if options.filesystem:
     if options.filesystem in config['workspaces']:
         filesystems = [options.filesystem]
     else:
@@ -93,24 +90,24 @@ else:
     filesystems = config['workspaces'].keys()
 
 # reduce list to allowed filesystems
-legal=[]
-for f in filesystems:
-    userok=True
-    if 'user_acl' in config['workspaces'][f] or 'group_acl' in config['workspaces'][f]:
-        userok=False
-    if 'group_acl' in config['workspaces'][f]:
-        for g in groups:
-            if g in config['workspaces'][f]['group_acl']:
-                userok=True
+legal_filesystems = []
+for fs in filesystems:
+    userok = True
+    if 'user_acl' in config['workspaces'][fs] or 'group_acl' in config['workspaces'][fs]:
+        userok = False
+    if 'group_acl' in config['workspaces'][fs]:
+        groups = os.getgrouplist(username, os.getgid())
+        for gid in groups:
+            groupname = grp.getgrgid(gid).gr_name
+            if groupname in config['workspaces'][fs]['group_acl']:
+                userok = True
                 break
-            if group in config['workspaces'][f]['group_acl']:
-                userok=True
-    if 'user_acl' in config['workspaces'][f]:
-            if user in config['workspaces'][f]['user_acl']:
-                userok=True
+    if 'user_acl' in config['workspaces'][fs]:
+            if username in config['workspaces'][fs]['user_acl']:
+                userok = True
     # admin can see workspaces from anywhere, but can also restrict
     if userok:
-        legal.append(f)
+        legal_filesystems.append(fs)
 
 
 # main loop
@@ -119,25 +116,25 @@ for f in filesystems:
 if not os.path.isdir(dirname):
     os.makedirs(dirname)
 
-for fs in legal:
-    keeplist=[]
-    dbfilename='%s/%s-*' % (config["workspaces"][fs]['database'], user)
-    wsdirs=[]
+for fs in legal_filesystems:
     if not os.path.isdir(dirname+"/"+fs):
         os.mkdir(dirname+"/"+fs)
+    keeplist = []
+    dbfilename = '%s/%s-*' % (config["workspaces"][fs]['database'], username)
+    wsdirs = []
     for fname in glob.glob(dbfilename):
-        f=yaml.safe_load(open(fname)) 
+        f = yaml.safe_load(open(fname))
         try:
-            wsname=f['workspace']
+            wsname = f['workspace']
         except TypeError:
             f = open(fname).readlines()
-            wsname=f[1][:-1]
-        keeplist.append(dirname+"/"+fs+"/"+os.path.basename(wsname))
-        if not (os.path.exists(dirname+"/"+fs+"/"+os.path.basename(wsname)) or 
-                       (os.path.islink(dirname+"/"+fs+"/"+os.path.basename(wsname)))):
-            os.symlink(wsname,dirname+"/"+fs+"/"+os.path.basename(wsname))
+            wsname = f[1][:-1]
+        linkpath = dirname + "/" + fs + "/" + os.path.basename(wsname)
+        keeplist.append(linkpath)
+        if not os.path.exists(linkpath) and not os.path.islink(linkpath):
+            os.symlink(wsname, linkpath)
     # delete links not beeing workspaces anymore
-    for f in glob.glob(dirname+"/"+fs+"/*"):
+    for f in glob.glob(dirname + "/" + fs + "/*"):
         if os.path.islink(f):
             if not f in keeplist:
                 print("removing link ", f)
