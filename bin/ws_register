@@ -130,7 +130,7 @@ for fs in legal:
         try:
             wsname=f['workspace']
         except TypeError:
-            f=open(fname).readines()
+            f = open(fname).readlines()
             wsname=f[1][:-1]
         keeplist.append(dirname+"/"+fs+"/"+os.path.basename(wsname))
         if not (os.path.exists(dirname+"/"+fs+"/"+os.path.basename(wsname)) or 
