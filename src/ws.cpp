@@ -164,7 +164,9 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 				cerr << "debug: moved default filesystem to front:" << filesystem << endl;
 			}
 		} else {
-			cerr << "warn: you seem to have no access to your default workspace!?" << endl;
+			cerr << "Warning: you seem to have no access to your default workspace!?" << endl;
+			cerr << "Warning: this might be a administrator side configuration problem," << endl;
+			cerr << "Warning: which could lead to problems with future versions." << endl;
 		}
     }
 
