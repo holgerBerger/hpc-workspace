@@ -170,6 +170,9 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
                 cerr << "Info: reminder email will be sent to local user account" << endl;
             }
         }
+		if (reminder>=duration) {
+                cerr << "Warning: reminder is only sent after workspace expiry!" << endl;
+		}
     } else {
         // check if mail address was set with -m but not -r
         if(opt.count("mailaddress") && !opt.count("extension")) {

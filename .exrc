@@ -1,6 +1,4 @@
 if &cp | set nocp | endif
-xnoremap <silent>  :call multiple_cursors#new("v")
-nnoremap <silent>  :call multiple_cursors#new("n")
 let s:cpo_save=&cpo
 set cpo&vim
 nmap gx <Plug>NetrwBrowseX
@@ -9,7 +7,6 @@ let &cpo=s:cpo_save
 unlet s:cpo_save
 set autoindent
 set backspace=indent,eol,start
-set expandtab
 set exrc
 set fileencodings=ucs-bom,utf-8,default,latin1
 set helplang=en
@@ -17,7 +14,6 @@ set history=50
 set nomodeline
 set printoptions=paper:letter
 set ruler
-set runtimepath=~/.vim,/var/lib/vim/addons,/usr/share/vim/vimfiles,/usr/share/vim/vim74,/usr/share/vim/vimfiles/after,/var/lib/vim/addons/after,~/.vim/after
 set shiftwidth=4
 set smartindent
 set suffixes=.bak,~,.swp,.o,.info,.aux,.log,.dvi,.bbl,.blg,.brf,.cb,.ind,.idx,.ilg,.inx,.out,.toc
