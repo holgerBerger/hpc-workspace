@@ -62,7 +62,7 @@ using namespace std;
  *  parse the commandline and see if all required arguments are passed, and check the workspace name for 
  *  bad characters
  */
-void commandline(po::variables_map &opt, string &name, int &duration, string &filesystem, 
+void commandline(po::variables_map &opt, string &name, int &duration, const int durationdefault, string &filesystem, 
                     bool &extension, int &reminder, string &mailaddress, string &user, string &groupname, string &comment,
                     int argc, char**argv) {
     // define all options
@@ -71,7 +71,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
     cmd_options.add_options()
             ("help,h", "produce help message")
             ("version,V", "show version")
-            ("duration,d", po::value<int>(&duration)->default_value(1), "duration in days")
+            ("duration,d", po::value<int>(&duration)->default_value(durationdefault), "duration in days")
             ("name,n", po::value<string>(&name), "workspace name")
             ("filesystem,F", po::value<string>(&filesystem), "filesystem")
             ("reminder,r", po::value<int>(&reminder), "reminder to be sent n days before expiration")
@@ -196,7 +196,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, string &fi
  */
 
 int main(int argc, char **argv) {
-    int duration;
+    int duration, durationdefault;
     bool extensionflag;
     string name;
     string filesystem;
@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
     std::setlocale(LC_ALL, "C");
     std::locale::global(std::locale("C"));
     
-    // read config (for reminder default only)
+    // read config (for dbuid, reminder and duration default only)
     YAML::Node config;
     try {
         config = YAML::LoadFile("/etc/ws.conf");
@@ -223,6 +223,7 @@ int main(int argc, char **argv) {
     }
 
     reminder = config["reminderdefault"].as<int>(0);
+	durationdefault = config["durationdefault"].as<int>(1);
 
     int db_uid = config["dbuid"].as<int>();
 
@@ -231,7 +232,8 @@ int main(int argc, char **argv) {
 
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
-    commandline(opt, name, duration, filesystem, extensionflag, reminder, mailaddress, user_option, groupname, comment, argc, argv);
+    commandline(opt, name, duration, durationdefault , filesystem, extensionflag, 
+				reminder, mailaddress, user_option, groupname, comment, argc, argv);
 
     openlog("ws_allocate", 0, LOG_USER); // SYSLOG
 

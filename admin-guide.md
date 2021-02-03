@@ -213,6 +213,11 @@ by all users. A user may still manually choose the location with ```-F```.
 Maximum lifetime in days of a workspace, can be overwritten in each workspace 
 location specific section.
 
+#### `durationdefault`
+
+Lifetimes in days attached to a workspace if user does not specify it.
+Defaults to 1 day.
+
 #### `maxextensions`
 
 Maximum number of times a user can extend a workspace, can be overwritten in 
