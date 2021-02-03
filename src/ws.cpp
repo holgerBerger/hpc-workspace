@@ -598,6 +598,8 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         if(!userok && getuid()!=0) {
             cerr << "Error: You are not allowed to use the specified workspace!" << endl;
             exit(4);
+			// FIXME this case is hit for -F -x -u and should not
+			// global default to workspace without ACL entry ends in that case, caller has to allowed, not owner
         }
     } else {
         // no filesystem specified, figure out which to use
