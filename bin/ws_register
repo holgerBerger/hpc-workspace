@@ -87,7 +87,7 @@ if(options.filesystem):
     if options.filesystem in config['workspaces']:
         filesystems = [options.filesystem]
     else:
-        print("Error: no such filesystem.", file=sys.stderr)
+        print("Error: Invalid filesystem specified", file=sys.stderr)
         sys.exit(-1)
 else:
     filesystems = config['workspaces'].keys()
@@ -140,7 +140,8 @@ for fs in legal:
     for f in glob.glob(dirname+"/"+fs+"/*"):
         if os.path.islink(f):
             if not f in keeplist:
+                print("removing link ", f)
                 os.unlink(f)
             else:
-                print("keep",f)
+                print("keeping link ", f)
 
