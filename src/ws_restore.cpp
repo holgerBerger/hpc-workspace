@@ -310,6 +310,7 @@ int main(int argc, char **argv) {
     // we only support C locale, if the used local is not installed on the system
     // ws_restore fails
     setenv("LANG","C",1);
+    setenv("LC_CTYPE","C",1);
     std::setlocale(LC_ALL, "C");
 	std::locale::global(std::locale("C"));
 
