@@ -57,10 +57,10 @@ const int CAP_CHOWN = 1;
 #include <yaml-cpp/yaml.h>
 
 // BOOST
-#include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/foreach.hpp>
+
 
 #define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_NO_DEPRECATED

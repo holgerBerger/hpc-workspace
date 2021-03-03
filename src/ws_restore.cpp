@@ -31,8 +31,7 @@
  *  along with workspace++.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#define _XOPEN_SOURCE
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
@@ -41,8 +40,10 @@
 
 #include <iostream>
 #include <string>
+#include <regex>
+
+// BOOST
 #include <boost/program_options.hpp>
-#include <boost/regex.hpp>
 #include <boost/foreach.hpp>
 #include <boost/optional.hpp>
 #include <boost/lexical_cast.hpp>
@@ -148,7 +149,7 @@ void commandline(po::variables_map &opt, string &name, string &target,
             exit(1);
         }
         // validate workspace name against nasty characters    
-        static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
+        static const std::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
         if (!regex_match(name, e)) {
             cerr << "Error: Illegal workspace name, use characters and numbers, -,. and _ only!" << endl;
             exit(1);

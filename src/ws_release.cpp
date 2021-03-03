@@ -33,10 +33,10 @@
  */
 
 #include <iostream>
+#include <regex>
 #include <string>
 #include <syslog.h>
 #include <boost/program_options.hpp>
-#include <boost/regex.hpp>
 
 #ifndef SETUID
 #include <sys/capability.h>
@@ -129,7 +129,7 @@ void commandline(po::variables_map &opt, string &name, int &duration,
     }
 
     // validate workspace name against nasty characters    
-    static const boost::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
+    static const std::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");
     if (!regex_match(name, e)) {
             cerr << "Error: Illegal workspace name, use characters and numbers, -,. and _ only!" << endl;
             exit(1);

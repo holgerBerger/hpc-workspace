@@ -44,7 +44,7 @@ IF (LUACALLOUTS)
 ENDIF (LUACALLOUTS)
 
 set(Boost_USE_MULTITHREADED OFF)  
-FIND_PACKAGE(Boost COMPONENTS system filesystem regex program_options REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS system filesystem program_options REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
