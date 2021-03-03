@@ -44,7 +44,6 @@
 
 // BOOST
 #include <boost/program_options.hpp>
-#include <boost/foreach.hpp>
 #include <boost/optional.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -232,13 +231,11 @@ std::vector<string> get_valid_fslist() {
 
       // read ACL lists
       if ( config["workspaces"][cfilesystem]["user_acl"]) {
-          BOOST_FOREACH(string v,
-                        config["workspaces"][cfilesystem]["user_acl"].as<vector<string> >())
+          for(string v: config["workspaces"][cfilesystem]["user_acl"].as<vector<string> >())
               user_acl.push_back(v);
       }
       if ( config["workspaces"][cfilesystem]["group_acl"]) {
-          BOOST_FOREACH(string v,
-                        config["workspaces"][cfilesystem]["group_acl"].as<vector<string> >())
+          for(string v: config["workspaces"][cfilesystem]["group_acl"].as<vector<string> >())
               group_acl.push_back(v);
       }
 
@@ -250,7 +247,7 @@ std::vector<string> get_valid_fslist() {
           userok=true;
       }
 #ifdef CHECK_ALL_GROUPS
-      BOOST_FOREACH(string grp, groupnames) {
+      for(string grp: groupnames) {
           if( find(group_acl.begin(), group_acl.end(), grp) != group_acl.end() ) {
               userok=true;
               break;
@@ -338,7 +335,7 @@ int main(int argc, char **argv) {
 
     if (listflag) {
         
-        BOOST_FOREACH(string fs, get_valid_fslist()) {
+        for(string fs: get_valid_fslist()) {
             std::cout << fs << ":" << std::endl;
 
             // construct db-entry username  name
@@ -352,7 +349,7 @@ int main(int argc, char **argv) {
                     exit(-1);
                 }
             }
-            BOOST_FOREACH(string dn, getRestorable(fs, username)) {
+            for(string dn: getRestorable(fs, username)) {
                 cout << dn << endl;
                 if (!terse) {
                     std::vector<std::string> splitted;

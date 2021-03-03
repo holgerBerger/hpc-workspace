@@ -59,7 +59,6 @@ const int CAP_CHOWN = 1;
 // BOOST
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/foreach.hpp>
 
 
 #define BOOST_FILESYSTEM_VERSION 3
@@ -170,7 +169,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 		}
     }
 
-    BOOST_FOREACH(string cfilesystem, searchlist) {
+    for(string cfilesystem: searchlist) {
       // construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
       if (opt.count("debug")) {
 		  cerr << "debug: searching valid filesystems " << cfilesystem << endl;
@@ -558,14 +557,12 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
 
         // read ACL lists
         if ( config["workspaces"][opt["filesystem"].as<string>()]["user_acl"]) {
-            BOOST_FOREACH(string v,
-                          config["workspaces"][opt["filesystem"].as<string>()]["user_acl"].as<vector<string> >())
+            for(string v: config["workspaces"][opt["filesystem"].as<string>()]["user_acl"].as<vector<string> >())
                 user_acl.push_back(v);
         }
 
         if ( config["workspaces"][opt["filesystem"].as<string>()]["group_acl"]) {
-            BOOST_FOREACH(string v,
-                          config["workspaces"][opt["filesystem"].as<string>()]["group_acl"].as<vector<string> >())
+            for(string v: config["workspaces"][opt["filesystem"].as<string>()]["group_acl"].as<vector<string> >())
                 group_acl.push_back(v);
         }
 
@@ -585,7 +582,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
             }
         }
 #ifdef CHECK_ALL_GROUPS
-        BOOST_FOREACH(string grp, groupnames) {
+        for(string grp: groupnames) {
             if( find(group_acl.begin(), group_acl.end(), grp) != group_acl.end() ) {
                 userok=true;
                 if (opt.count("debug")) {
@@ -633,11 +630,11 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
                 }
             }
             if(config["workspaces"][it->first]["groupdefault"]) {
-                BOOST_FOREACH(string u, config["workspaces"][it->first]["groupdefault"].as<vector<string> >())
+                for(string u: config["workspaces"][it->first]["groupdefault"].as<vector<string> >())
                     groups_defaults[u]=v;
             }
             if(config["workspaces"][it->first]["userdefault"]) {
-                BOOST_FOREACH(string u, config["workspaces"][it->first]["userdefault"].as<vector<string> >())
+                for(string u: config["workspaces"][it->first]["userdefault"].as<vector<string> >())
                     user_defaults[u]=v;
             }
         }
@@ -658,7 +655,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
             goto found;
         }
 #ifdef CHECK_ALL_GROUPS
-        BOOST_FOREACH(string grp, groupnames) {
+        for(string grp: groupnames) {
             if( groups_defaults.count(grp)>0 ) {
                 filesystem=groups_defaults[grp];
                 goto found;
@@ -1040,13 +1037,11 @@ std::vector<string> Workspace::get_valid_fslist() {
 
       // read ACL lists
       if ( config["workspaces"][cfilesystem]["user_acl"]) {
-          BOOST_FOREACH(string v,
-                        config["workspaces"][cfilesystem]["user_acl"].as<vector<string> >())
+          for(string v: config["workspaces"][cfilesystem]["user_acl"].as<vector<string> >())
               user_acl.push_back(v);
       }
       if ( config["workspaces"][cfilesystem]["group_acl"]) {
-          BOOST_FOREACH(string v,
-                        config["workspaces"][cfilesystem]["group_acl"].as<vector<string> >())
+          for(string v: config["workspaces"][cfilesystem]["group_acl"].as<vector<string> >())
               group_acl.push_back(v);
       }
 
@@ -1066,7 +1061,7 @@ std::vector<string> Workspace::get_valid_fslist() {
           }
       }
 #ifdef CHECK_ALL_GROUPS
-      BOOST_FOREACH(string grp, groupnames) {
+      for(string grp: groupnames) {
           if( find(group_acl.begin(), group_acl.end(), grp) != group_acl.end() ) {
 			  if (opt.count("debug")) {
 				  cerr << "debug: find_valid_fs, in group ACL, access granted (secondary)." << endl;
