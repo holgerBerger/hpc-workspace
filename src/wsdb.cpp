@@ -129,7 +129,10 @@ void WsDB::write_dbfile()
     Workspace::raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here
-    setegid(dbgid); seteuid(dbuid); 
+    if (setegid(dbgid)|| seteuid(dbuid)) {
+			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
+			exit(-1);
+	}
 #endif
     ofstream fout(dbfilename.c_str());
     fout << entry;
@@ -144,7 +147,10 @@ void WsDB::write_dbfile()
         cerr << "Error: could not change permissions of database entry" << endl;
     }
 #ifdef SETUID
-    seteuid(0); setegid(0);
+    if(seteuid(0)|| setegid(0)) {
+			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
+			exit(-1);
+	}
 #endif
     Workspace::lower_cap(CAP_DAC_OVERRIDE, dbuid);
 

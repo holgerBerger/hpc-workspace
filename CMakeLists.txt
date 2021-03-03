@@ -7,7 +7,7 @@ add_definitions("-DWS_VERSION=\"1.3.4\"")
 #workaround for old Redhat 6 cmake
 set(Boost_NO_BOOST_CMAKE ON)
 
-SET(CMAKE_CXX_FLAGS "-Wall -g -std=c++11")
+SET(CMAKE_CXX_FLAGS "-Wall -Wno-deprecated-declarations -Wno-unused-variable -std=c++11 -Os")
 
 OPTION(STATIC "static linking" FALSE)
 IF (STATIC)

@@ -434,7 +434,10 @@ void Workspace::release(string name) {
         raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID
         // for filesystem with root_squash, we need to be DB user here
-        setegid(dbgid); seteuid(dbuid); 
+        if(setegid(dbgid) || seteuid(dbuid)) {
+			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
+			exit(-1);
+		}
 #endif
         if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
             // cerr << "rename " << dbfilename.c_str() << " -> " << dbtargetname.c_str() << " failed" << endl;
@@ -820,7 +823,10 @@ void Workspace::restore(const string name, const string target, const string use
         int ret = mv(wssourcename.c_str(), targetwsdir.c_str());
 #ifdef SETUID
         // get db user to be able to unlink db entry from root_squash filesystems
-        setegid(config["dbgid"].as<int>()); seteuid(config["dbuid"].as<int>());
+        if(setegid(config["dbgid"].as<int>()) || seteuid(config["dbuid"].as<int>())) {
+			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
+			exit(-1);
+		}
 #endif
         if (ret == 0) {
             unlink(dbfilename.c_str());
@@ -831,7 +837,10 @@ void Workspace::restore(const string name, const string target, const string use
             cerr << "Error: moving data failed, database entry kept!" << endl;
         }
 #ifdef SETUID
-        seteuid(0); setegid(0);
+        if(seteuid(0)||setegid(0)) {
+			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
+			exit(-1);
+		}
 #endif
         lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
 
