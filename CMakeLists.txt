@@ -7,7 +7,12 @@ add_definitions("-DWS_VERSION=\"1.3.4\"")
 #workaround for old Redhat 6 cmake
 set(Boost_NO_BOOST_CMAKE ON)
 
+message(STATUS "build type: " ${CMAKE_BUILD_TYPE})
+message(STATUS "use cmake -DCMAKE_BUILD_TYPE=debug for debug build")
+
 SET(CMAKE_CXX_FLAGS "-Wall -Wno-deprecated-declarations -Wno-unused-variable -Wno-effc++ -std=c++11 -Os")
+SET(CMAKE_CXX_FLAGS_DEBUG "-Wall -Wno-deprecated-declarations -Wno-unused-variable -Wno-effc++ -std=c++11 -g -Os")
+SET(CMAKE_CXX_FLAGS_RELEASE "-Wall -Wno-deprecated-declarations -Wno-unused-variable -Wno-effc++ -std=c++11 -Os")
 
 OPTION(STATIC "static linking" FALSE)
 IF (STATIC)
@@ -106,6 +111,9 @@ IF (IS_DIRECTORY "${PROJECT_SOURCE_DIR}/.git")
 ENDIF ()
 
 SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${workspace_BINARY_DIR}/bin)
+
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
 ADD_EXECUTABLE(ws_allocate ${workspace_SOURCE_DIR}/src/ws_allocate.cpp 
 							 ${workspace_SOURCE_DIR}/src/ws.cpp 
