@@ -43,6 +43,7 @@
 
 #include <boost/program_options.hpp>
 #include <boost/regex.hpp>
+#include <boost/filesystem.hpp>
 
 #ifndef SETUID
 #include <sys/capability.h>
@@ -210,8 +211,10 @@ int main(int argc, char **argv) {
     // ws_allocate fails
     setenv("LANG","C",1);
     setenv("LC_CTYPE","C",1);
+	setenv("LC_ALL","C",1);
     std::setlocale(LC_ALL, "C");
     std::locale::global(std::locale("C"));
+	boost::filesystem::path::imbue(std::locale());
     
     // read config (for dbuid, reminder and duration default only)
     YAML::Node config;

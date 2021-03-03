@@ -155,6 +155,7 @@ int main(int argc, char **argv) {
     // ws_release fails
     setenv("LANG","C",1);
 	setenv("LC_CTYPE","C",1);
+	setenv("LC_ALL","C",1);
     std::setlocale(LC_ALL, "C");
     std::locale::global(std::locale("C"));
 	
