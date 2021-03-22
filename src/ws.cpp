@@ -65,6 +65,8 @@ const int CAP_CHOWN = 1;
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
+#include <boost/system/error_code.hpp>
+
 // LUA
 #ifdef LUACALLOUTS
 #include <lua.hpp>
@@ -169,6 +171,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 		}
     }
 
+	// loop over valid workspaces
     for(string cfilesystem: searchlist) {
       // construct db-entry name, special case if called by root with -x and -u, allows overwrite of maxextensions
       if (opt.count("debug")) {
@@ -191,7 +194,13 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
       }
 
       // does db entry exist?
-      if(fs::exists(dbfilename)) {
+      if (opt.count("debug")) {
+		  cerr << "debug: check existance of db entry <" << dbfilename << ">" << endl;
+	  }
+
+	  // extra error checking, this could acess a path that does not exist and could give unexpected errors/throw
+	  boost::system::error_code ec;
+      if(fs::exists(dbfilename, ec)) {
           WsDB dbentry(dbfilename,  config["dbuid"].as<int>(),  config["dbgid"].as<int>());
           wsdir = dbentry.getwsdir();
           extension = dbentry.getextension();
@@ -238,8 +247,12 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
           }
           ws_exists = true;
           break;
-      }
-    }
+      } else {
+      	if (opt.count("debug")) {
+		  cerr << "error: existence check: " << ec << " for " << dbfilename << endl;
+		}
+	  }
+    } // loop over searchlist
 
     if (!ws_exists) {
         if(extensionflag && user_option.length()>0) {
@@ -384,7 +397,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress, primarygroup, comment);
 
         syslog(LOG_INFO, "created for user <%s> DB <%s> with space <%s>.", username.c_str(), dbfilename.c_str(), wsdir.c_str());
-    }
+    } // ! exists
     cout << wsdir << endl;
     cerr << "remaining extensions  : " << extension << endl;
     cerr << "remaining time in days: " << (expiration-time(NULL))/(24*3600) << endl;
@@ -515,7 +528,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         if(grp) {
 			groupnames.push_back(string(grp->gr_name));
 			if (opt.count("debug")) {
-				cerr << "Debug: secondary group " << string(grp->gr_name) << endl; 
+				cerr << "debug: secondary group " << string(grp->gr_name) << endl; 
 			}
 		}
     }
@@ -797,7 +810,7 @@ void Workspace::restore(const string name, const string target, const string use
     } else {
         cerr << "Error: target workspace does not exist!" << endl;
       	if (opt.count("debug")) {
-			cerr << "Debug: target=" << targetdbfilename << endl;
+			cerr << "debug: target=" << targetdbfilename << endl;
 		}
         exit(1);
     }
