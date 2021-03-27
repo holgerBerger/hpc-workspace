@@ -36,7 +36,13 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <regex>
+#ifdef USE_BOOST_REGEXP
+	#include <boost/regex.hpp>
+    #define REGEX boost::regex
+#else
+	#include <regex>
+    #define REGEX std::regex
+#endif
 #include <syslog.h>
 
 // YAML
@@ -184,7 +190,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
 
     // validate workspace name against nasty characters    
     //  static const std::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");  // #77
-	static const std::regex e("^[[:alnum:]][[:alnum:]_.-]*$");
+	static const REGEX e("^[[:alnum:]][[:alnum:]_.-]*$");
     if (!regex_match(name, e)) {
             cerr << "Error: Illegal workspace name, use characters and numbers, -,. and _ only!" << endl;
             exit(1);

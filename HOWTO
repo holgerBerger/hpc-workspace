@@ -38,7 +38,7 @@ PLANNED
 
 PREREQUISITS
 
-c++ compiler (no c++0x needed) (g++ and clang++ tested)
+c++ compiler (c++11 needed) (g++ and clang++ tested)
 boost
 boost_filesystem
 boost_regex
@@ -116,3 +116,4 @@ REMARKS
   to
   FIND_LIBRARY(YAML no-libyaml-cpp.so)
 - with boost 1.70, use yaml-cpp-0.6.2 or later
+- for Redhat7 uses, enable USE_BOOST_REGEXP, std::regexp seems to be broken in standard gcc
