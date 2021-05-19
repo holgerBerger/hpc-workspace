@@ -235,6 +235,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 					   cerr << "Info: changed mail address to " << newmail <<  endl;
 				  }
 			  }
+
               if(reminder!=0) {
                    cerr << "Info: changed reminder setting." << endl;
               }
