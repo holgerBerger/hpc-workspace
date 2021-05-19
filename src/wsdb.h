@@ -79,6 +79,9 @@ public:
 
     void use_extension(const long expiration, const string mailaddress, const int reminder, const string comment);
 
+	string getmailaddress() {
+		return mailaddress;
+	}
 
     long int getexpiration() {
         return expiration;

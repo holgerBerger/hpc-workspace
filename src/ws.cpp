@@ -224,9 +224,17 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
               cerr << "Info: extending workspace." << endl;
               syslog(LOG_INFO, "extending DB <%s> for user <%s>.", dbfilename.c_str(), username.c_str());
 
-              if(mailaddress!="") {
-                   cerr << "Info: changed mail address to " << mailaddress <<  endl;
-              }
+			  auto oldmail = dbentry.getmailaddress();
+			  string newmail;
+			  if (oldmail != "") {
+				  newmail = oldmail;
+				  cerr << "Info: reused mail address " << newmail <<  endl;
+			  } else {
+				  if(mailaddress!="") {
+					   newmail = mailaddress;
+					   cerr << "Info: changed mail address to " << newmail <<  endl;
+				  }
+			  }
               if(reminder!=0) {
                    cerr << "Info: changed reminder setting." << endl;
               }
@@ -236,9 +244,9 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
               if (duration != 0) {
                 expiration = time(NULL)+duration*24*3600;
-                dbentry.use_extension(expiration, mailaddress, reminder, comment);
+                dbentry.use_extension(expiration, newmail, reminder, comment);
               } else {
-                dbentry.use_extension(-1, mailaddress, reminder, comment);
+                dbentry.use_extension(-1, newmail, reminder, comment);
               }
               extension = dbentry.getextension();
           } else {
