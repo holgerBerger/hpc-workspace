@@ -13,7 +13,7 @@
  *    - using setuid or capabilities (needs support by filesystem!)
  *    - supports configuration of reminder emails
  *
- *  (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
+ *  (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021
  * 
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
@@ -71,7 +71,7 @@ using namespace std;
  */
 void commandline(po::variables_map &opt, string &name, int &duration, const int durationdefault, string &filesystem, 
                     bool &extension, int &reminder, string &mailaddress, string &user, string &groupname, string &comment,
-                    int argc, char**argv) {
+                    int argc, char**argv, std::stringstream &userconf) {
     // define all options
 
     po::options_description cmd_options( "\nOptions" );
@@ -156,13 +156,11 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
     if(reminder!=0) {
         if (!opt.count("mailaddress")) {
             YAML::Node user_home_config;  // load yaml file from home here, not used anywhere else so far
-            ifstream infile;
-            infile.open((Workspace::getuserhome()+"/.ws_user.conf").c_str());
             // get first line, this is either a mailaddress or something like key: value
-            getline(infile, mailaddress);
+            getline(userconf, mailaddress);
             // check if file looks like yaml
             if (mailaddress.find(":",0) != string::npos) {
-                user_home_config = YAML::LoadFile((Workspace::getuserhome()+"/.ws_user.conf").c_str());
+                user_home_config = YAML::Load(userconf.str());
                 try {
                     mailaddress = user_home_config["mail"].as<std::string>();
                 } catch (...) {
@@ -238,13 +236,23 @@ int main(int argc, char **argv) {
 
     int db_uid = config["dbuid"].as<int>();
 
+    // read user config before dropping privileges
+    std::stringstream user_conf;
+    string user_conf_filename = Workspace::getuserhome()+"/.ws_user.conf";
+    if (!boost::filesystem::is_symlink(user_conf_filename)) {
+        std::ifstream t(user_conf_filename.c_str());
+        user_conf << t.rdbuf();
+    } else {
+        cerr << "Error: ~/.ws_user.conf can not be symlink!" << endl;
+        exit(-1);
+    }
+
     // lower capabilities to minimum
     Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
 
-
     // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, duration, durationdefault , filesystem, extensionflag, 
-				reminder, mailaddress, user_option, groupname, comment, argc, argv);
+				reminder, mailaddress, user_option, groupname, comment, argc, argv, user_conf);
 
     openlog("ws_allocate", 0, LOG_USER); // SYSLOG
 
