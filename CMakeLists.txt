@@ -2,7 +2,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
 PROJECT(workspace)
 # set to version number of the latest release
-add_definitions("-DWS_VERSION=\"1.3.4\"")
+add_definitions("-DWS_VERSION=\"1.3.5\"")
 
 #workaround for old Redhat 6 cmake
 set(Boost_NO_BOOST_CMAKE ON)
