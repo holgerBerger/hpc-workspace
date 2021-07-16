@@ -338,6 +338,11 @@ for fs in fslist:
            dbentry = get_old_db_entry_informations(dbentryfilename)
            reminder = 0
            mailaddress = ""
+
+        if len(dbentry) == 0: 
+            print("   ERROR, skiping empty db entry:", dbentryfilename)
+            continue
+
         try:
           expiration = int(dbentry["expiration"])
         except Exception:
