@@ -98,6 +98,8 @@ Run ```cmake .``` and ```make -j 4``` to configure and compile the tool set.
 Copy the executables from ```bin``` to e.g. ```/usr/local/bin``` and the
 manpages from ```man``` to e.g. ```/usr/local/man/1```.
 
+make `ws_allocate`, `ws_release`, `ws_restore` setuid root.
+
 Finally, a cron job has to be set up that calls the `ws_expirer` script at
 regular intervals, only then will old workspaces be cleaned up. The
 `ws_expirer` setup is detailed below.
