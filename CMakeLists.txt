@@ -31,6 +31,13 @@ IF (CHECK_ALL_GROUPS)
     ADD_DEFINITIONS("-DCHECK_ALL_GROUPS")
 ENDIF (CHECK_ALL_GROUPS)
 
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.9)
+	message(STATUS "using boost_regexp for broken gcc")
+	set(USE_BOOST_REGEXP on)
+ELSE ()
+	message(STATUS "using C++11 regexp")
+endif()
+
 OPTION(USE_BOOST_REGEXP "use boost regexp in case std::regexp is broken (rh7 gcc)" FALSE)
 IF (USE_BOOST_REGEXP)
     ADD_DEFINITIONS("-DUSE_BOOST_REGEXP")
