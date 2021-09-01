@@ -252,9 +252,7 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
-#ifdef SETUID
-    seteuid(0);
-#endif
+    Workspace::raise_cap(CAP_DAC_OVERRIDE);
 
     // lower capabilities to minimum
     Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
