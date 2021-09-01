@@ -237,10 +237,10 @@ int main(int argc, char **argv) {
     int db_uid = config["dbuid"].as<int>();
 
     // read user config before dropping privileges to DB user
-	//
-	// get user first, so user config is read as owner
-	// of files, which is needed for root_squash homes
-	Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, getuid());
+    //
+    // get user first, so user config is read as owner
+    // of files, which is needed for root_squash homes
+    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, getuid());
 
     std::stringstream user_conf;
     string user_conf_filename = Workspace::getuserhome()+"/.ws_user.conf";
@@ -251,6 +251,10 @@ int main(int argc, char **argv) {
         cerr << "Error: ~/.ws_user.conf can not be symlink!" << endl;
         exit(-1);
     }
+
+#ifdef SETUID
+    seteuid(0);
+#endif
 
     // lower capabilities to minimum
     Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
