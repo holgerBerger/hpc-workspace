@@ -106,7 +106,8 @@ for gid_tmp in os.getgroups():
     try:
         groups.append(grp.getgrgid(gid_tmp)[0])
     except KeyError:
-        print(f"group <{gid_tmp}> could not be resolved - ignoring", file=sys.stderr)
+        print("group <%s> could not be resolved - ignoring" % gid_tmp, file=sys.stderr)
+        #print(f"group <{gid_tmp}> could not be resolved - ignoring", file=sys.stderr)
 
 # load config file
 config = yaml.safe_load(open('/etc/ws.conf'))
