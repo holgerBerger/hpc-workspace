@@ -1,3 +1,1 @@
-Info: reusing workspace.
-remaining extensions  : 3
-remaining time in days: 10
+Error: can not change uid.

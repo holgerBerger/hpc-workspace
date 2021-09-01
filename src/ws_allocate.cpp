@@ -236,7 +236,12 @@ int main(int argc, char **argv) {
 
     int db_uid = config["dbuid"].as<int>();
 
-    // read user config before dropping privileges
+    // read user config before dropping privileges to DB user
+	//
+	// get user first, so user config is read as owner
+	// of files, which is needed for root_squash homes
+	Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, getuid());
+
     std::stringstream user_conf;
     string user_conf_filename = Workspace::getuserhome()+"/.ws_user.conf";
     if (!boost::filesystem::is_symlink(user_conf_filename)) {
