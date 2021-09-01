@@ -18,6 +18,8 @@ or if that is proven to work you can run
 
 If modifying local machine is not ok, use virtual machine:
 
+Select a vagrant file and rename it to 'Vagrantfile'.
+
 For testing, you start a virtual machine using in this directory here
 using the provided Vagrantfile:
 
