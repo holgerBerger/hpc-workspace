@@ -1,3 +1,5 @@
+#!/bin/bash
+
 wget https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.6.3.tar.gz
 tar xzf yaml-cpp-0.6.3.tar.gz
 
