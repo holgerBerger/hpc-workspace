@@ -425,6 +425,10 @@ for fs in fslist:
         # check if the entry was released or was expired
         try:
             was_released = dbentry['released'] 
+            # released before 2001, makes no sense, ignore
+            if was_released < 1000000000:                                 
+                was_released = time.time() + 3600000    # time in future never reached 
+                print("  IGNORING RELEASED <",released,"> for",dbentryfilename)
         except:
             was_released = time.time() + 3600000    # time in future never reached
 
