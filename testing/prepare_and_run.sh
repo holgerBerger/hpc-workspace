@@ -1,4 +1,4 @@
-# be carefull, this cleans, prepares and runs all tests
+# be careful, this cleans, prepares and runs all tests
 # discards all output of clean and prepare, use only if setups is proven to work
 
 scripts/cleanup_tests.sh 2>/dev/null >/dev/null
