@@ -136,8 +136,14 @@ void commandline(po::variables_map &opt, string &name, int &duration,
 
     // validate workspace name against nasty characters    
     // static const std::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$"); // #77
-	static const REGEX e("^[[:alnum:]][[:alnum:]_.-]*$");
-    if (!regex_match(name, e)) {
+	// bugfix: as regexp parser are recursiv, split in two parts, complex match for start, simple search for remainder
+	static const REGEX e1("^[[:alnum:]][[:alnum:]_.-]*$");
+    if (!regex_match(name.substr(0,2) , e1)) {
+            cerr << "Error: Illegal workspace name, use characters and numbers, -,. and _ only!" << endl;
+            exit(1);
+    }
+	static const REGEX e2("[^[:alnum:]_.-]");
+    if (regex_search(name, e2)) {
             cerr << "Error: Illegal workspace name, use characters and numbers, -,. and _ only!" << endl;
             exit(1);
     }
