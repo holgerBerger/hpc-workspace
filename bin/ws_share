@@ -1,0 +1,158 @@
+#!/bin/bash
+#
+# ws_share is a helper script that can be used to grant quickly read access for
+# a workspace to other users based on UNIX ACLs.
+# See ws_share --help to get usage information.
+#
+# Known issues:
+#   Changing file or directory permissions after sharing with the standard UNIX
+#   commands chmod, etc. after sharing with another user will not modify the
+#   rights appropriately for this user. However, you will likely get a message
+#   from these tools, e.g.
+#     chmod: ... new permissions are ....., not ....
+#   A workaround to update permissions is to unshare and re-share the workspace
+#   with the users.
+#
+# Copyright(c) 2021      Christoph Niethammer <niethammer@hlrs.de>
+#
+
+progname=$(basename $0)
+
+# Test for compatible getopt version.
+# The parser needs an enhanced version of getopt.
+# See man page of getopt for this test.
+getopt --test
+if [[ $? -ne 4 ]]; then
+    echo "Error: $progname needs an enhaced getopt to work."
+    exit 1
+fi
+
+function usage() {
+cat <<EOF
+$progname allows to share an existing workspace with other users.
+
+usage:
+
+The follwoing commands share / unshare a workspace (WS_NAME) with users:
+ $progname share [-F FILESYSTEM] WS_NAME USER [USER...]
+ $progname unshare [-F FILESYSTEM] WS_NAME USER [USER...]
+ $progname unshare-all [-F FILESYSTEM] WS_NAME
+
+Users that were granted read access to a workspace (WS_NAME) can be listed with
+ $progname list WS_NAME
+
+options:
+   -F, --filesystem  ws filesystem
+   -h, --help        show this help
+
+EOF
+}
+
+
+# parse command line, based on example provided by util-linux
+OPTIONS=F:h
+LONG_OPTIONS=filesystem:,help
+PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@")
+if [[ $? -ne 0 ]]; then
+    echo "Error: Command line error"
+    usage
+    exit 1
+fi
+eval set -- "$PARSED"
+unset PARSED
+
+# parse options
+while true; do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -F|--filesystem)
+            FILESYSTEM="$2"
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "Error: Found unknown option"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+ACTION="$1"
+shift
+WS_NAME="$1"
+shift
+
+if [[ -z "$ACTION" ]]; then
+    echo "Error: no action specified"
+    exit 1
+fi
+if [[ -z "$WS_NAME" ]]; then
+    echo "Error: workspace name missing"
+    exit 1
+fi
+WS_PATH=$(ws_find ${FILESYSTEM:+-F $FILESYSTEM} $WS_NAME)
+if [[ $? -ne 0 || -z "$WS_PATH" ]]; then
+    echo "Error: Invalid workspace name."
+    exit 1
+fi
+
+case $ACTION in
+    list)
+        getfacl -ap --omit-header "$WS_PATH" | grep user | cut -d : -f 2 | grep -v '^$'
+        ;;
+    share)
+        USERS="$@"
+        MACL=""
+        for user in $USERS; do
+            id "$user" >/dev/null 2>&1
+            if [[ $? -ne 0 ]]; then
+                echo "Error: User $user unknown"
+                exit 1
+            fi
+            echo "Granting access for $user ..."
+            MACL+="user:$user:rX,"
+            MACL+="default:user:$user:rX,"
+        done
+        if [[ -z "$MACL" ]]; then
+            # nothing to do
+            exit 0
+        fi
+        setfacl -R -m "$MACL" "$WS_PATH"
+        ;;
+    unshare)
+        USERS="$@"
+        XACL=""
+        for user in $USERS; do
+            id "$user" >/dev/null 2>&1
+            if [[ $? -ne 0 ]]; then
+                echo "Error: User $user unknown"
+                exit 1
+            fi
+            echo "Removing access for $user"
+            XACL+="user:$user,"
+            XACL+="default:user:$user,"
+        done
+        if [[ -z "$XACL" ]]; then
+            # nothing to do
+            exit 0
+        fi
+        setfacl -R -x "$XACL" "$WS_PATH"
+        ;;
+    unshare-all)
+        setfacl -R -b "$WS_PATH"
+        ;;
+    check)
+        ;;
+    *)
+        echo "Error: Invalid action $ACTION"
+        usage
+        exit 1
+esac
+
