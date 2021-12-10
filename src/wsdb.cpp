@@ -199,5 +199,8 @@ void WsDB::read_dbfile()
         entry.close();
         mailaddress = "";
         reminder = 0;
+	} catch (const YAML::Exception&) {
+		cerr << "invalid db entry, aborting." << endl;
+		exit(-2);
     }
 }
