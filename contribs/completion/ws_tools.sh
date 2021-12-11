@@ -1,11 +1,11 @@
 #
 # bash completion for hpc-workspace
 #
-# Copyright(c) 2020      Christoph Niethammer
+# Copyright(c) 2020-2021 Christoph Niethammer
 #
 #
-# Note: Currently only the ws_find command takes a provided filesystems into
-#       account when completing workspace names.
+# Note: Currently only the completions for ws_find and ws_share take a
+#       provided filesystems into account when completing workspace names.
 #
 #
 # bash completion for hpc-workspace is free software: you can redistribute it
@@ -121,4 +121,65 @@ function _complete_ws_restore() {
     esac
 }
 complete -F _complete_ws_restore ws_restore
+
+
+# ws_share completion with available workspace names and system users
+function _complete_ws_share() {
+    case "${COMP_WORDS[$COMP_CWORD]}" in
+        -*)
+            COMPREPLY=($(compgen -W "--filesystem --help" -- "${COMP_WORDS[$COMP_CWORD]}"))
+            ;;
+        *)
+            prev="${COMP_WORDS[$COMP_CWORD - 1]}"
+            if [[ "$COMP_CWORD" == "1" ]] ; then
+                COMPREPLY=($(compgen -W "share unshare unshare-all list" -- "${COMP_WORDS[$COMP_CWORD]}"))
+            elif [[ "$prev" == "-F" || "$prev" == "--filesystem" ]] ; then
+                local file_systems="$(_ws_filesystem_list)"
+                COMPREPLY=($(compgen -W "$file_systems" -- "${COMP_WORDS[3]}"))
+            else
+                action="${COMP_WORDS[1]}"
+                declare -i argpos=$((COMP_CWORD - 1))
+                if [[ "${COMP_WORDS[2]}" == "-F" || "${COMP_WORDS[2]}" == "--filesystem" ]] ; then
+                    file_system="${COMP_WORDS[3]}"
+                    argpos=$((argpos - 2))
+                fi
+                case $action in
+                    share)
+                        case $argpos in
+                            1)
+                                local ws_names=$(_ws_workspace_list "$file_system")
+                                COMPREPLY=($(compgen -W "$ws_names" -- "${COMP_WORDS[$COMP_CWORD]}"))
+                                ;;
+                            *)
+                                COMPREPLY=($(compgen -A user -- "${COMP_WORDS[$COMP_CWORD]}"))
+                                ;;
+                        esac
+                        ;;
+                    unshare)
+                        case $argpos in
+                            1)
+                                local ws_names=$(_ws_workspace_list "$file_system")
+                                COMPREPLY=($(compgen -W "$ws_names" -- "${COMP_WORDS[$COMP_CWORD]}"))
+                                ;;
+                            *)
+                                ws_name="${COMP_WORDS[$((COMP_CWORD - argpos + 1))]}"
+                                filesysopt="${filesystem:+-F $filesystem}"
+                                COMPREPLY=($(compgen -W "$(ws_share list $filesysopt $ws_name)" -- "${COMP_WORDS[$COMP_CWORD]}"))
+                                ;;
+                        esac
+                        ;;
+                    unshare-all|list)
+                        if [[ $argpos -le 1 ]] ; then
+                            local ws_names=$(_ws_workspace_list "$file_system")
+                            COMPREPLY=($(compgen -W "$ws_names" -- "${COMP_WORDS[$COMP_CWORD]}"))
+                        else
+                            COMPREPLY=""
+                        fi
+                        ;;
+                esac
+            fi
+            ;;
+    esac
+}
+complete -F _complete_ws_share ws_share
 
