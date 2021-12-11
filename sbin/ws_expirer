@@ -274,6 +274,14 @@ for fs in fslist:
             print("  FAILED to access", fs, "in config file")
             continue
         spaces = config["workspaces"][fs]["spaces"]	
+        # avoid datarace, fetch directories first and db entries second (1),
+        # so entries created during this run of expirer will be ignored
+        #  this eats memory, but... generators from python3 pathlib.Path.glob
+        #  would reintroduce the race.
+        workspaces={}
+        for space in spaces:
+            workspaces[space]=glob.glob(os.path.join(space,"*-*"))
+
         dbentries = glob.glob(os.path.join(dbdir,"*-*"))
         dbentrynames = list(map(os.path.basename, dbentries))  # (1)
         dbentriesws=get_dbentriesws(dbentries)
@@ -281,11 +289,7 @@ for fs in fslist:
         workspacedelprefix = config["workspaces"][fs]["deleted"]
         print("PHASE: checking for stray workspaces for", fs, dbdir, spaces)
         for space in spaces:
-                # FIXME: #87 here is potential datarace. DB entries from (1) will not 
-                # show for workspaces created between (1) and (2), this could lead
-                # to deletion of workspaces allocated during expirer run!
-                for ws in glob.glob(os.path.join(space,"*-*")):     # (2)
-                        #if os.path.basename(ws) not in dbentrynames:
+                for ws in workspaces[space]:    # (2) for for #87
                         if os.path.basename(ws) not in dbentryworkspaces:
                                 print("  stray workspace", ws)
                                 # FIXME: this could fail on scatefs, should fallback to 'mv'. Lustre DNE2 cross MDT renames work well meanwhile
