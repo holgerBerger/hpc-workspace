@@ -265,6 +265,7 @@ else:
 
 # cleanup stray directories, this removes stuff that was released (no DB entry any more)
 # from spaces, and checks if anything is left over in removed state for whatever reasons
+# this searches over workspaces and checks DB
 for fs in fslist:
     # first for visible workspaces
         try:
@@ -274,18 +275,22 @@ for fs in fslist:
             continue
         spaces = config["workspaces"][fs]["spaces"]	
         dbentries = glob.glob(os.path.join(dbdir,"*-*"))
-        dbentrynames = list(map(os.path.basename, dbentries))
+        dbentrynames = list(map(os.path.basename, dbentries))  # (1)
         dbentriesws=get_dbentriesws(dbentries)
         dbentryworkspaces=list(map(os.path.basename, dbentriesws))
         workspacedelprefix = config["workspaces"][fs]["deleted"]
         print("PHASE: checking for stray workspaces for", fs, dbdir, spaces)
         for space in spaces:
-                for ws in glob.glob(os.path.join(space,"*-*")):
+                # FIXME: #87 here is potential datarace. DB entries from (1) will not 
+                # show for workspaces created between (1) and (2), this could lead
+                # to deletion of workspaces allocated during expirer run!
+                for ws in glob.glob(os.path.join(space,"*-*")):     # (2)
                         #if os.path.basename(ws) not in dbentrynames:
                         if os.path.basename(ws) not in dbentryworkspaces:
                                 print("  stray workspace", ws)
-                                # FIXME delete it
-                                # FIXME this could fail on scatefs, should fallback to 'mv'
+                                # FIXME: this could fail on scatefs, should fallback to 'mv'. Lustre DNE2 cross MDT renames work well meanwhile
+                                # FIXME: a stray workspace will be moved to deleted here, and will be deleted in 
+                                # the same run in (3). Is this intended? dangerous with datarace #87
                                 timestamp=str(int(time.time()))
                                 if not dryrun:
                                     try:
@@ -298,7 +303,8 @@ for fs in fslist:
                         else:
                                 print("  valid workspace", ws)
 
-        # second for removed workspaces
+        # second for removed workspaces (3)
+        #  ws_release moves DB entry first, workspace second, should be race free
         dbdelentries = glob.glob(os.path.join(dbdir,config["workspaces"][fs]["deleted"],"*-*"))
         dbdelentrynames = list(map(os.path.basename, dbdelentries))
         for space in spaces:
@@ -314,7 +320,7 @@ for fs in fslist:
 
 
 # expire the workspaces by moving them into deleted spaces, dbentry + workspace itself
-# this searches over db
+# this searches over DB, nothing not in DB will be touched
 for fs in fslist:
     try:
         spaces = config["workspaces"][fs]["spaces"]
@@ -342,6 +348,9 @@ for fs in fslist:
         if len(dbentry) == 0: 
             print("   ERROR, skiping empty db entry:", dbentryfilename)
             continue
+            # FIXME: what happens with workspace if one exists that matches this empty DB entry? can only
+            # be found in above file based search. this removes the directory as no DB entry matches
+            # the path, but it would not remove the entry. entry will go stale, workspace will get deleted,
 
         try:
           expiration = int(dbentry["expiration"])
@@ -361,7 +370,8 @@ for fs in fslist:
             else:
                 print("  MV", dbentryfilename, os.path.join(dbdeldir, os.path.basename(dbentryfilename))+"-"+timestamp)
 
-            # FIXME this could fail on scatefs, should fallback to 'mv'
+            # FIXME: this could fail on scatefs, should fallback to 'mv'
+            # while true for scatefs, lustre DNE2 meanwhile handels cross MDT renames well
             if not dryrun:
                 try:
                     os.rename(workspace, os.path.join(os.path.dirname(workspace),
