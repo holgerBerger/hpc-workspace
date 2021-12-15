@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+# export DH_VERBOSE = 1
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
+
+
+%:
+	dh $@
+
+override_dh_clean:
+	dh_clean -X Makefile.orig -X src/Makefile.orig -X testing/README debian/.debhelper/ debian/debhelper-build-stamp debian/files debian/hpc-workspace.substvars 
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)

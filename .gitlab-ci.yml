@@ -1,0 +1,49 @@
+variables:
+  # https://forum.gitlab.com/t/optimize-gitlab-ci-yml-for-debian-package-build/41662
+  TOOL_ARGS: apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends --yes --allow-unauthenticated -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
+
+
+stages:
+  - build
+
+.build:
+  tags:
+    - docker
+  image: $IMAGE
+  stage: build
+  before_script:
+    - rm .gitlab-ci.yml
+    - apt update
+    - apt install --yes git
+#    - git status
+#    - git checkout $CI_COMMIT_BRANCH
+#    - git pull origin upstream
+#    - git pull origin $CI_COMMIT_BRANCH
+#    - git checkout $CI_COMMIT_BRANCH
+#    - git pull origin $CI_COMMIT_REF_NAME
+    - apt install --yes build-essential git-buildpackage dh-make
+    - mk-build-deps --install --remove --tool="$TOOL_ARGS" debian/control
+    - rm hpc-workspace-build-deps_*.{buildinfo,changes}
+
+  script:
+    - gbp buildpackage --git-export=WC --git-no-pristine-tar -uc -us --git-upstream-tag='%(version)s'
+    - mkdir artifacts
+    - mv ../*.deb ../*.buildinfo ../*.changes ../*.tar.* ../*.dsc artifacts
+
+  artifacts:
+    paths:
+      - artifacts
+
+build-bullseye:
+  extends: .build
+  variables:
+    IMAGE: debian:bullseye
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "debian/bullseye"'
+
+build-bionic:
+  extends: .build
+  variables:
+    IMAGE: ubuntu:bionic
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "ubuntu/bionic"'
