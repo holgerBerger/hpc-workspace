@@ -142,7 +142,7 @@ workspaces:
     duration: 30		# max lifetime of a workspace in days
     keeptime: 7			# days to keep deleted data after expiration
     maxextensions: 3		# maximum number of times a user can ask for a extension
-    spaces: [/tmp/ws/ws1]	# paths where workspaces are created, this is a list and path is picked randomly
+    spaces: [/tmp/ws/ws1]	# paths where workspaces are created, this is a list and path is picked randomly or based on uid or guid
 ```
 
 **Note:** the 3 lines with () around the comment are required by the validator, 
@@ -272,11 +272,14 @@ it will be removed and can not be recovered anymore.
 #### `spaces`
 
 A list of directories that make up the workspace location. The directory for 
-new workspaces will be picked randomly from the directories in this list.
+new workspaces will be picked randomly from the directories in this list by default, see ```spaceselection```
 
 This can be used to distribute load and storage space over several filesystems 
-or fileservers or metadata domains like DNE in recent Lustre versions.
+or fileservers or metadata domains like DNE in Lustre.
 
+### `spaceselection`
+
+can be `random` which is default, or `uid` or `gid` to select space based on modulo operation with uid or gid.
 
 #### `deleted`
 

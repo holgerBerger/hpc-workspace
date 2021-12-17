@@ -314,10 +314,19 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
         // add some randomness
         srand(time(NULL));
+		int spaceid=rand()%spaces.size();  // default is random
+		if(config["workspaces"][filesystem]["spaceselection"]) {
+			if(config["workspaces"][filesystem]["spaceselection"].as<string>() == "uid") spaceid = getuid() % spaces.size();
+			if(config["workspaces"][filesystem]["spaceselection"].as<string>() == "gid") spaceid = getgid() % spaces.size();
+		}
+		if (opt.count("debug")) {
+			cerr << "Info: spaceid=" << spaceid << endl;
+		}
+
         if (user_option.length()>0 && (user_option != username) && (getuid() != 0)) {
-            wsdir = spaces[rand()%spaces.size()]+prefix+"/"+username+"-"+name;
+            wsdir = spaces[spaceid]+prefix+"/"+username+"-"+name;
         } else {  // we are root and can change owner!
-            string randspace = spaces[rand()%spaces.size()];
+            string randspace = spaces[spaceid];
             wsdir_nopostfix = randspace+prefix;
             if (user_option.length()>0 && (getuid()==0)) {
                 wsdir = randspace+prefix+"/"+user_option+"-"+name;
