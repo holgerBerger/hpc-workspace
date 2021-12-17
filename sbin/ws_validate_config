@@ -122,6 +122,12 @@ for ws in workspaces:
     except KeyError:
         print(' ERROR: no workspace locations defined, please add <"spaces": list> clause to workspace',ws)
         sys.exit(1)
+    try:
+        print(' spaceselection :',config["workspaces"][ws]["spaceselection"])
+        if config["workspaces"][ws]["spaceselection"] not in ["random","uid","gid"]:
+            print(" WARNING: unkown spaceselection, default `random` will be used")
+    except:
+        pass
     for sp in config["workspaces"][ws]["spaces"]:
         if not config["workspaces"][ws]["deleted"]:
             print(' ERROR: no target for deletion defined in workspace', ws)
