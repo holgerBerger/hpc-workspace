@@ -133,7 +133,7 @@ def slowdeldir(dir):
         fullname=os.path.join(dir,obj)
         if os.path.isdir(fullname) and not os.path.islink(fullname):
             os.chmod(dir, 0o000)
-            deldir(fullname)
+            slowdeldir(fullname)
             time.sleep(0.01)
             os.rmdir(fullname)
             time.sleep(0.01)
