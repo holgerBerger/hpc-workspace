@@ -107,9 +107,9 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
         s.sendmail(sender, recipients, msg.as_string())
         s.quit()
     except smtplib.SMTPRecipientsRefused:
-        print("Recipient refused: {}", format(str(recipients)))
+        print("Recipient refused: {}".format(str(recipients)))
     except smtplib.SMTPSenderRefused:
-        print("Sender refused: {}", format(str(sender)))
+        print("Sender refused: {}".format(str(sender)))
     except socket.error:
         print("Socket error")
     except:  # something went wrong
@@ -133,7 +133,7 @@ def slowdeldir(dir):
         fullname=os.path.join(dir,obj)
         if os.path.isdir(fullname) and not os.path.islink(fullname):
             os.chmod(dir, 0o000)
-            deldir(fullname)
+            slowdeldir(fullname)
             time.sleep(0.01)
             os.rmdir(fullname)
             time.sleep(0.01)
