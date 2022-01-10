@@ -226,14 +226,14 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
 			  auto oldmail = dbentry.getmailaddress();
 			  string newmail;
-			  if (oldmail != "") {
-				  newmail = oldmail;
-				  cerr << "Info: reused mail address " << newmail <<  endl;
+			  if(mailaddress!="") {
+				  newmail = mailaddress;
+				  cerr << "Info: changed mail address to " << newmail <<  endl;
 			  } else {
-				  if(mailaddress!="") {
-					   newmail = mailaddress;
-					   cerr << "Info: changed mail address to " << newmail <<  endl;
-				  }
+				  if (oldmail != "") {
+					  newmail = oldmail;
+					  cerr << "Info: reused mail address " << newmail <<  endl;
+				  } 
 			  }
 
               if(reminder!=0) {
