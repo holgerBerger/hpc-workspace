@@ -94,8 +94,24 @@ are available anymore.
 
 ## getting reminder
 
-TBD
+To get a reminder email before the workspace expires, you can set a reminder alarm
+using ```ws_allocate -m <mailaddress> -r <DAYS> <workspace> <duration>```.
+
+You can store default values for reminder and email in ~/.ws_user.conf (from version 1.4.0 on, before only for email).
+Defaults in file can be overruled with command line options.
+
+You can change reminder and email address of an existing workspace using ```ws_allocate -r <days> -m <mail> -x <workspace> 0```.
+
 
 ## cooperative usage (group workspaces)
 
-TBD
+When a workspace is created with ```-g``` it gets a group workspace that is visible to others with ```ws_list -g``` (if in same group), 
+and is group readable.
+
+When it is created with ```-G <groupname>``` the workspace gets writable as well, and gets group sticky bit.
+
+With ```ws_share``` you can share workspaces with users outside of your group, using ACLs (if supported by underlaying filesystem, since 1.3.7)
+
+```ws_share share <workspace> <user>``` gives read access to the specified user, ```ws_share unshare <workspace> <user>``` removes the access.
+
+Those operations are applied to all files and directories in the workspace.
