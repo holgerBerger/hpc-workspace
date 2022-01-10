@@ -1,0 +1,5 @@
+hpc-workspace (1.3.6-1debian) bullseye; urgency=medium
+
+  * Initial release
+
+ -- Markus Kötter <koetter@cispa.de>  Thu, 09 Dec 2021 07:40:07 +0100
