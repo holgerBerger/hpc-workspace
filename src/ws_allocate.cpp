@@ -78,7 +78,8 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
     cmd_options.add_options()
             ("help,h", "produce help message")
             ("version,V", "show version")
-            ("duration,d", po::value<int>(&duration)->default_value(durationdefault), "duration in days")
+            ("duration,d", po::value<int>(&duration), "duration in days")
+            //("duration,d", po::value<int>(&duration)->default_value(durationdefault), "duration in days")
             ("name,n", po::value<string>(&name), "workspace name")
             ("filesystem,F", po::value<string>(&filesystem), "filesystem")
             ("reminder,r", po::value<int>(&reminder), "reminder to be sent n days before expiration")
@@ -150,23 +151,59 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
         cout << cmd_options << "\n";
         exit(1);
     }
+	
+	// get some values from ~/.ws_user.conf if not on commandline
+	//  mail:  mail address for reminder
+	//  reminder: days before expiry to send reminder
+	//  duration: duration of workspace 
+	//  groupname: group for group workspace
+	YAML::Node user_home_config;
+	std::string firstline;
+    getline(userconf, firstline);
+    if ((firstline.find(":",0) == string::npos) && (firstline.find("@",0) != string::npos)) {
+		cerr << "Info: ignoring ~/.ws_user.conf, seems to be in old, non yaml format and contain no mail: in front of mail address" << endl;
+	} else {
+        user_home_config = YAML::Load(userconf.str());
+		if(opt.count("reminder")==0) {
+			try {
+				reminder = user_home_config["reminder"].as<int>();
+				cerr << "Info: reminder <" << reminder << "> taken from ~/.ws_user.conf" << endl;
+			} catch (...) {
+				reminder = 0;
+			}
+		}
+		if(groupname=="") {
+			try {
+				groupname = user_home_config["groupname"].as<std::string>();
+				cerr << "Info: groupname <" << groupname << "> taken from ~/.ws_user.conf" << endl;
+			} catch (...) {
+				groupname = "";
+			}
+		}
+		if(opt.count("duration")==0) {
+			try {
+				duration = user_home_config["duration"].as<int>();
+				cerr << "Info: duration <" << duration << "> taken from ~/.ws_user.conf" << endl;
+			} catch (...) {
+				duration = durationdefault;
+			}
+		} 
+	}
 
     // reminder check, if we have a reminder number, we need either a mailaddress argument or config file
     // with mailaddress in user home
     if(reminder!=0) {
         if (!opt.count("mailaddress")) {
-            YAML::Node user_home_config;  // load yaml file from home here, not used anywhere else so far
-            // get first line, this is either a mailaddress or something like key: value
-            getline(userconf, mailaddress);
             // check if file looks like yaml
-            if (mailaddress.find(":",0) != string::npos) {
-                user_home_config = YAML::Load(userconf.str());
+            if (firstline.find(":",0) != string::npos) {
                 try {
                     mailaddress = user_home_config["mail"].as<std::string>();
                 } catch (...) {
                     mailaddress = "";
                 }
-            }
+            } else {
+				mailaddress = firstline;
+			}
             if(mailaddress.length()>0) {
                 cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;
             } else {
@@ -185,6 +222,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
             exit(1);
         } 
     }
+
 
     // validate workspace name against nasty characters    
     //  static const std::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$");  // #77
