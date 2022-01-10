@@ -113,11 +113,19 @@ myworkspace 10
 .SH FILES
 .B
 ~/.ws_user.conf 
-can contain an email address to send reminders to, if no \-m option is used.
+user config file to store some default values. file format is yaml, possible keys are mail, duration, reminder and groupname.
+Those values can be overwritten with options on commandline.
 
 .TP
-It has the form
+Example:
 mail: user@domain
+.br
+reminder: 1
+.br
+groupname: boygroup
+.br
+duration: 10
+
 
 .SH AUTHOR
 Written by Holger Berger
