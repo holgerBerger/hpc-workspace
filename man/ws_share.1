@@ -1,0 +1,81 @@
+.TH WS_SHARE 1 "January 2022" "USER COMMANDS"
+.SH NAME
+ws_share \- allows to share an owned workspace with other users
+.SH SYNOPSIS
+.B ws_share [\-h] [\-F FILESYSTEM] <command> [<args>]
+.SH DESCRIPTION
+The ws_share tool allows a user to manage read access permissions for his
+workspaces.  It can be used to quickly grant, remove, and list
+read access to other users for a workspace that the calling user owns.
+Different commands are provided therefore that are described in the COMMANDS section.
+.PP
+.SH OPTIONS
+.TP
+\-h, \-\-help
+display usage help text
+.TP
+\-F, \-\-filesystem
+select the workspace filesystem to work on
+.SH COMMANDS
+.PP
+.B share
+.RS 4
+Grant read access to WORKSPACE for USER
+.sp
+ws_share share [\-F FILESYSTEM] WORKSPACE USER
+.RE
+.PP
+.B unshare
+.RS 4
+Remove access to WORKSPACE for USER
+.sp
+ws_share unshare [\-F FILESYSTEM] WORKSPACE USER
+.RE
+.PP
+.B unshare-all
+.RS 4
+Remove access to WORKSPACE for all users
+.sp
+ws_share unshare-all [\-F FILESYSTEM] WORKSPACE
+.RE
+.PP
+.B list
+.RS 4
+List users with access to WORKSPACE
+.sp
+ws_share list [\-F FILESYSTEM] WORKSPACE
+.RE
+.SH NOTES
+UNIX ACL support of the filesystem storing the workspaces is necessary for
+ws_share to work.
+.SH EXAMPLES
+.TP
+In the following the users alice and bob are granted read access to a workspace named my_workspace:
+.RS 4
+$ ws_share share my_workspace alice
+.sp 0
+$ ws_share share my_workspace bob
+.RE
+.TP
+To check which users have access to the workspace my_workspace
+.RS 4
+$ ws_share list my_workspace
+.sp 0
+> alice
+.sp 0
+> bob
+.RE
+.TP
+To revoke/remove access for bob
+.RS 4
+$ ws_share unshare my_workspace bob
+.RE
+.TP
+To remove access for all
+.RS 4
+$ ws_share unshare-all my_workspace
+.RE
+.SH AUTHOR
+Written by Christoph Niethammer
+.SH SEE ALSO
+.BR ws_allocate "(1), " ws_release "(1), " ws_list "(1), " ws_restore "(1), " ws_find "(1), " acl "(5)
