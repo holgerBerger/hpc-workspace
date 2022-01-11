@@ -175,7 +175,13 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
 		if(groupname=="") {
 			try {
 				groupname = user_home_config["groupname"].as<std::string>();
+				// ugly hack to get changed groupname into validator, we parse some pseudo commandline fake command line option
+				auto tg = groupname;
+				int largc=3; char* largv[] = {(char *)"",(char*)"-G",(char*)tg.c_str(),NULL};
+				po::store(po::command_line_parser(largc, largv).options(all_options).positional(p).run(), opt);
+				po::notify(opt);
 				cerr << "Info: groupname <" << groupname << "> taken from ~/.ws_user.conf" << endl;
+				cerr << "Warning: your workspace will be group writable, as your ~/.ws_user.conf contains a groupname directive!" << endl;
 			} catch (...) {
 				groupname = "";
 			}
