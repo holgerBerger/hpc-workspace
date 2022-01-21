@@ -18,7 +18,7 @@
 
     (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
     (c) Bernd Krisckok 2017
-    (c) Christoph Niethammer 2021
+    (c) Christoph Niethammer 2021-2022
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
 
@@ -40,7 +40,7 @@
 from __future__ import print_function
 
 import os, os.path, pwd, grp, sys
-import glob, time
+import glob
 import argparse
 import pathlib
 
