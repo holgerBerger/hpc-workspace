@@ -52,7 +52,7 @@ EOF
 # parse command line, based on example provided by util-linux
 OPTIONS=F:h
 LONG_OPTIONS=filesystem:,help
-PARSED=$(getopt --options=$OPTIONS --longoptions=$LONGOPTIONS --name "$0" -- "$@")
+PARSED=$(getopt --options=$OPTIONS --longoptions=$LONG_OPTIONS --name "$0" -- "$@")
 if [[ $? -ne 0 ]]; then
     echo "Error: Command line error"
     usage
