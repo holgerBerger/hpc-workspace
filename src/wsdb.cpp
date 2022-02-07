@@ -54,8 +54,9 @@
 #include <sys/capability.h>
 #else
 typedef int cap_value_t;
-const int CAP_DAC_OVERRIDE = 0;
-const int CAP_CHOWN = 1;
+const int CAP_CHOWN = 0;
+const int CAP_DAC_OVERRIDE = 1;
+const int CAP_FOWNER = 3;
 #endif
 
 #include "wsdb.h"
@@ -126,8 +127,7 @@ void WsDB::write_dbfile()
         entry["released"] = released;
     }
     entry["comment"] = comment;
-    // Workspace::raise_cap(CAP_DAC_OVERRIDE);
-    Workspace::raise_cap(CAP_FOWNER);
+    Workspace::raise_cap(CAP_DAC_OVERRIDE);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here
     if (setegid(dbgid)|| seteuid(dbuid)) {
@@ -144,16 +144,18 @@ void WsDB::write_dbfile()
     } else {
         perm = 0644;
     }
+    Workspace::raise_cap(CAP_FOWNER);
     if (chmod(dbfilename.c_str(), perm) != 0) {
         cerr << "Error: could not change permissions of database entry" << endl;
     }
+    Workspace::lower_cap(CAP_FOWNER, dbuid);
 #ifdef SETUID
     if(seteuid(0)|| setegid(0)) {
 			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
 			exit(-1);
 	}
 #endif
-    Workspace::lower_cap(CAP_FOWNER, dbuid);
+    Workspace::lower_cap(CAP_DAC_OVERRIDE, dbuid);
 
 #ifndef SETUID
     Workspace::raise_cap(CAP_CHOWN);
