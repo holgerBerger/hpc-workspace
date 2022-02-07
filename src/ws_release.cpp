@@ -47,9 +47,11 @@
 #ifndef SETUID
 #include <sys/capability.h>
 #else
+// dummies
 typedef int cap_value_t;
 const int CAP_DAC_OVERRIDE = 0;
 const int CAP_CHOWN = 1;
+const int CAP_FOWNER = 2;
 #endif
 
 #include "ws.h"
@@ -184,7 +186,7 @@ int main(int argc, char **argv) {
     int db_uid = config["dbuid"].as<int>();
 
     // lower capabilities to minimum
-    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
+    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid);
 
     // check commandline
     commandline(opt, name, duration, filesystem, extensionflag, argc, argv);

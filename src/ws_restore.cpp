@@ -65,6 +65,8 @@
 typedef int cap_value_t;
 const int CAP_DAC_OVERRIDE = 0;
 const int CAP_CHOWN = 1;
+const int CAP_FOWNER = 2;
+const int CAP_DAC_READ_SEARCH = 3;
 #endif
 
 #include "ws.h"
@@ -338,7 +340,7 @@ int main(int argc, char **argv) {
     int db_uid = config["dbuid"].as<int>();
 
     // lower capabilities to minimum
-    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
+    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH, db_uid);
 
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
@@ -376,7 +378,7 @@ int main(int argc, char **argv) {
 
     } else {
         // get workspace object
-        Workspace ws(WS_Release, opt, duration, filesystem);
+        Workspace ws(WS_Restore, opt, duration, filesystem);
 
         // construct db-entry username  name
         string real_username = ws.getusername();

@@ -51,6 +51,8 @@
 typedef int cap_value_t;
 const int CAP_DAC_OVERRIDE = 0;
 const int CAP_CHOWN = 1;
+const int CAP_FOWNER = 2;
+const int CAP_DAC_READ_SEARCH=3;
 #endif
 
 // YAML
@@ -105,7 +107,13 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     db_gid = config["dbgid"].as<int>();
 
     // lower capabilities to minimum
-    drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
+    if (clientcode == WS_Allocate)
+    	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
+    if (clientcode == WS_Release ) 
+    	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid);
+    if (clientcode == WS_Restore ) 
+    	drop_cap(CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH, db_uid);
+
     // read private config
     raise_cap(CAP_DAC_OVERRIDE);
     try {
@@ -343,8 +351,13 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
             umask(oldmask);
             lower_cap(CAP_DAC_OVERRIDE, db_uid);
         } catch (...) {
+            auto uid=getuid();
+	    auto euid=geteuid();
             lower_cap(CAP_DAC_OVERRIDE, db_uid);
-            cerr << "Error: could not create workspace directory!"  << endl;
+            cerr << "Error: could not create workspace directory <" << wsdir << ">! "  << endl;
+	    if (opt.count("debug")) {
+		    cerr << "Debug: uid: " << uid << " euid: " << euid <<endl;
+	    }
             exit(-1);
         }
 
@@ -462,6 +475,7 @@ void Workspace::release(string name) {
                               "/" + userprefix + name + "-" + timestamp;
         // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
         raise_cap(CAP_DAC_OVERRIDE);
+        raise_cap(CAP_FOWNER);
 #ifdef SETUID
         // for filesystem with root_squash, we need to be DB user here
         if(setegid(dbgid) || seteuid(dbuid)) {
@@ -472,10 +486,15 @@ void Workspace::release(string name) {
         if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
             // cerr << "rename " << dbfilename.c_str() << " -> " << dbtargetname.c_str() << " failed" << endl;
             lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+            lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
             cerr << "Error: database entry could not be deleted." << endl;
             exit(-1);
         }
+	if (opt.count("debug")) {
+		cerr << "Debug: lower cap after db rename" << endl;
+	}
         lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+        lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
 
         // rational: we move the workspace into deleted directory and append a timestamp to name
         // as a new workspace could have same name and releasing the new one would lead to a name
@@ -508,6 +527,9 @@ void Workspace::release(string name) {
                 exit(-1);
             }
         }
+	if (opt.count("debug")) {
+		cerr << "Debug: lower cap after rename" << endl;
+	}
         lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
 
         syslog(LOG_INFO, "release for user <%s> from <%s> to <%s> done, moved DB entry from <%s> to <%s>.", username.c_str(), wsdir.c_str(), wstargetname.c_str(), dbfilename.c_str(), dbtargetname.c_str());
@@ -848,9 +870,13 @@ void Workspace::restore(const string name, const string target, const string use
         // log restore request
         // syslog(LOG_INFO, "restore for user <%s> from <%s> to <%s>.", username, wssourcename.c_str(), targetwsdir.c_str());
 
-        raise_cap(CAP_DAC_OVERRIDE);
+	string targetpathname = targetwsdir + "/" + fs::path(wssourcename).filename().string();
 
-        int ret = mv(wssourcename.c_str(), targetwsdir.c_str());
+        raise_cap(CAP_DAC_OVERRIDE);
+        raise_cap(CAP_DAC_READ_SEARCH);
+
+        // int ret = mv(wssourcename.c_str(), targetwsdir.c_str()); // does not work with capabilities
+	int ret = rename(wssourcename.c_str(), targetpathname.c_str());
 #ifdef SETUID
         // get db user to be able to unlink db entry from root_squash filesystems
         if(setegid(config["dbgid"].as<int>()) || seteuid(config["dbuid"].as<int>())) {
@@ -864,7 +890,7 @@ void Workspace::restore(const string name, const string target, const string use
             cerr << "Info: restore successful, database entry removed." << endl;
         } else {
             syslog(LOG_INFO, "restore for user <%s> from <%s> to <%s> failed, kept DB entry <%s>.", username.c_str(), wssourcename.c_str(), targetwsdir.c_str(), dbfilename.c_str());
-            cerr << "Error: moving data failed, database entry kept!" << endl;
+            cerr << "Error: moving data failed, database entry kept! " <<  ret << endl;
         }
 #ifdef SETUID
         if(seteuid(0)||setegid(0)) {
@@ -873,6 +899,7 @@ void Workspace::restore(const string name, const string target, const string use
 		}
 #endif
         lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+        lower_cap(CAP_DAC_READ_SEARCH, config["dbuid"].as<int>());
 
 
     } else {
@@ -882,7 +909,7 @@ void Workspace::restore(const string name, const string target, const string use
 
 
 /*
- * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN
+ * drop effective capabilities, except CAP_DAC_OVERRIDE | CAP_CHOWN (FIXME is this comment correct?)
  */
 void Workspace::drop_cap(cap_value_t cap_arg, int dbuid)
 {
@@ -935,6 +962,45 @@ void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid)
     // cap_list[1] = CAP_CHOWN;
 
     if (cap_set_flag(caps, CAP_PERMITTED, 2, cap_list, CAP_SET) == -1) {
+        cerr << "Error: problem with capabilities." << endl;
+        exit(1);
+    }
+
+    if (cap_set_proc(caps) == -1) {
+        cerr << "Error: problem dropping capabilities." << endl;
+        cap_t cap = cap_get_proc();
+        cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
+        cap_free(cap);
+        exit(1);
+    }
+
+    cap_free(caps);
+#else
+    // seteuid(0);
+    if(seteuid(dbuid)) {
+        cerr << "Error: can not change uid." << endl;
+        exit(1);
+    }
+#endif
+
+}
+
+void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, cap_value_t cap_arg3, int dbuid)
+{
+#ifndef SETUID
+    cap_t caps;
+    cap_value_t cap_list[3];
+
+    cap_list[0] = cap_arg1;
+    cap_list[1] = cap_arg2;
+    cap_list[2] = cap_arg3;
+
+    caps = cap_init();
+
+    // cap_list[0] = CAP_DAC_OVERRIDE;
+    // cap_list[1] = CAP_CHOWN;
+
+    if (cap_set_flag(caps, CAP_PERMITTED, 3, cap_list, CAP_SET) == -1) {
         cerr << "Error: problem with capabilities." << endl;
         exit(1);
     }

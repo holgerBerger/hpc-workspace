@@ -126,7 +126,8 @@ void WsDB::write_dbfile()
         entry["released"] = released;
     }
     entry["comment"] = comment;
-    Workspace::raise_cap(CAP_DAC_OVERRIDE);
+    // Workspace::raise_cap(CAP_DAC_OVERRIDE);
+    Workspace::raise_cap(CAP_FOWNER);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here
     if (setegid(dbgid)|| seteuid(dbuid)) {
@@ -152,7 +153,7 @@ void WsDB::write_dbfile()
 			exit(-1);
 	}
 #endif
-    Workspace::lower_cap(CAP_DAC_OVERRIDE, dbuid);
+    Workspace::lower_cap(CAP_FOWNER, dbuid);
 
 #ifndef SETUID
     Workspace::raise_cap(CAP_CHOWN);

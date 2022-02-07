@@ -54,9 +54,11 @@
 #ifndef SETUID
 #include <sys/capability.h>
 #else
+// dummies
 typedef int cap_value_t;
 const int CAP_DAC_OVERRIDE = 0;
 const int CAP_CHOWN = 1;
+const int CAP_FOWNER = 2;
 #endif
 
 #include "ws.h"

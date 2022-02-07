@@ -91,7 +91,8 @@ copy ws_allocate and ws_release and ws_restore and ws_list where wanted,
 ( and set capabilites with
 
 setcap "CAP_DAC_OVERRIDE=p CAP_CHOWN=p" ws_allocate
-setcap "CAP_DAC_OVERRIDE=p" ws_release
+setcap "CAP_DAC_OVERRIDE=p CAP_CHOWN=p CAP_FOWNER=p" ws_release
+setcap "CAP_DAC_OVERRIDE=p CAP_DAC_READ_SEARCH=p" ws_restore
 )
 
 OR (on filesystems without capabilities and now default in build,
