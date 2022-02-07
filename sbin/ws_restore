@@ -32,9 +32,7 @@
 
 from __future__ import print_function
 import yaml
-import os, os.path, pwd, grp, sys
-import glob, time
-from optparse import OptionParser
+import os, os.path, sys
 
 
 if os.getuid()!=0:

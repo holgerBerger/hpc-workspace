@@ -36,7 +36,6 @@
 from __future__ import print_function
 
 import os, os.path, pwd, grp, sys
-import glob, time
 from optparse import OptionParser
 
 # read a single line from ws.conf of the form: pythonpath: /path/to/python

@@ -42,15 +42,11 @@ from __future__ import print_function
 import os, os.path, pwd, grp, sys
 import glob, time
 from optparse import OptionParser
-from tempfile import mkstemp
 ### from datetime import datetime, date, time
 import smtplib
 from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
-from email.utils import COMMASPACE, formatdate
-from email import encoders
-import datetime
+from email.utils import formatdate
 
 CRLF = "\r\n"
 
