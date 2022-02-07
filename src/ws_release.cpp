@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
     int db_uid = config["dbuid"].as<int>();
 
     // lower capabilities to minimum
-    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid);
+    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid, __LINE__, __FILE__);
 
     // check commandline
     commandline(opt, name, duration, filesystem, extensionflag, argc, argv);

@@ -94,7 +94,7 @@ public:
     static string getusername();
     static void drop_cap(cap_value_t cap_arg, int dbuid);
     static void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid);
-    static void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, cap_value_t cap_arg3, int dbuid);
+    static void drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, cap_value_t cap_arg3, int dbuid, int srcline, std::string srcfile);
     static void raise_cap(int cap);
     static void lower_cap(int cap, int dbuid);
 

@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
     //
     // get user first, so user config is read as owner
     // of files, which is needed for root_squash homes
-    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, getuid());
+    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, getuid(), __LINE__, __FILE__);
 
     std::stringstream user_conf;
     string user_conf_filename = Workspace::getuserhome()+"/.ws_user.conf";

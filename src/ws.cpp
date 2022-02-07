@@ -97,13 +97,15 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     db_uid = config["dbuid"].as<int>();
     db_gid = config["dbgid"].as<int>();
 
+    /*  seems redundant 
     // lower capabilities to minimum
     if (clientcode == WS_Allocate)
-    	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid);
+    	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid, __LINE__, __FILE__);
     if (clientcode == WS_Release ) 
-    	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid);
+    	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid, __LINE__, __FILE__);
     if (clientcode == WS_Restore ) 
     	drop_cap(CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH, db_uid);
+    */
 
     // read private config
     raise_cap(CAP_DAC_OVERRIDE);
@@ -932,7 +934,7 @@ void Workspace::drop_cap(cap_value_t cap_arg, int dbuid)
 #else
     // seteuid(0);
     if(seteuid(dbuid)) {
-        cerr << "Error: can not change uid." << endl;
+        cerr << "Error: can not change uid. (line " << __LINE__ << ")" << endl;
         exit(1);
     }
 #endif
@@ -969,14 +971,14 @@ void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, int dbuid)
 #else
     // seteuid(0);
     if(seteuid(dbuid)) {
-        cerr << "Error: can not change uid." << endl;
+        cerr << "Error: can not change uid. (line " << __LINE__ << ")" << endl;
         exit(1);
     }
 #endif
 
 }
 
-void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, cap_value_t cap_arg3, int dbuid)
+void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, cap_value_t cap_arg3, int dbuid, int srcline, std::string srcfile)
 {
 #ifndef SETUID
     cap_t caps;
@@ -1008,7 +1010,10 @@ void Workspace::drop_cap(cap_value_t cap_arg1, cap_value_t cap_arg2, cap_value_t
 #else
     // seteuid(0);
     if(seteuid(dbuid)) {
-        cerr << "Error: can not change uid." << endl;
+        cerr << "Error: can not change uid. (line " << __LINE__ << ", from " << srcfile <<":"<<srcline<<")" << endl;
+	// auto uid=getuid();
+	// auto euid=geteuid();
+	// cerr << "uid: " << uid << " euid: " << euid << endl;
         exit(1);
     }
 #endif
@@ -1045,7 +1050,7 @@ void Workspace::lower_cap(int cap, int dbuid)
     // seteuid(0);
 
     if(seteuid(dbuid)) {
-        cerr << "Error: can not change uid." << endl;
+        cerr << "Error: can not change uid. (line " << __LINE__ << ")" << endl;
         exit(1);
     }
 #endif
@@ -1080,7 +1085,7 @@ void Workspace::raise_cap(int cap)
     cap_free(caps);
 #else
     if (seteuid(0)) {
-        cerr << "Error: can not change uid." << endl;
+        cerr << "Error: can not change uid. (line " << __LINE__ << ")" << endl;
         exit(1);
     }
 #endif
