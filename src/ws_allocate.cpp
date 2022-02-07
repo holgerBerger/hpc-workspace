@@ -56,9 +56,10 @@
 #else
 // dummies
 typedef int cap_value_t;
-const int CAP_DAC_OVERRIDE = 0;
-const int CAP_CHOWN = 1;
-const int CAP_FOWNER = 2;
+const int CAP_CHOWN = 0;
+const int CAP_DAC_OVERRIDE = 1;
+const int CAP_DAC_READ_SEARCH=2;
+const int CAP_FOWNER = 3;
 #endif
 
 #include "ws.h"
@@ -294,7 +295,7 @@ int main(int argc, char **argv) {
     //
     // get user first, so user config is read as owner
     // of files, which is needed for root_squash homes
-    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, getuid());
+    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, getuid());
 
     std::stringstream user_conf;
     string user_conf_filename = Workspace::getuserhome()+"/.ws_user.conf";
@@ -306,10 +307,12 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
+    /*
     Workspace::raise_cap(CAP_DAC_OVERRIDE);
 
     // lower capabilities to minimum
-    Workspace::drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
+    Workspace::drop_cap(CAP_DAC_OVERRIDE, db_uid);
+    */
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, duration, durationdefault , filesystem, extensionflag, 

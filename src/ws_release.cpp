@@ -49,9 +49,10 @@
 #else
 // dummies
 typedef int cap_value_t;
-const int CAP_DAC_OVERRIDE = 0;
-const int CAP_CHOWN = 1;
-const int CAP_FOWNER = 2;
+const int CAP_CHOWN = 0;
+const int CAP_DAC_OVERRIDE = 1;
+const int CAP_DAC_READ_SEARCH=2;
+const int CAP_FOWNER = 3;
 #endif
 
 #include "ws.h"

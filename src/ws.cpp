@@ -49,10 +49,10 @@
 #include <sys/capability.h>
 #else
 typedef int cap_value_t;
-const int CAP_DAC_OVERRIDE = 0;
-const int CAP_CHOWN = 1;
-const int CAP_FOWNER = 2;
-const int CAP_DAC_READ_SEARCH=3;
+const int CAP_CHOWN = 0;
+const int CAP_DAC_OVERRIDE = 1;
+const int CAP_DAC_READ_SEARCH=2;
+const int CAP_FOWNER = 3;
 #endif
 
 // YAML
@@ -108,7 +108,7 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
 
     // lower capabilities to minimum
     if (clientcode == WS_Allocate)
-    	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, db_uid);
+    	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid);
     if (clientcode == WS_Release ) 
     	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid);
     if (clientcode == WS_Restore ) 
@@ -1079,9 +1079,10 @@ void Workspace::raise_cap(int cap)
 
     if (cap_set_proc(caps) == -1) {
         cerr << "Error: problem raising capabilities." << endl;
-        cap_t cap = cap_get_proc();
-        cerr << "Running with capabilities: " << cap_to_text(cap, NULL) << endl;
-        cap_free(cap);
+        cap_t caps = cap_get_proc();
+        cerr << "Running with capabilities: " << cap_to_text(caps, NULL) << endl;
+        cap_free(caps);
+	cerr << "raising: " << cap_to_name(cap) << endl;
         exit(1);
     }
 
