@@ -119,7 +119,7 @@ void WsDB::write_dbfile()
         entry["released"] = released;
     }
     entry["comment"] = comment;
-    Workspace::raise_cap(CAP_DAC_OVERRIDE);
+    Workspace::raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here
     if (setegid(dbgid)|| seteuid(dbuid)) {
@@ -136,7 +136,7 @@ void WsDB::write_dbfile()
     } else {
         perm = 0644;
     }
-    Workspace::raise_cap(CAP_FOWNER);
+    Workspace::raise_cap(CAP_FOWNER, __LINE__, __FILE__);
     if (chmod(dbfilename.c_str(), perm) != 0) {
         cerr << "Error: could not change permissions of database entry" << endl;
     }
@@ -150,7 +150,7 @@ void WsDB::write_dbfile()
     Workspace::lower_cap(CAP_DAC_OVERRIDE, dbuid);
 
 #ifndef SETUID
-    Workspace::raise_cap(CAP_CHOWN);
+    Workspace::raise_cap(CAP_CHOWN, __LINE__, __FILE__);
     if (chown(dbfilename.c_str(), dbuid, dbgid)) {
         Workspace::lower_cap(CAP_CHOWN, dbuid);
         cerr << "Error: could not change owner of database entry" << endl;

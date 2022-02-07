@@ -108,7 +108,7 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     */
 
     // read private config
-    raise_cap(CAP_DAC_OVERRIDE);
+    raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
     try {
         userconfig = YAML::LoadFile("/etc/ws_private.conf");
     } catch (const YAML::BadFile&) {
@@ -338,7 +338,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 
         // make directory and change owner + permissions
         try {
-            raise_cap(CAP_DAC_OVERRIDE);
+            raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
             mode_t oldmask = umask( 077 );    // as we create intermediate directories, we better take care of umask!!
             fs::create_directories(wsdir);
             umask(oldmask);
@@ -371,7 +371,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 			}
 		}
 
-        raise_cap(CAP_CHOWN);
+        raise_cap(CAP_CHOWN, __LINE__, __FILE__);
         /*
         // removed 3.6.2020, what was it good for??
         if(prefix.length()>0) {  // in case we have a prefix, we change owner of that one
@@ -387,7 +387,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         }
         lower_cap(CAP_CHOWN, db_uid);
 
-        raise_cap(CAP_DAC_OVERRIDE);
+        raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
 		mode_t mode = S_IRUSR | S_IWUSR | S_IXUSR;
         // group workspaces can be read and listed by group
 		if (opt.count("group") || groupname!="") {
@@ -467,8 +467,8 @@ void Workspace::release(string name) {
                               config["workspaces"][filesystem]["deleted"].as<string>() +
                               "/" + userprefix + name + "-" + timestamp;
         // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
-        raise_cap(CAP_DAC_OVERRIDE);
-        raise_cap(CAP_FOWNER);
+        raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
+        raise_cap(CAP_FOWNER, __LINE__, __FILE__);
 #ifdef SETUID
         // for filesystem with root_squash, we need to be DB user here
         if(setegid(dbgid) || seteuid(dbuid)) {
@@ -508,7 +508,7 @@ void Workspace::release(string name) {
 */
 
         // cout << wsdir.c_str() << " - " << wstargetname.c_str() << endl;
-        raise_cap(CAP_DAC_OVERRIDE);
+        raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
         if(rename(wsdir.c_str(), wstargetname.c_str())) {
             // cerr << "rename " << wsdir.c_str() << " -> " << wstargetname.c_str() << " failed " << geteuid() << " " << getuid() << endl;
 
@@ -865,8 +865,8 @@ void Workspace::restore(const string name, const string target, const string use
 
 	string targetpathname = targetwsdir + "/" + fs::path(wssourcename).filename().string();
 
-        raise_cap(CAP_DAC_OVERRIDE);
-        raise_cap(CAP_DAC_READ_SEARCH);
+        raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
+        raise_cap(CAP_DAC_READ_SEARCH, __LINE__, __FILE__);
 
         // int ret = mv(wssourcename.c_str(), targetwsdir.c_str()); // does not work with capabilities
 	int ret = rename(wssourcename.c_str(), targetpathname.c_str());
@@ -1059,7 +1059,7 @@ void Workspace::lower_cap(int cap, int dbuid)
 /*
  * add a capability to the effective set
  */
-void Workspace::raise_cap(int cap)
+void Workspace::raise_cap(int cap, int srcline, std::string srcfile)
 {
 #ifndef SETUID
     cap_t caps;
@@ -1085,7 +1085,10 @@ void Workspace::raise_cap(int cap)
     cap_free(caps);
 #else
     if (seteuid(0)) {
-        cerr << "Error: can not change uid. (line " << __LINE__ << ")" << endl;
+        cerr << "Error: can not change uid. (line " << __LINE__ << ", from " << srcfile <<":"<<srcline<<")" << endl;
+		//auto uid=getuid();
+		//auto euid=geteuid();
+		//cerr << "uid: " << uid << " euid: " << euid << endl;
         exit(1);
     }
 #endif
