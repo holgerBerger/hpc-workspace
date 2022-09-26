@@ -340,14 +340,18 @@ for fs in fslist:
         mailaddress = ""
         workspace = ""
         expiration = 0
+        dbentry=[]
         try:
            dbentry = yaml.safe_load(open(dbentryfilename))
            reminder = int(dbentry['reminder'])
            mailaddress = dbentry['mailaddress']
         except:
-           dbentry = get_old_db_entry_informations(dbentryfilename)
-           reminder = 0
-           mailaddress = ""
+           try:
+               dbentry = get_old_db_entry_informations(dbentryfilename)
+               reminder = 0
+               mailaddress = ""
+           except Exception as e:
+               print("   ERROR: could not read entry, ", e)
 
         if len(dbentry) == 0: 
             print("   ERROR, skiping empty db entry:", dbentryfilename)
@@ -422,9 +426,12 @@ for fs in fslist:
            expiration = int(dbentry['expiration'])
            workspace = dbentry['workspace']
         except:
-           dbentry = get_old_db_entry_informations(dbentryfilename)
-           expiration = int(dbentry['expiration'])
-           workspace = dbentry['workspace']
+           try:
+               dbentry = get_old_db_entry_informations(dbentryfilename)
+               expiration = int(dbentry['expiration'])
+               workspace = dbentry['workspace']
+           except Exception as e:
+               print("  ERROR: could not read db entry, ", e)
         if workspace == "" or expiration == 0:
             print("  FAILED to parse DB for", dbentryfilename)
             continue
