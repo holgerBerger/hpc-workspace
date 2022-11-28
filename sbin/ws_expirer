@@ -41,6 +41,7 @@ import shutil
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import socket
+import signal
 
 
 # read a single line from ws.conf of the form: pythonpath: /path/to/python
@@ -62,6 +63,10 @@ import yaml
 
 
 count = 0
+
+def handler(signum, frame):
+    #print(f"starting Timeouthandler")
+    raise Exception("end of time")
 
 # send a reminder email
 def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
@@ -118,38 +123,44 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
 # fast recursive deleter, using new python mechanisms
 def fastdeldir(dir):
     print("   deldir(fast)", dir)
-    if not os.path.exists(dir):
-        print("Error: Path to delete does not exist: %s" % dir)
-        return
-    shutil.rmtree(dir)
+    try:
+        if not os.path.exists(dir):
+            print("Error: Path to delete does not exist: %s" % dir)
+            return
+        shutil.rmtree(dir)
+    except:
+       print(f"aborting fastdeldir of {dir} due to timelimit")
 
 # slow recursive deleter, to avoid high meta data pressure on servers
 def slowdeldir(dir):
     global count
     print("   deldir(slow)",dir)
-    os.chmod(dir, 0o000)
-    if not os.path.exists(dir): return
-    for obj in os.listdir(dir):
-        fullname=os.path.join(dir,obj)
-        if os.path.isdir(fullname) and not os.path.islink(fullname):
-            os.chmod(dir, 0o000)
-            slowdeldir(fullname)
-            time.sleep(0.01)
-            os.rmdir(fullname)
-            time.sleep(0.01)
-        else:
-            if os.path.isfile(fullname):
-                size=os.path.getsize(fullname)
+    try:
+        os.chmod(dir, 0o000)
+        if not os.path.exists(dir): return
+        for obj in os.listdir(dir):
+            fullname=os.path.join(dir,obj)
+            if os.path.isdir(fullname) and not os.path.islink(fullname):
+                os.chmod(dir, 0o000)
+                slowdeldir(fullname)
+                time.sleep(0.01)
+                os.rmdir(fullname)
+                time.sleep(0.01)
             else:
-                size=0.001
-            os.unlink(fullname)
-            time.sleep(max(0.001,size*0.00000000001))
-            count+=1
-            if count%10==0:
-                time.sleep(0.05)
-            if count%100==0:
-                time.sleep(0.1)
-                count=0
+                if os.path.isfile(fullname):
+                    size=os.path.getsize(fullname)
+                else:
+                    size=0.001
+                os.unlink(fullname)
+                time.sleep(max(0.001,size*0.00000000001))
+                count+=1
+                if count%10==0:
+                    time.sleep(0.05)
+                if count%100==0:
+                    time.sleep(0.1)
+                    count=0
+    except:
+        print(f"aborting slowdeldir of {dir} due to timelimit")
 
 # getting old workspace database informations (path and expiration date)
 def get_old_db_entry_informations(dbfile):
@@ -233,6 +244,7 @@ deldir=fastdeldir
 
 smtphost = config['smtphost']
 clustername = config['clustername']
+deldir_timelimit=config['deldir_timeout']
 
 start = time.time()
 
@@ -262,6 +274,8 @@ else:
     dryrun = False
     print("really cleaning ...")
 
+# register timout handler
+signal.signal(signal.SIGALRM, handler)
 
 # cleanup stray directories, this removes stuff that was released (no DB entry any more)
 # from spaces, and checks if anything is left over in removed state for whatever reasons
@@ -316,7 +330,9 @@ for fs in fslist:
                         if os.path.basename(ws) not in dbdelentrynames:
                                 print("  stray removed workspace", ws)
                                 if not dryrun:
+                                    signal.alarm(deldir_timelimit)
                                     deldir(ws)
+                                    signal.alarm(0)
                                 else:
                                     print("  DELDIR", ws)
                         else:
@@ -465,7 +481,9 @@ for fs in fslist:
                 os.unlink(dbentryfilename)
                 print(" OS.UNLINK", dbentryfilename)
                 # remove the workspace directory
+                signal.alarm(deldir_timelimit)
                 deldir(os.path.join(os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename)))
+                signal.alarm(0)
                 print("  DELDIR", os.path.join(os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename)))
 
                 try:
