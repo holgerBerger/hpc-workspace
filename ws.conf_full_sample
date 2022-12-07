@@ -13,6 +13,7 @@ pythonpath: /path/to/my/python	# optional, path which is appended to python sear
 dbuid: 9999			# mandantory
 dbgid: 9999			# mandantory
 admins: [hobel]			# list of admin users, for ws_list
+deldir_timeout: 3600		# maximum time in secs to delete a single workspace.
 workspaces:		# now the list of the workspaces
 	lustre:			# name of workspace as shown with ws_list -l
 		keeptime: 1				# mandantory, time in days to keep workspaces after they expired
