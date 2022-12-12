@@ -201,9 +201,16 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
                     mailaddress = "";
                 }
             } else {
-				mailaddress = firstline;
-			}
-            if(mailaddress.length()>0) {
+                mailaddress = firstline;
+            }
+            if(mailaddress.length()>0) {                        
+                // The same for the mailaddress (if set), because ws_restore python script leads to dataloss if non utf-8 characters are present in mailadress:
+                //  UnicodeDecodeError: 'utf-8' codec can't decode byte 0xc5 in position 137: invalid continuation byte
+                static const REGEX em("^[[:alnum:]][[:alnum:]_.@-]*$");
+                if (!regex_match(mailaddress, em)) {
+                    cerr << "Error: Illegal non-utf8 mailadress, use characters and numbers, -,.,_ and @ only!" << endl;
+                    exit(1);
+                }
                 cerr << "Info: Took email address <" << mailaddress << "> from users config." << endl;
             } else {
                 mailaddress = Workspace::getusername();
@@ -211,9 +218,9 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
                 cerr << "Info: reminder email will be sent to local user account" << endl;
             }
         }
-		if (reminder>=duration) {
-                cerr << "Warning: reminder is only sent after workspace expiry!" << endl;
-		}
+        if (reminder>=duration) {
+            cerr << "Warning: reminder is only sent after workspace expiry!" << endl;
+        }
     } else {
         // check if mail address was set with -m but not -r
         if(opt.count("mailaddress") && !opt.count("extension")) {
@@ -237,7 +244,6 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
             cerr << "Error: Illegal workspace name, use characters and numbers, -,. and _ only!" << endl;
             exit(1);
     }
-
 }
 
 
