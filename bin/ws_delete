@@ -1,0 +1,110 @@
+#!/bin/bash
+#
+# ws_delete is a helper script that can be used to delete a workspace and all
+# the files in it immediately instead of just releasing it - and waiting for
+# the workspace cleaner to clean the files up. This may be desirable in case
+# of quota issues. However, the content of a deleted workspace cannot be recovered
+# - you have beed warned!
+#
+# See ws_delete --help to get usage information.
+#
+# Copyright(c) 2023      Christoph Niethammer <niethammer@hlrs.de>
+#
+
+progname=$(basename $0)
+
+# Test for compatible getopt version.
+# The parser needs an enhanced version of getopt.
+# See man page of getopt for this test.
+getopt --test
+if [[ $? -ne 4 ]]; then
+    echo "Error: $progname needs an enhaced getopt to work."
+    exit 1
+fi
+
+function usage() {
+cat <<EOF
+$progname deletes all files and directories in a workspace permanently and
+releases the workspace.
+
+WARNING:  The content of a deleted workspace cannot be recoverd!
+
+usage:
+
+The follwoing command deletes a workspace (WS_NAME) and all containing files:
+ $progname [-F FILESYSTEM] WS_NAME
+
+options:
+   -F, --filesystem  ws filesystem
+   -h, --help        show this help
+
+EOF
+}
+
+
+# parse command line, based on example provided by util-linux
+OPTIONS=F:h
+LONG_OPTIONS=filesystem:,help
+PARSED=$(getopt --options=$OPTIONS --longoptions=$LONG_OPTIONS --name "$0" -- "$@")
+if [[ $? -ne 0 ]]; then
+    echo "Error: Command line error"
+    usage
+    exit 1
+fi
+eval set -- "$PARSED"
+unset PARSED
+
+# parse options
+while true; do
+    case "$1" in
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -F|--filesystem)
+            FILESYSTEM="$2"
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "Error: Found unknown option"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+WS_NAME="$1"
+shift
+
+if [[ -z "$WS_NAME" ]]; then
+    echo "Error: workspace name missing"
+    exit 1
+fi
+WS_PATH=$(ws_find ${FILESYSTEM:+-F $FILESYSTEM} $WS_NAME)
+if [[ $? -ne 0 || -z "$WS_PATH" ]]; then
+    echo "Error: Invalid workspace name."
+    exit 1
+fi
+
+
+
+while true; do
+  read -p "Are you sure, you want to delete the workspace '$WS_NAME' and all files within it permanently? [YES|NO] " answer
+  case $answer in
+     YES )
+        # using rsync for fast deletion of files 
+        EMPTY_DIR=$(mktemp -d)
+        trap "{ /usr/bin/rm -r ${EMPTY_DIR} ; }" SIGINT SIGTERM ERR EXIT
+        rsync -av --delete "$EMPTY_DIR/"  "$WS_PATH/"
+        ws_release ${FILESYSTEM:+-F $FILESYSTEM} $WS_NAME
+        break;;
+     NO )
+        break;;
+     * )
+        echo Invalid option. Please answer with 'YES' or 'NO'.
+  esac
+done
