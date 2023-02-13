@@ -74,6 +74,7 @@ void commandline(po::variables_map &opt, string &name, int &duration,
 				("version,V", "show version")
 				("name,n", po::value<string>(&name), "workspace name")
 				("filesystem,F", po::value<string>(&filesystem), "filesystem")
+				("delete-data", "delete all data, workspace can NOT BE RECOVERED")
 		;
 	}
 
