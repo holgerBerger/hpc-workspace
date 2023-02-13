@@ -387,7 +387,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         }
         lower_cap(CAP_CHOWN, db_uid);
 
-        raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
+        raise_cap(CAP_FOWNER, __LINE__, __FILE__);
 		mode_t mode = S_IRUSR | S_IWUSR | S_IXUSR;
         // group workspaces can be read and listed by group
 		if (opt.count("group") || groupname!="") {
@@ -397,12 +397,12 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 			mode |= S_IWGRP | S_ISGID;
 		}
         if(chmod(wsdir.c_str(), mode)) {
-            lower_cap(CAP_DAC_OVERRIDE, db_uid);
+            lower_cap(CAP_FOWNER, db_uid);
             cerr << "Error: could not change permissions of workspace!" << endl;
             unlink(wsdir.c_str());
             exit(-1);
         }
-        lower_cap(CAP_DAC_OVERRIDE, db_uid);
+        lower_cap(CAP_FOWNER, db_uid);
 
         extension = maxextensions;
         expiration = time(NULL)+duration*24*3600;
@@ -457,11 +457,11 @@ void Workspace::release(string name) {
 
         string timestamp = lexical_cast<string>(time(NULL));
 
-	// set expiration to now so it gets deleted earlier after beeing released
-	dbentry.setexpiration(time(NULL));
-	// set released flag so released workspaces can be distinguished from expired ones
+        // set expiration to now so it gets deleted earlier after beeing released
+        dbentry.setexpiration(time(NULL));
+        // set released flag so released workspaces can be distinguished from expired ones
     	dbentry.setreleased(time(NULL));
-	dbentry.write_dbfile();
+        dbentry.write_dbfile();
 
         string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" +
                               config["workspaces"][filesystem]["deleted"].as<string>() +
@@ -483,9 +483,9 @@ void Workspace::release(string name) {
             cerr << "Error: database entry could not be deleted." << endl;
             exit(-1);
         }
-	if (opt.count("debug")) {
-		cerr << "Debug: lower cap after db rename" << endl;
-	}
+        if (opt.count("debug")) {
+            cerr << "Debug: lower cap after db rename" << endl;
+        }
         lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
         lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
 
@@ -520,12 +520,60 @@ void Workspace::release(string name) {
                 exit(-1);
             }
         }
-	if (opt.count("debug")) {
-		cerr << "Debug: lower cap after rename" << endl;
-	}
+        if (opt.count("debug")) {
+            cerr << "Debug: lower cap after rename" << endl;
+        }
         lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
 
         syslog(LOG_INFO, "release for user <%s> from <%s> to <%s> done, moved DB entry from <%s> to <%s>.", username.c_str(), wsdir.c_str(), wstargetname.c_str(), dbfilename.c_str(), dbtargetname.c_str());
+
+		// wipe the data if the user wants that
+		if(opt.count("delete-data")) {
+			cerr << "Info: deleting files workspace as --delete-data was given" << endl;
+			cerr << "Info: you have 5 seconds to interrupt with CTRL-C to prevent deletion" << endl;
+			sleep(5);
+
+        	raise_cap(CAP_FOWNER, __LINE__, __FILE__);
+#ifdef SETUID
+			// get process owner, to be allowd to delete files
+			if(seteuid(getuid())) {
+				cerr << "Error: can not setuid, ad installation?" << endl;
+			}
+#endif
+			boost::system::error_code ec;	
+			auto filecount = fs::remove_all(fs::path(wstargetname), ec);
+			
+			// we expect an error 13 for the topmost directory
+			if (ec.value() != 13) {
+				cerr << "Error: unexpected error " << ec << endl;
+			}
+
+#ifdef SETUID
+			// get root so we can drop again
+			if(seteuid(0)) {
+				cerr << "Error: can not setuid, ad installation?" << endl;
+			}
+#endif
+        	lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
+		
+			// remove what is left as DB user (could be done by ws_expirer)
+			fs::remove_all(fs::path(wstargetname), ec);
+
+			cerr << "Info: deleted " << filecount << " files" << endl;
+        	syslog(LOG_INFO, "delete-data for user <%s> from <%s> removed %ld files." , username.c_str(), wstargetname.c_str(), filecount);
+
+			// delete DB entry as last step
+			raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
+#ifdef SETUID
+			// for filesystem with root_squash, we need to be DB user here
+			if (setegid(dbgid) || seteuid(dbuid)) {
+				cerr << "Error: can not setuid, ad installation?" << endl;
+			}
+#endif
+			fs::remove(fs::path(dbtargetname.c_str()));
+        	lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+        	syslog(LOG_INFO, "removed db entry <%s> for user <%s>." , dbtargetname.c_str(), username.c_str());
+        }
 
     } else {
         cerr << "Error: workspace does not exist!" << endl;
