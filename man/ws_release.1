@@ -1,11 +1,11 @@
-.TH ws_release 1 "March 2013" "USER COMMANDS"
+.TH ws_release 1 "February 2023" "USER COMMANDS"
 
 .SH NAME
 ws_release \- release a workspace directory and free the workspace name
 
 .SH SYNOPSIS
 .B ws_release
-[\-h] [\-F filesystem] NAME 
+[\-h] [\-F filesystem] [\-\-delete\-data] NAME 
 
 .SH DESCRIPTION
 Release the 
@@ -33,7 +33,7 @@ for deletion and make the data unavailable.
 
 Deletion is probably a task done once a night and not immediately. Data left in workspaces after releasing them therefore still accounts for disk quota if enabled by the administrator. If the user is short on available quota it makes sense to manually remove the content inside the workspace directory using
 .B rm
-before releasing the workspace.
+before releasing the workspace, or using the --deleta-data option.
 
 If a
 .B workspace
@@ -53,6 +53,11 @@ See
 .B ws_list
 \-l
 for a list of available filesystems.
+.TP
+\-\-delete-workspace
+delete the data in the workspace immediately. This will not allow you to recover the data in
+case of error. This might be usefull if you have to free quota. Use with care! There is a warning
+and a 5 second grace period to stop this operation.
 .TP
 \--userworkspace
 for root only: release a users workspace, with the id as seen in 
