@@ -148,7 +148,7 @@ void commandline(po::variables_map &opt, string &name, int &duration,
  */
 
 int main(int argc, char **argv) {
-    int duration;
+    int duration=0;
     bool extensionflag;
     string name;
     string filesystem;
