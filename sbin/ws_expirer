@@ -73,9 +73,10 @@ def handler(signum, frame):
 
 # send a reminder email
 def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
+    exptime = time.strftime("%a %b %d %H:%M:%S %Y %z", time.localtime(expiration))
     text = """ 
         Your workspace %s on system %s will expire at %s.
-    """ % (wsname, clustername, time.ctime(expiration))
+    """ % (wsname, clustername, exptime)
     msg = MIMEMultipart('mixed')
     recipients = [ mailaddress ]
     try:
@@ -84,7 +85,7 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
         sender = "wsadmin"
     msg['From'] = sender
     msg['To'] = mailaddress
-    msg['Subject'] = 'Workspace %s will expire at %s' % (wsname, time.ctime(expiration))
+    msg['Subject'] = 'Workspace %s will expire at %s' % (wsname, exptime)
     msg.preamble = text
 
     msg.attach(MIMEText(text,'html'))
