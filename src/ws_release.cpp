@@ -13,7 +13,7 @@
  *    - using setuid or capabilities (needs support by filesystem!)
  *    - always moves released workspace away (this change is affecting the user!)
  *
- *  (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
+ *  (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2023
  * 
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
@@ -74,6 +74,7 @@ void commandline(po::variables_map &opt, string &name, int &duration,
 				("version,V", "show version")
 				("name,n", po::value<string>(&name), "workspace name")
 				("filesystem,F", po::value<string>(&filesystem), "filesystem")
+				("delete-data", "delete all data, workspace can NOT BE RECOVERED")
 		;
 	}
 
@@ -148,7 +149,7 @@ void commandline(po::variables_map &opt, string &name, int &duration,
  */
 
 int main(int argc, char **argv) {
-    int duration;
+    int duration=0;
     bool extensionflag;
     string name;
     string filesystem;

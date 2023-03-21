@@ -10,7 +10,7 @@
     to be called from a cronjob to expire workspaces, does delete the data as well
     Reads new YAML configuration files and new YAML workspace database.
 
-    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
+    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2022
     (c) Bernd Krischok 2017, 2020
     (c) Christoph Niethammer 2020
 
@@ -64,9 +64,12 @@ import yaml
 
 count = 0
 
+class TimeOut(Exception):
+    pass
+
 def handler(signum, frame):
     #print(f"starting Timeouthandler")
-    raise Exception("end of time")
+    raise TimeOut("end of time")
 
 # send a reminder email
 def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
@@ -128,8 +131,8 @@ def fastdeldir(dir):
             print("Error: Path to delete does not exist: %s" % dir)
             return
         shutil.rmtree(dir)
-    except:
-       print(f"aborting fastdeldir of {dir} due to timelimit")
+    except TimeOut:
+        print(f"aborting fastdeldir of {dir} due to timelimit {deldir_timelimit}s")    # f"" introduces python 3.6 dependency
 
 # slow recursive deleter, to avoid high meta data pressure on servers
 def slowdeldir(dir):
@@ -159,8 +162,8 @@ def slowdeldir(dir):
                 if count%100==0:
                     time.sleep(0.1)
                     count=0
-    except:
-        print(f"aborting slowdeldir of {dir} due to timelimit")
+    except TimeOut:
+        print(f"aborting fastdeldir of {dir} due to timelimit {deldir_timelimit}s")    # f"" introduces python 3.6 dependency
 
 # getting old workspace database informations (path and expiration date)
 def get_old_db_entry_informations(dbfile):
@@ -244,7 +247,11 @@ deldir=fastdeldir
 
 smtphost = config['smtphost']
 clustername = config['clustername']
-deldir_timelimit=config['deldir_timeout']
+try:
+    deldir_timelimit=config['deldir_timeout']
+except KeyError:
+    print("Warning: no deldir_timeout in config, defaulting", file=sys.stderr)
+    deldir_timelimit=3600*24*365                # some huge default to not affect people not updating config file
 
 start = time.time()
 

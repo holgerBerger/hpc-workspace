@@ -45,7 +45,7 @@ boost_regex
 boost_program_options
 yaml-cpp
 libcap2
-python2.6
+python3.x
 pyyaml
 lua5.1
 
@@ -55,9 +55,9 @@ SUPPLIED
 ws_allocate         (C++)
 ws_release          (C++)
 we_restore          (C++)
+ws_restore          (C++)
 ws_list             (python)
 ws_validate_config  (python)
-ws_restore          (python)
 ws_register         (python)
 ws_find             (python)
 ws_expirer          (python)
