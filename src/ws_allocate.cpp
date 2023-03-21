@@ -63,7 +63,7 @@ using namespace std;
  *  bad characters
  */
 void commandline(po::variables_map &opt, string &name, int &duration, const int durationdefault, string &filesystem, 
-                    bool &extension, int &reminder, string &mailaddress, string &user, string &groupname, string &comment,
+                    bool &extension, int &reminder, const int reminderdefault, string &mailaddress, string &user, string &groupname, string &comment,
                     int argc, char**argv, std::stringstream &userconf) {
     // define all options
 
@@ -162,7 +162,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
 				reminder = user_home_config["reminder"].as<int>();
 				cerr << "Info: reminder <" << reminder << "> taken from ~/.ws_user.conf" << endl;
 			} catch (...) {
-				reminder = 0;
+				reminder = reminderdefault;
 			}
 		}
 		if(groupname=="") {
@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
     string mailaddress("");
     string user_option, groupname;
 	string comment;
-    int reminder = 0;
+    int reminder=0, reminderdefault;
     po::variables_map opt;
 
     // we only support C locale, if the used local is not installed on the system
@@ -282,8 +282,8 @@ int main(int argc, char **argv) {
         exit(-1);
     }
 
-    reminder = config["reminderdefault"].as<int>(0);
-	durationdefault = config["durationdefault"].as<int>(1);
+    reminderdefault = config["reminderdefault"].as<int>(0);
+    durationdefault = config["durationdefault"].as<int>(1);
 
     int db_uid = config["dbuid"].as<int>();
 
@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, duration, durationdefault , filesystem, extensionflag, 
-				reminder, mailaddress, user_option, groupname, comment, argc, argv, user_conf);
+				reminder, reminderdefault, mailaddress, user_option, groupname, comment, argc, argv, user_conf);
 
     openlog("ws_allocate", 0, LOG_USER); // SYSLOG
 
