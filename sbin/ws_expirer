@@ -386,7 +386,10 @@ for fs in fslist:
         try:
           expiration = int(dbentry["expiration"])
         except Exception:
-          print("   ERROR in parsing expiration <",dbentry["expiration"],"> for",dbentryfilename)
+          if "expiration" in dbentry.keys():
+              print("   ERROR in parsing expiration <",dbentry["expiration"],"> for",dbentryfilename)
+          else:
+              print("   ERROR missing field <expiration> for",dbentryfilename)
           continue
         workspace = dbentry["workspace"]
         if workspace == "" or expiration == 0:
