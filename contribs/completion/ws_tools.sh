@@ -40,7 +40,7 @@ function _ws_workspace_list() {
 }
 
 function _ws_restore_list() {
-    local restore_targets="$(ws_restore -l -b)"
+    local restore_targets="$(ws_restore -l -b | grep -E -v ":$")"
     printf "%s" "$restore_targets"
 }
 
