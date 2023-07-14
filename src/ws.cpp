@@ -136,7 +136,8 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
     lua_State* L;
     if(config["workspaces"][filesystem]["prefix_callout"]) {
         prefixcallout = config["workspaces"][filesystem]["prefix_callout"].as<string>();
-        L = lua_open();
+        // L = lua_open();  // LUA 5.1
+	L = luaL_newstate(); // LUA 5.3
         luaL_openlibs(L);
         if(luaL_dofile(L, prefixcallout.c_str())) {
             cerr << "Error: prefix callout script <"<< prefixcallout << "> does not exist or other lua error!"  << endl;
