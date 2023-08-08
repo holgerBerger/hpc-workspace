@@ -96,7 +96,7 @@ Only the setuid version is under regression testing.
 Run ```cmake .``` and ```make -j 4``` to configure and compile the tool set.
 
 Copy the executables from ```bin``` to e.g. ```/usr/local/bin``` and the
-manpages from ```man``` to e.g. ```/usr/local/man/1```.
+manpages from ```man``` to e.g. ```/usr/local/man/man1```.
 
 make `ws_allocate`, `ws_release`, `ws_restore` setuid root.
 
