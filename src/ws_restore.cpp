@@ -179,7 +179,7 @@ bool check_name(const string name, const string username, const string real_user
     // we checked already that only root can use another username with -u, so here
     // we know we are either root or username == real_username
     if ((username != sp[0]) && (real_username != "root")) {
-        cerr << "Error: only root can do this 1" << username << sp[0] << endl;
+        cerr << "Error: only root can do this, or invalid workspace name!" << username << sp[0] << endl;
         return false;
     } else {
         return true;
