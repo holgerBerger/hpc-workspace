@@ -161,7 +161,7 @@ set(PROGRAM_PERMISSIONS_DEFAULT
     OWNER_WRITE OWNER_READ OWNER_EXECUTE
     GROUP_READ GROUP_EXECUTE
     WORLD_READ WORLD_EXECUTE)
-install (FILES bin/ws_extend bin/ws_find bin/ws_list bin/ws_register bin/ws_send_ical DESTINATION bin PERMISSIONS ${PROGRAM_PERMISSIONS_DEFAULT})
+install (FILES bin/ws_extend bin/ws_find bin/ws_list bin/ws_register bin/ws_send_ical bin/ws_share DESTINATION bin PERMISSIONS ${PROGRAM_PERMISSIONS_DEFAULT})
 install(TARGETS
       ws_allocate ws_release ws_restore
       DESTINATION bin
