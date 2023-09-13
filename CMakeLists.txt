@@ -169,6 +169,6 @@ install(TARGETS
 install (FILES sbin/ws_expirer sbin/ws_restore sbin/ws_validate_config DESTINATION sbin PERMISSIONS ${PROGRAM_PERMISSIONS_DEFAULT})
 
 # Install man pages
-INSTALL(FILES man/ws_allocate.1 man/ws_find.1 man/ws_register.1
-              man/ws_restore.1 man/ws_extend.1 man/ws_list.1 man/ws_release.1
-              man/ws_send_ical.1             DESTINATION share/man/man1)
+INSTALL(FILES man/man1/ws_allocate.1 man/man1/ws_find.1 man/man1/ws_register.1
+              man/man1/ws_restore.1 man/man1/ws_extend.1 man/man1/ws_list.1 man/man1/ws_release.1
+              man/man1/ws_send_ical.1             DESTINATION share/man/man1)
