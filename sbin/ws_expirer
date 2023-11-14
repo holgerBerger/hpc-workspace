@@ -42,6 +42,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import socket
 import signal
+import yaml
 
 
 # read a single line from ws.conf of the form: pythonpath: /path/to/python
@@ -59,8 +60,6 @@ def read_python_conf():
 
 
 read_python_conf()
-import yaml
-
 
 count = 0
 
@@ -75,10 +74,10 @@ def handler(signum, frame):
 
 
 # send a reminder email
-def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
+def send_reminder(smtphost, clustername, wsname, fsname, expiration, mailaddress):
     exptime = time.strftime("%a %b %d %H:%M:%S %Y %z", time.localtime(expiration))
-    text = """ 
-        Your workspace %s on system %s will expire at %s.
+    text = """
+        Your workspace %s on filesystem %s at HPC system %s will expire at %s.
     """ % (
         wsname,
         clustername,
@@ -134,14 +133,14 @@ def send_reminder(smtphost, clustername, wsname, expiration, mailaddress):
 
 # fast recursive deleter, using new python mechanisms
 def fastdeldir(dir):
-    print("   deldir(fast)", dir)
+    logging.debug("   deldir(fast)", dir)
     try:
         if not os.path.exists(dir):
-            print("Error: Path to delete does not exist: %s" % dir)
+            logging.warning("Error: Path to delete does not exist: %s" % dir)
             return
         shutil.rmtree(dir)
     except TimeOut:
-        print(
+        logging.warning(
             f"aborting fastdeldir of {dir} due to timelimit {deldir_timelimit}s"
         )  # f"" introduces python 3.6 dependency
 
@@ -149,11 +148,12 @@ def fastdeldir(dir):
 # slow recursive deleter, to avoid high meta data pressure on servers
 def slowdeldir(dir):
     global count
-    print("   deldir(slow)", dir)
+    logging.debug("   deldir(slow)", dir)
     try:
-        os.chmod(dir, 0o000)
         if not os.path.exists(dir):
+            logging.warning(f"Path to delete does not exist: {directory}")
             return
+        os.chmod(dir, 0o000)
         for obj in os.listdir(dir):
             fullname = os.path.join(dir, obj)
             if os.path.isdir(fullname) and not os.path.islink(fullname):
@@ -177,8 +177,24 @@ def slowdeldir(dir):
                     count = 0
     except TimeOut:
         print(
-            f"aborting fastdeldir of {dir} due to timelimit {deldir_timelimit}s"
+            f"aborting slowdeldir of {dir} due to timelimit {deldir_timelimit}s"
         )  # f"" introduces python 3.6 dependency
+
+
+def write_to_influx(influx_config, measurement, tags_data, data):
+    influx_pw_file = influx_config["influx_pw"]
+    influx_url = influx_config["influx_url"]
+    influx_database = influx_config["influx_database"]
+    influx_username = influx_config["influx_username"]
+
+    values = []
+    for key, value in data.items():
+        values.append("{}={}".format(key, value))
+    tags = []
+    for key, value in tags_data.items():
+        tags.append("{}={}".format(key, value))
+
+    post_data = "%s,%s %s" % (measurement, ",".join(tags), ",".join(values))
 
 
 # getting old workspace database informations (path and expiration date)
@@ -260,6 +276,36 @@ def processOpts():
     return options
 
 
+def rename(src, target):
+    try:
+        os.rename(src, target)
+        logging.debug(f"    OS.RENAME {src} {target}")
+        return 0
+    except os.error:
+        logging.error(f"  OS.RENAME FAILED {src} {target}")
+        return 1
+    except NotImplementedError:
+        logging.error(" NotImplementedError; os.rename is not available at this platform.")
+        return 1
+
+
+# Phase2: Active WSs # Reviewed davon # Keep Active und # Expired und # Mails
+# Phase3: Inactive WSs # Reviewed davon # keep in grave # Deleted
+
+
+def print_stats(stats):
+    """Output statistics to stdout."""
+    print("Expirer Run Statistics")
+    print(f"\n{'Filesystem':15} {'Active [Seen Keep Expired Mails]':>30} {'':>4} {'Inactive [Seen Keep Removed]':>30}")
+    # {'Stray':>5} {'Valid':>5} {'Keep':>5} {'Expired':>7} {'Removed':>7} {'Mails':>5}")
+    print(f"{'':->84}")
+    for key, value in stats.items():
+        o = f"{key:15} {'':>7} {value['seen_active']:4} {value['keep_active']:4} {value['expired']:7}"
+        o += f" {value['send_mails']:5} {'':>17} {value['seen_inactive']:4} {value['keep_inactive']:4}"
+        o += f" {value['removed']:7}"
+        print(o)
+    print("\n")
+
 if os.getuid() != 0:
     print("Error: you are not root.", file=sys.stderr)
     sys.exit(-1)
@@ -276,12 +322,8 @@ clustername = config["clustername"]
 try:
     deldir_timelimit = config["deldir_timeout"]
 except KeyError:
-    print("Warning: no deldir_timeout in config, defaulting", file=sys.stderr)
+    logging.warning("Warning: no deldir_timeout in config, defaulting")
     deldir_timelimit = 3600 * 24 * 365  # some huge default to not affect people not updating config file
-
-start = time.time()
-
-print("start of expirer run", time.ctime())
 
 dryrun = True
 
@@ -310,17 +352,42 @@ else:
 # register timout handler
 signal.signal(signal.SIGALRM, handler)
 
+# Statistics:
+stats_t = {
+    "stray": 0,
+    "seen_active": 0,
+    "seen_inactive": 0,
+    "valid": 0,
+    "keep_active": 0,
+    "keep_inactive": 0,
+    "expired": 0,
+    "removed": 0,
+    "send_mails": 0,
+}
+
+# Add stats dict for every WS filesystem
+# stats = []
+# for fs in fslist:
+#    st = {fs: dict(stats_t)}
+#    stats.append(st)
+stats = {i: dict(stats_t) for i in fslist}
+
 # cleanup stray directories, this removes stuff that was released (no DB entry any more)
 # from spaces, and checks if anything is left over in removed state for whatever reasons
 # this searches over workspaces and checks DB
+logging.info("Step 1: ")
 for fs in fslist:
     # first for visible workspaces
     try:
         dbdir = config["workspaces"][fs]["database"]
     except KeyError:
-        print("  FAILED to access", fs, "in config file")
+        logging.warning(f"  FAILED to access database for {fs} in config file.")
         continue
-    spaces = config["workspaces"][fs]["spaces"]
+    try:
+        spaces = config["workspaces"][fs]["spaces"]
+    except KeyError:
+        logging.info(f"  FAILED to access spaces for {fs} in config file")
+        continue
     # avoid datarace, fetch directories first and db entries second (1),
     # so entries created during this run of expirer will be ignored
     #  this eats memory, but... generators from python3 pathlib.Path.glob
@@ -338,34 +405,13 @@ for fs in fslist:
     for space in spaces:
         for ws in workspaces[space]:  # (2) for for #87
             if os.path.basename(ws) not in dbentryworkspaces:
-                print("  stray workspace", ws)
+                logging.info(f"  stray workspace {ws}")
                 # FIXME: this could fail on scatefs, should fallback to 'mv'. Lustre DNE2 cross MDT renames work well meanwhile
                 # FIXME: a stray workspace will be moved to deleted here, and will be deleted in
                 # the same run in (3). Is this intended? dangerous with datarace #87
                 timestamp = str(int(time.time()))
                 if not dryrun:
-                    try:
-                        os.rename(
-                            ws,
-                            os.path.join(
-                                os.path.dirname(ws), workspacedelprefix, os.path.basename(ws) + "-" + timestamp
-                            ),
-                        )
-                        print(
-                            "  OS.RENAME",
-                            ws,
-                            os.path.join(
-                                os.path.dirname(ws), workspacedelprefix, os.path.basename(ws) + "-" + timestamp
-                            ),
-                        )
-                    except os.error:
-                        print(
-                            "  OS.RENAME FAILED",
-                            ws,
-                            os.path.join(
-                                os.path.dirname(ws), workspacedelprefix, os.path.basename(ws) + "-" + timestamp
-                            ),
-                        )
+                    rename(ws, target)
                 else:
                     print(
                         "  MV",
@@ -395,6 +441,7 @@ for fs in fslist:
 
 # expire the workspaces by moving them into deleted spaces, dbentry + workspace itself
 # this searches over DB, nothing not in DB will be touched
+logging.info("Step 2: ")
 for fs in fslist:
     try:
         spaces = config["workspaces"][fs]["spaces"]
@@ -421,7 +468,7 @@ for fs in fslist:
                 reminder = 0
                 mailaddress = ""
             except Exception as e:
-                print("   ERROR: could not read entry, ", e)
+                logging.error("   ERROR: could not read entry, ", e)
 
         if len(dbentry) == 0:
             print("   ERROR, skiping empty db entry:", dbentryfilename)
@@ -459,6 +506,9 @@ for fs in fslist:
 
             # FIXME: this could fail on scatefs, should fallback to 'mv'
             # while true for scatefs, lustre DNE2 meanwhile handels cross MDT renames well
+            target = os.path.join(
+                os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename) + "-" + timestamp
+            )
             if not dryrun:
                 try:
                     os.rename(
@@ -552,6 +602,7 @@ for fs in fslist:
             continue
 
         # check if the entry was released or was expired
+        # TODO: Better check if dbentry has this entry instead of throwing an exception?
         try:
             was_released = dbentry["released"]
             # released before 2001, makes no sense, ignore
@@ -573,13 +624,9 @@ for fs in fslist:
                 print(" OS.UNLINK", dbentryfilename)
                 # remove the workspace directory
                 signal.alarm(deldir_timelimit)
-                deldir(os.path.join(os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename)))
+                deldir(target)
                 signal.alarm(0)
-                print(
-                    "  DELDIR",
-                    os.path.join(os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename)),
-                )
-
+                logging.debug(f"  DELDIR {target}")
                 try:
                     os.rmdir(
                         os.path.join(os.path.dirname(workspace), workspacedelprefix, os.path.basename(dbentryfilename))
@@ -609,3 +656,11 @@ for fs in fslist:
 
 end = time.time()
 print("end of expirer run after ", end - start, "seconds at", time.ctime())
+
+# Report stats to influx (if this is not a dryrun)
+if not dryrun and opts.influx_config:
+    for fs in stats:
+        write_to_influx(opts.influx_config, fs, {"dry_run": dryrun}, stats[fs])
+
+if morbid_db_files:
+    print("Morbid DB Files and Comment")
