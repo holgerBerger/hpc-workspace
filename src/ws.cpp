@@ -420,6 +420,9 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 		}
 
         WsDB dbentry(dbfilename, wsdir, expiration, extension, acctcode, db_uid, db_gid, reminder, mailaddress, primarygroup, comment);
+        // set released flag to 0 so hopefully it will not be written into the dbfile
+    	dbentry.setreleased(0);
+	    dbentry.write_dbfile();
 
         syslog(LOG_INFO, "created for user <%s> DB <%s> with space <%s>.", username.c_str(), dbfilename.c_str(), wsdir.c_str());
     } // ! exists
