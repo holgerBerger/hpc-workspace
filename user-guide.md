@@ -109,10 +109,25 @@ You can change reminder and email address of an existing workspace using ```ws_a
 When a workspace is created with ```-g``` it gets a group workspace that is visible to others with ```ws_list -g``` (if in same group), 
 and is group readable.
 
-When it is created with ```-G <groupname>``` the workspace gets writable as well, and gets group sticky bit.
+When it is created with ```-G <groupname>``` the workspace gets writable as well, and gets group sticky bit. The group can be specified in
+the ~/.ws_user.conf file as well.
 
 With ```ws_share``` you can share workspaces with users outside of your group, using ACLs (if supported by underlaying filesystem, since 1.3.7)
 
 ```ws_share share <workspace> <user>``` gives read access to the specified user, ```ws_share unshare <workspace> <user>``` removes the access.
 
 Those operations are applied to all files and directories in the workspace.
+
+## user defaults with ~/.ws_user.conf file
+
+Some defaults can be set in ~/.ws_user.conf, so you do not have to give them on command line all the time.
+The file is in YAML syntax, and can have the follwing keys: ```mail```, ```duration```, ```reminder``` and ```groupname```.
+
+Example:
+```
+mail: reach@me.here
+duration: 10
+reminder: 3
+groupname: abba
+```
+
