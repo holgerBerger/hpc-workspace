@@ -564,3 +564,31 @@ and cleans up old log files.
 
 find /var/log/workspace -type f -ctime +80 -exec rm {} \;
 ```
+
+## Contributing
+
+Is highly welcome. Please refer to the 
+[issue tracker](https://github.com/holgerBerger/hpc-workspace/issues) of this project.
+
+It is good practice to apply the linter and formatter tools (see below) to the changed files before pushing any commit.
+### Code Style, Linter and Formatter
+
+#### Python Code
+
+We use [black](https://github.com/psf/black) for formatting Python code. It is configured via the file `pyproject.toml`
+which is found automatically, if `black` is run from the hpc-workspace directory or any subdirectory.
+
+```
+$ black <python-file>
+reformatted <python-file>
+All done! ✨ 🍰 ✨
+1 file reformatted.
+```
+
+For linting, we rely on [flake8](https://flake8.pycqa.org). It helps to check the style and quality of Python code.
+Flake8 is configured via the file `setup.cfg` and invoked as follows:
+
+```
+flake8 <python-file>
+```
+
