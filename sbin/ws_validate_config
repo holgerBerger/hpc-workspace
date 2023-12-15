@@ -30,127 +30,138 @@
 
 
 from __future__ import print_function
-import sys,os.path
+import sys, os.path
 import yaml
 
-if len(sys.argv)>1 and sys.argv[1] in ['-h','--help']:
+if len(sys.argv) > 1 and sys.argv[1] in ["-h", "--help"]:
     print("Usage: ws_validate_config [filename]")
     sys.exit(0)
 
-filename = sys.argv[1] if len(sys.argv)>1 else '/etc/ws.conf'
+filename = sys.argv[1] if len(sys.argv) > 1 else "/etc/ws.conf"
 
 config = yaml.safe_load(open(filename))
 
-print('validating config from',filename)
+print("validating config from", filename)
 
 try:
-    workspaces=list(config["workspaces"].keys())
-    print('workspaces:', end=' ')
-    for i in workspaces: print(i, end=' ')
+    workspaces = list(config["workspaces"].keys())
+    print("workspaces:", end=" ")
+    for i in workspaces:
+        print(i, end=" ")
     print()
 except KeyError:
-    print('ERROR: no workspaces defined!')
+    print("ERROR: no workspaces defined!")
     sys.exit(1)
 
 try:
-    clustername = config['clustername']
-    print('clustername:', clustername)
+    clustername = config["clustername"]
+    print("clustername:", clustername)
 except KeyError:
-    print('No clustername defined!')
+    print("No clustername defined!")
     sys.exit(1)
 
 try:
-    smtphost = config['smtphost']
-    print('smtphost:', smtphost)
+    smtphost = config["smtphost"]
+    print("smtphost:", smtphost)
 except KeyError:
-    print('No smtphost defined!')
+    print("No smtphost defined!")
     sys.exit(1)
 
 try:
-    print('default workspace:',config["default"])
-    defaultws=config["default"]
+    print("default workspace:", config["default"])
+    defaultws = config["default"]
     if config["default"] not in workspaces:
-        print('ERROR: default workspace is not defined as workspace in the file')
+        print("ERROR: default workspace is not defined as workspace in the file")
         sys.exit(1)
 except KeyError:
     print('WARNING: no default workspace defined, please add <"default": "name"> clause to toplevel')
-    defaultws="____"
-
+    defaultws = "____"
 
 
 try:
-    print('workspace db uid:',config["dbuid"])
+    print("workspace db uid:", config["dbuid"])
 except KeyError:
     print('ERROR: no DB uid defined, please add <"dbuid": uid> clause to toplevel')
     sys.exit(1)
 
 try:
-    print('workspace db gid:',config["dbgid"])
+    print("workspace db gid:", config["dbgid"])
 except KeyError:
     print('ERROR: no DB gid defined, please add <"dbgid": gid> clause to toplevel')
     sys.exit(1)
 
 try:
-    print('workspace default duration:',config["duration"])
+    print("workspace default duration:", config["duration"])
 except KeyError:
     print('ERROR: no default workspace duration defined, please add <"duration": days> clause to toplevel')
     sys.exit(1)
 
 try:
-    print('workspace default extensions:',config["maxextensions"])
+    print("workspace default extensions:", config["maxextensions"])
 except KeyError:
-    print('ERROR: no default number of allowed extensions defined, please add <"maxextensions": number> clause to toplevel')
+    print(
+        'ERROR: no default number of allowed extensions defined, please add <"maxextensions": number> clause to toplevel'
+    )
     sys.exit(1)
 
 
-
 for ws in workspaces:
-    print("workspace:",ws)
+    print("workspace:", ws)
     try:
-        print(' workspace database directory:',config["workspaces"][ws]["database"])
+        print(" workspace database directory:", config["workspaces"][ws]["database"])
     except KeyError:
-        print(' ERROR: no database location defined, please add <"database": "dir"> clause to workspace',ws)
+        print(' ERROR: no database location defined, please add <"database": "dir"> clause to workspace', ws)
         sys.exit(1)
     if not os.path.exists(config["workspaces"][ws]["database"]):
-        print(' WARNING: database directory <%s> does not exist!' % config["workspaces"][ws]["database"])
-    if not os.path.exists(os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"])):
-        print(' WARNING: deleted database directory <%s> does not exist!' % os.path.join(config["workspaces"][ws]["database"],config["workspaces"][ws]["deleted"]))
-        
+        print(" WARNING: database directory <%s> does not exist!" % config["workspaces"][ws]["database"])
+    if not os.path.exists(os.path.join(config["workspaces"][ws]["database"], config["workspaces"][ws]["deleted"])):
+        print(
+            " WARNING: deleted database directory <%s> does not exist!"
+            % os.path.join(config["workspaces"][ws]["database"], config["workspaces"][ws]["deleted"])
+        )
 
     try:
-        print(' workspace directories:'," ".join(config["workspaces"][ws]["spaces"]))
+        print(" workspace directories:", " ".join(config["workspaces"][ws]["spaces"]))
     except KeyError:
-        print(' ERROR: no workspace locations defined, please add <"spaces": list> clause to workspace',ws)
+        print(' ERROR: no workspace locations defined, please add <"spaces": list> clause to workspace', ws)
         sys.exit(1)
     try:
-        print(' spaceselection :',config["workspaces"][ws]["spaceselection"])
-        if config["workspaces"][ws]["spaceselection"] not in ["random","uid","gid"]:
+        print(" spaceselection :", config["workspaces"][ws]["spaceselection"])
+        if config["workspaces"][ws]["spaceselection"] not in ["random", "uid", "gid"]:
             print(" WARNING: unkown spaceselection, default `random` will be used")
     except:
         pass
     for sp in config["workspaces"][ws]["spaces"]:
         if not config["workspaces"][ws]["deleted"]:
-            print(' ERROR: no target for deletion defined in workspace', ws)
+            print(" ERROR: no target for deletion defined in workspace", ws)
         if not os.path.exists(sp):
-            print(' WARNING: workspace directory <%s> does not exist!' % sp)
-        if not os.path.exists(os.path.join(sp,config["workspaces"][ws]["deleted"])):
-            print((' WARNING: deleted workspace directory <%s> does not exist!' %
-                        os.path.join(sp,config["workspaces"][ws]["deleted"])))
-    
+            print(" WARNING: workspace directory <%s> does not exist!" % sp)
+        if not os.path.exists(os.path.join(sp, config["workspaces"][ws]["deleted"])):
+            print(
+                (
+                    " WARNING: deleted workspace directory <%s> does not exist!"
+                    % os.path.join(sp, config["workspaces"][ws]["deleted"])
+                )
+            )
+
     try:
-        print(' workspace keeptime:',config["workspaces"][ws]["keeptime"])
+        print(" workspace keeptime:", config["workspaces"][ws]["keeptime"])
     except KeyError:
-        print(' ERROR: no workspace keeptime set!')
+        print(" ERROR: no workspace keeptime set!")
         sys.exit(1)
 
     try:
-        if ws==defaultws and len(config["workspaces"][ws]["user_acl"]):
-            print(" WARNING: default workspace has ACLs! there is a risk not all users can access their default workspace")
+        if ws == defaultws and len(config["workspaces"][ws]["user_acl"]):
+            print(
+                " WARNING: default workspace has ACLs! there is a risk not all users can access their default workspace"
+            )
     except:
         pass
 
     try:
-        if ws==defaultws and len(config["workspaces"][ws]["group_acl"])>0:
-            print(" WARNING: default workspace has ACLs! there is a risk not all users can access their default workspace")
+        if ws == defaultws and len(config["workspaces"][ws]["group_acl"]) > 0:
+            print(
+                " WARNING: default workspace has ACLs! there is a risk not all users can access their default workspace"
+            )
     except:
         pass
