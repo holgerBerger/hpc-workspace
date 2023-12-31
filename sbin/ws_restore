@@ -35,14 +35,14 @@ import yaml
 import os, os.path, sys
 
 
-if os.getuid()!=0:
+if os.getuid() != 0:
     print("Error: you are not root.", file=sys.stderr)
     sys.exit(-1)
 
 # load config file
-config = yaml.safe_load(open('/etc/ws.conf'))
+config = yaml.safe_load(open("/etc/ws.conf"))
 
-if len(sys.argv)==1:
+if len(sys.argv) == 1:
     print("Usage: ws_restore <workspace>", file=sys.stderr)
     sys.exit(0)
 
@@ -51,27 +51,31 @@ workspaceid = sys.argv[1]
 for fs in config["workspaces"]:
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     dbdir = config["workspaces"][fs]["database"]
-    dbentry = os.path.join(dbdeldir, workspaceid )
+    dbentry = os.path.join(dbdeldir, workspaceid)
     if os.path.exists(dbentry):
-        if os.path.exists( os.path.join( dbdir , workspaceid[:workspaceid.rfind('-')]) ):
+        if os.path.exists(os.path.join(dbdir, workspaceid[: workspaceid.rfind("-")])):
             print("Error: workspace with same name %s exists, resolve it by hand!", file=sys.stderr)
             sys.exit(-1)
         else:
             entry = yaml.safe_load(open(dbentry))
             try:
-                wsentry = os.path.join( os.path.dirname(entry["workspace"]), config["workspaces"][fs]["deleted"] , workspaceid )
+                wsentry = os.path.join(
+                    os.path.dirname(entry["workspace"]), config["workspaces"][fs]["deleted"], workspaceid
+                )
             except TypeError:
                 f = open(dbentry)
                 expiration = int(f.readline())
-                wsentry = os.path.join( os.path.dirname(f.readline()[:-1]), config["workspaces"][fs]["deleted"] , workspaceid )
+                wsentry = os.path.join(
+                    os.path.dirname(f.readline()[:-1]), config["workspaces"][fs]["deleted"], workspaceid
+                )
                 f.close()
-            if os.path.exists( wsentry ):
-                os.rename(dbentry,os.path.join( dbdir , workspaceid[:workspaceid.rfind('-')]))
+            if os.path.exists(wsentry):
+                os.rename(dbentry, os.path.join(dbdir, workspaceid[: workspaceid.rfind("-")]))
                 os.rename(wsentry, entry["workspace"])
                 print("Info: workspace found and restored", file=sys.stderr)
                 exit(0)
             else:
-                print("Error: workspace not found!", file=sys.stderr)            
+                print("Error: workspace not found!", file=sys.stderr)
                 exit(-1)
 
 print("Error: workspace not found", file=sys.stderr)

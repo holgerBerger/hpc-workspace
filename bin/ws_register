@@ -44,18 +44,20 @@ import glob
 import argparse
 import pathlib
 
+
 # read a single line from ws.conf of the form: pythonpath: /path/to/python
 def read_python_conf():
-    for l in open("/etc/ws.conf","r"):
-        if 'pythonpath' in l:
+    for l in open("/etc/ws.conf", "r"):
+        if "pythonpath" in l:
             key = l.split(":")[0].strip()
             value = l.split(":")[1].strip()
-            if key == 'pythonpath':
+            if key == "pythonpath":
                 if os.path.isdir(value):
-                    sys.path.insert(0,value)
+                    sys.path.insert(0, value)
                     break
                 else:
                     print("Warning: Invalid pythonpath in ws.conf", file=sys.stderr)
+
 
 read_python_conf()
 
@@ -68,11 +70,13 @@ username = pwd.getpwuid(uid).pw_name
 
 
 # load config file
-config = yaml.safe_load(open('/etc/ws.conf'))
+config = yaml.safe_load(open("/etc/ws.conf"))
 
-parser = argparse.ArgumentParser(description='Creates/updates symbolic links to workspaces in a directory')
-parser.add_argument('directory', metavar='directory', type=pathlib.Path, help='directory in which links shall be created/updated')
-parser.add_argument('-F', '--filesystem', help='filesystem to search workspaces in')
+parser = argparse.ArgumentParser(description="Creates/updates symbolic links to workspaces in a directory")
+parser.add_argument(
+    "directory", metavar="directory", type=pathlib.Path, help="directory in which links shall be created/updated"
+)
+parser.add_argument("-F", "--filesystem", help="filesystem to search workspaces in")
 options = parser.parse_args()
 
 
@@ -81,30 +85,30 @@ dirname = str(options.directory)
 
 # all filesystems or a selected one?
 if options.filesystem:
-    if options.filesystem in config['workspaces']:
+    if options.filesystem in config["workspaces"]:
         filesystems = [options.filesystem]
     else:
         print("Error: Invalid filesystem specified", file=sys.stderr)
         sys.exit(-1)
 else:
-    filesystems = config['workspaces'].keys()
+    filesystems = config["workspaces"].keys()
 
 # reduce list to allowed filesystems
 legal_filesystems = []
 for fs in filesystems:
     userok = True
-    if 'user_acl' in config['workspaces'][fs] or 'group_acl' in config['workspaces'][fs]:
+    if "user_acl" in config["workspaces"][fs] or "group_acl" in config["workspaces"][fs]:
         userok = False
-    if 'group_acl' in config['workspaces'][fs]:
+    if "group_acl" in config["workspaces"][fs]:
         groups = os.getgrouplist(username, os.getgid())
         for gid in groups:
             groupname = grp.getgrgid(gid).gr_name
-            if groupname in config['workspaces'][fs]['group_acl']:
+            if groupname in config["workspaces"][fs]["group_acl"]:
                 userok = True
                 break
-    if 'user_acl' in config['workspaces'][fs]:
-            if username in config['workspaces'][fs]['user_acl']:
-                userok = True
+    if "user_acl" in config["workspaces"][fs]:
+        if username in config["workspaces"][fs]["user_acl"]:
+            userok = True
     # admin can see workspaces from anywhere, but can also restrict
     if userok:
         legal_filesystems.append(fs)
@@ -117,15 +121,15 @@ if not os.path.isdir(dirname):
     os.makedirs(dirname)
 
 for fs in legal_filesystems:
-    if not os.path.isdir(dirname+"/"+fs):
-        os.mkdir(dirname+"/"+fs)
+    if not os.path.isdir(dirname + "/" + fs):
+        os.mkdir(dirname + "/" + fs)
     keeplist = []
-    dbfilename = '%s/%s-*' % (config["workspaces"][fs]['database'], username)
+    dbfilename = "%s/%s-*" % (config["workspaces"][fs]["database"], username)
     wsdirs = []
     for fname in glob.glob(dbfilename):
         f = yaml.safe_load(open(fname))
         try:
-            wsname = f['workspace']
+            wsname = f["workspace"]
         except TypeError:
             f = open(fname).readlines()
             wsname = f[1][:-1]
@@ -141,4 +145,3 @@ for fs in legal_filesystems:
                 os.unlink(f)
             else:
                 print("keeping link ", f)
-
