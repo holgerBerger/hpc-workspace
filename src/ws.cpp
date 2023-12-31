@@ -246,6 +246,25 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 			  }
 
               if (duration != 0) {
+				// new code for duration check for existing workspaces
+				// check durations - userexception in workspace/workspace/global
+
+				int configduration;
+				if(userconfig["workspaces"][cfilesystem]["userexceptions"][username]["duration"]) {
+					configduration = userconfig["workspaces"][cfilesystem]["userexceptions"][username]["duration"].as<int>();
+				} else {
+					if(config["workspaces"][cfilesystem]["duration"]) {
+						configduration = config["workspaces"][cfilesystem]["duration"].as<int>();
+					} else {
+						configduration = config["duration"].as<int>();
+					}
+				}
+				if ( getuid()!=0 && ( (duration > configduration) || (duration < 0)) ) {
+					duration = configduration;
+					cerr << "Error: Duration longer than allowed for this workspace" << endl;
+					cerr << "       setting to allowed maximum of " << duration << endl;
+				}
+
                 expiration = time(NULL)+duration*24*3600;
                 dbentry.use_extension(expiration, newmail, reminder, comment);
               } else {
