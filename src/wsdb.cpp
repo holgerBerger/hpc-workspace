@@ -60,21 +60,40 @@ using namespace std;
 /*
  * write new db entry
  */
-WsDB::WsDB(const string _filename, const string _wsdir, const long int _expiration,
-           const int _extensions, const string _acctcode, const int _dbuid,
-           const int _dbgid, const int _reminder, const string _mailaddress, const string _group, const string _comment)
-    :
-    dbfilename(_filename), wsdir(_wsdir), expiration(_expiration), extensions(_extensions),
-    acctcode(_acctcode), dbuid(_dbuid), dbgid(_dbgid), reminder(_reminder), mailaddress(_mailaddress), group(_group), comment(_comment), released(0)
-{
+WsDB::WsDB(const string _filename, const string _wsdir, const long int _expiration, const int _extensions,
+           const string _acctcode, const int _dbuid, const int _dbgid, const int _reminder, const string _mailaddress,
+           const string _group, const string _comment)
+    : dbfilename(_filename),
+      wsdir(_wsdir),
+      expiration(_expiration),
+      extensions(_extensions),
+      acctcode(_acctcode),
+      dbuid(_dbuid),
+      dbgid(_dbgid),
+      reminder(_reminder),
+      mailaddress(_mailaddress),
+      group(_group),
+      comment(_comment),
+      released(0) {
     write_dbfile();
 }
 
 /*
  *  open db entry for reading
  */
-WsDB::WsDB(const string _filename, const int _dbuid, const int _dbgid) : dbfilename(_filename), dbuid(_dbuid), dbgid(_dbgid), released(0)
-{
+WsDB::WsDB(const string _filename, const int _dbuid, const int _dbgid)
+    : dbfilename(_filename),
+      wsdir(""),
+      expiration(0l),
+      extensions(0),
+      acctcode(""),
+      dbuid(_dbuid),
+      dbgid(_dbgid),
+      reminder(),
+      mailaddress(""),
+      group(""),
+      comment(""),
+      released(0l) {
     read_dbfile();
 }
 
@@ -122,7 +141,7 @@ void WsDB::write_dbfile()
     Workspace::raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here
-    if (setegid(dbgid)|| seteuid(dbuid)) {
+    if (setegid(dbgid) || seteuid(dbuid)) {
 			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
 			exit(-1);
 	}
@@ -142,7 +161,7 @@ void WsDB::write_dbfile()
     }
     Workspace::lower_cap(CAP_FOWNER, dbuid);
 #ifdef SETUID
-    if(seteuid(0)|| setegid(0)) {
+    if(seteuid(0) || setegid(0)) {
 			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
 			exit(-1);
 	}
@@ -178,17 +197,17 @@ void WsDB::read_dbfile()
 		// FIXME empty group or current group if no group in DB?
     } catch (const YAML::BadSubscript&) {
         // fallback to old db format, python version
-        ifstream entry (dbfilename.c_str());
+        ifstream entry(dbfilename.c_str());
         entry >> expiration;
         entry >> wsdir;
         // get acctcode and extensions, need some splitting
         string line;
         std::vector<std::string> sp;
-        getline(entry, line); // newline
-        getline(entry, line); // acctcode
+        getline(entry, line);  // newline
+        getline(entry, line);  // acctcode
         boost::split(sp, line, boost::is_any_of(":"));
         acctcode = sp[1];
-        getline(entry, line); // extension
+        getline(entry, line);  // extension
         boost::split(sp, line, boost::is_any_of(":"));
         extensions = boost::lexical_cast<int>(sp[1]);
         entry.close();

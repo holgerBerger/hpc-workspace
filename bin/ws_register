@@ -40,7 +40,7 @@
 from __future__ import print_function
 
 import os, os.path, pwd, grp, sys
-import glob
+import glob, yaml
 import argparse
 import pathlib
 
@@ -60,8 +60,6 @@ def read_python_conf():
 
 
 read_python_conf()
-
-import yaml
 
 
 # who are we?
