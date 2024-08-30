@@ -7,8 +7,8 @@
 
     python version of ws_send_ical command, no privileges necessary
 
-    send a rminder as VCALENDAR entry for a named workspace to the 
-    address. 
+    send a reminder as VCALENDAR entry for a named workspace to the
+    address.
 
     Reads new YAML configuration files and new YAML workspace database.
 
@@ -43,6 +43,7 @@ from __future__ import print_function
 import os, os.path, pwd, grp, sys
 import glob, time
 from optparse import OptionParser
+import getpass
 
 ### from datetime import datetime, date, time
 import smtplib
@@ -174,7 +175,9 @@ def send_ical(entry, smtphost, resource, attendee, mail_from, login, ws_name, cr
 # so we have to determine user and read config first, and parse commandline last
 
 # who are we?
-login = os.getlogin()
+# https://bugs.python.org/issue32651
+login = getpass.getuser()
+# login = os.getlogin()
 create_time = time.strftime("%Y%m%dT%H%M00", time.localtime(None))
 uid = os.getuid()
 gid = os.getgid()
