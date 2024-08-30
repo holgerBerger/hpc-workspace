@@ -1,5 +1,4 @@
 # this file illustrates and documents the workspace++ config files
-# this is a YAML file, view with tabstop=8
 # use ws_validate_config to validate a config file
 clustername: aName              # mandatory, a name to identify the system
 smtphost: localhosti            # mandatory, a host accepting smtp connections to send emails
