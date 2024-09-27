@@ -33,7 +33,7 @@ $progname allows to share an existing workspace with other users.
 
 usage:
 
-The follwoing commands share / unshare a workspace (WS_NAME) with users:
+The following commands share / unshare a workspace (WS_NAME) with users:
  $progname share [-F FILESYSTEM] WS_NAME USER [USER...]
  $progname unshare [-F FILESYSTEM] WS_NAME USER [USER...]
  $progname unshare-all [-F FILESYSTEM] WS_NAME
