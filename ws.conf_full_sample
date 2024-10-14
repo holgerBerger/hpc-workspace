@@ -1,7 +1,7 @@
 # this file illustrates and documents the workspace++ config files
 # use ws_validate_config to validate a config file
 clustername: aName              # mandatory, a name to identify the system
-smtphost: localhosti            # mandatory, a host accepting smtp connections to send emails
+smtphost: localhost             # mandatory, a host accepting smtp connections to send emails
 mail_from: noreply@mydomain.de  # sender address for reminders
 default: lustre                 # mandatory, the default workspace to choose
 duration: 10                    # mandatory, the max duration in days, if not specified in workspace
@@ -12,6 +12,7 @@ pythonpath: /path/to/my/python  # optional, path which is appended to python sea
 dbuid: 9999                     # mandatory
 dbgid: 9999                     # mandatory
 admins: [hobel]                 # list of admin users, for ws_list
+adminmail: [root@localhost]     # mail addresses for admins, used by ws_expirer to alert about bad situations
 deldir_timeout: 3600            # maximum time in secs to delete a single workspace.
 workspaces:                     # now the list of the workspaces
   lustre:                       # name of workspace as shown with ws_list -l
