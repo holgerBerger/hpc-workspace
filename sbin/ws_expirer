@@ -215,7 +215,7 @@ def get_dbentriesws(dbfullpathlist):
                 workspace = dbentry["workspace"]
                 W.append(workspace)
             except:
-                print("Empty DB entry %s, bailing out to avoid data loss! Manual intervention required!" % (dbentryfilename), file=sys.stderr)
+                print("Empty DB entry {0}, bailing out to avoid data loss! Manual intervention required!".format(dbentryfilename), file=sys.stderr)
                 senderrormail("empty workspace db entry "+dbentryfilename)
                 sys.exit(-1)
                 pass
@@ -339,6 +339,20 @@ for fs in fslist:
     workspaces = {}
     for space in spaces:
         workspaces[space] = glob.glob(os.path.join(space, "*-*"))
+
+    # check for magic in DB entry, to avoid that DB is not existing and all workspaces get wiped by accident, e.g. due to mouting problems if DB is not 
+    # in same FS.
+    try:
+        with open(os.path.join(dbdir, ".ws_db_magic")) as dbmagic:
+            magic=dbmagic.readline().strip()
+            if magic != fs:
+                print("DB directory {0} does not contain .ws_db_magic with workspace name in it, skipping to avoid data loss. Please check!".format(dbdir), file=sys.stderr)
+                senderrormail("DB directory {0} does not contain .ws_db_magic with workspace name in it, skipping to avoid data loss. Please check!".format(dbdir))
+                continue
+    except FileNotFoundError:
+        print("DB directory {0} does not contain .ws_db_magic, skipping to avoid data loss. Please check!".format(dbdir), file=sys.stderr)
+        senderrormail("DB directory {0} does not contain .ws_db_magic, skipping to avoid data loss. Please check!".format(dbdir))
+        continue
 
     dbentries = glob.glob(os.path.join(dbdir, "*-*"))
     dbentrynames = list(map(os.path.basename, dbentries))  # (1)
