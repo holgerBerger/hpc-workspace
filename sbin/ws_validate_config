@@ -104,6 +104,13 @@ except KeyError:
     )
     sys.exit(1)
 
+try:
+    print("admin email address:", config["adminmail"])
+except KeyError:
+    print(
+        'ERROR: no admin email, please add <adminmail: []> clause to toplevel'
+    )
+    sys.exit(1)
 
 for ws in workspaces:
     print("workspace:", ws)
