@@ -42,6 +42,7 @@
 #include <grp.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <signal.h>
 
 // YAML
 #include <yaml-cpp/yaml.h>
@@ -100,7 +101,6 @@ void WsDB::use_extension(const long _expiration, const string _mailaddress, cons
 
 
 
-
 // write data to file
 void WsDB::write_dbfile()
 {
@@ -119,6 +119,10 @@ void WsDB::write_dbfile()
         entry["released"] = released;
     }
     entry["comment"] = comment;
+	
+	// suppress ctrl-c to prevent broken DB entries when FS is hanging and user gets nervous
+	signal(SIGINT,SIG_IGN);
+
     Workspace::raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
 #ifdef SETUID
     // for filesystem with root_squash, we need to be DB user here
@@ -128,6 +132,7 @@ void WsDB::write_dbfile()
 	}
 #endif
     ofstream fout(dbfilename.c_str());
+	sleep(10);
     if(!(fout << entry)) cerr << "Error: could not write DB file! Please check if the outcome is as expected, you might have to make a backup of the workspace to prevent loss of data!"  << endl;
     fout.close();
     if (group.length()>0) {
@@ -157,6 +162,9 @@ void WsDB::write_dbfile()
     }
     Workspace::lower_cap(CAP_CHOWN, dbuid);
 #endif
+
+	// normal signal handling
+	signal(SIGINT,SIG_DFL);
 }
 
 // read data from file
