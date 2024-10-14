@@ -14,7 +14,7 @@
  *    - using setuid or capabilities (needs support by filesystem!)
  *    - always moves released workspace away (this change is affecting the user!)
  *
- *  (c) Holger Berger 2013, 2014, 2015, 2015, 2017, 2018, 2019, 2020
+ *  (c) Holger Berger 2013, 2014, 2015, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024
  *
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
