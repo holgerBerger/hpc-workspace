@@ -472,12 +472,15 @@ privileges (```ws_list```, ```ws_extend```, ```ws_find```, ```ws_register```,
 The basic setup consists of at least two directory trees, one for the DB and 
 one for the data. These trees have to be separate and neither may be a 
 subdirectory of the other. They may reside on different filesystems, but do not 
-have to.
+have to. The database directory has to contain a file .ws_db_magic with the name
+of the workspace in it, this is used by the ws_expirer to verify that the DB is present 
+and valid, to avoid e.g. problems with not mounted filesystems.
 
 A typical setup could look like this:
 
 ```
 /tmp/ws -+- ws1-db -+              (owned by dbuid:dbgid, permissions drwxr-xr-x)
+		 |          +- .ws_db_magic (containing name of ws, ws1 in the example)
          |          +- .removed    (owned by dbuid:dbgid, permissions drwx------)
          |
          +- ws1-----+              (owned by anybody, permissions drwxr-xr-x)
