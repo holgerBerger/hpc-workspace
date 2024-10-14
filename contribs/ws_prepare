@@ -82,6 +82,8 @@ for ws in workspaces:
         )
     else:
         print(" WARNING: database directory <%s> does already exist!" % config["workspaces"][ws]["database"])
+    if not os.path.exists(os.path.join(config["workspaces"][ws]["database"],".ws_db_magic")):
+        os.system("echo " + ws + "> " + os.path.join(config["workspaces"][ws]["database"],".ws_db_magic"))
     if not os.path.exists(os.path.join(config["workspaces"][ws]["database"], config["workspaces"][ws]["deleted"])):
         print(
             " INFO: deleted database directory <%s> does not exist. It will be created."
