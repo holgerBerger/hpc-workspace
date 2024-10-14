@@ -128,6 +128,7 @@ A very simple example `ws.conf` file:
 
 ```yaml
 admins: [root]			# users listed here can see all workspaces with ws_list
+adminmail: [root]      # (add somethingmeaningfull here, it is used to alarm of bad confitions)
 clustername: My Green Cluster	# some name for the cluster
 smtphost: mail.mydomain.com     # (my smtp server for sending mails)
 dbuid: 85			# a user id, this is the owner of some directories
@@ -254,6 +255,12 @@ to use a dedicated GID or a GID of another daemon.
 
 A list of of users who can see any workspace when calling ```ws_list```, not 
 just their own.
+
+
+#### `adminmail`
+
+A list of email addresses to inform when a bad condition is discovered by ws_expirer
+which needs intervention.
 
 ### Workspace-location-specific options
 
@@ -504,6 +511,11 @@ restorable location.
 non-accessible location, it is still counted towards the user's quota. Users 
 who want to free the space have to restore the data with ```ws_restore```, 
 delete it, and release it again.
+
+**Caution:** make sure that the DB and the workspace directory are available
+when the expirer is running, a missing DB (due e.g. a missing mount if in a different
+filesystem) can be fatal. It is advisable to avoid this by having both DB and data
+in same fs. For performance reasons, in Lustre the DB can be a DOM directory.
 
 It is the task of the cleaner, a part of the `ws_expirer` script, to iterate 
 through the spaces to find if there is anything looking like a workspace not 
