@@ -132,7 +132,6 @@ void WsDB::write_dbfile()
 	}
 #endif
     ofstream fout(dbfilename.c_str());
-	sleep(10);
     if(!(fout << entry)) cerr << "Error: could not write DB file! Please check if the outcome is as expected, you might have to make a backup of the workspace to prevent loss of data!"  << endl;
     fout.close();
     if (group.length()>0) {
