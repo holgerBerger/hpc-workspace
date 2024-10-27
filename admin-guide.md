@@ -28,14 +28,14 @@ takes care of the data anymore, it will get deleted.
 Administrators can assign different filesystems to users based on user and 
 group and can optionally loadbalance over several filesystems.
 
-Typically a workspace will be created
+Typically, a workspace will be created
 - on a fast filesystem for temporary data, probably no backups, not intended 
   for long time storage, probably faster and smaller than the typical home 
   filesystem, think of a parallel filesystem like Lustre or 
   GPFS/SpectrumScale/BeeGfs.
 - for the duration of a job or a job campaign.
 
-Typically a workspace will be deleted
+Typically, a workspace will be deleted
 
 - because the job or campaign ended, and the user releases the directory, or
 - because the maximum lifetime of the workspace is reached
@@ -66,7 +66,7 @@ The workspace tools use CMake for configuration and building, make sure it is
 installed, you will also need a C++ compiler, compiling with GCC has been 
 tested (on Ubuntu and Redhat).
 
-Furthermore it uses the boost components ```system filesystem regex 
+Furthermore, it uses the boost components ```system filesystem regex
 program_options```. It also needs terminfo or ncurses, and libyaml-cpp. You can 
 use ```getyamlcpp.sh``` to get and compile a local libyaml-cpp into the source 
 directory.
@@ -111,7 +111,7 @@ the workspaces and formost for the DB entry directory.
 
 You can reuse an existing user and group, but be aware that anybody able to use 
 that user can manipulate other peoples' DB entries, and that the setuid tools 
-spend most of their time with the privileges of that user. Therefore it makes 
+spend most of their time with the privileges of that user. Therefore, it makes
 sense to have a dedicated user and group ID, but it is not a hard requirement, 
 you could also reuse a user and group of another daemon or tool.
 
@@ -135,14 +135,14 @@ dbuid: 85			# a user id, this is the owner of some directories
 dbgid: 85			# a group id, this is the group of some directories
 default: ws1			# the default workspace location to use for everybody
 duration: 10                    # (maximum duration in days, default for all workspaces)
-maxextensions: 1                # (maximum number of times a user can ask for a extension)
+maxextensions: 1                # (maximum number of times a user can ask for an extension)
 workspaces:
   ws1:				# name of the workspace location
     database: /tmp/ws/ws1-db	# DB directory
     deleted: .removed		# name of the subdirectory used for expired workspaces
     duration: 30		# max lifetime of a workspace in days
     keeptime: 7			# days to keep deleted data after expiration
-    maxextensions: 3		# maximum number of times a user can ask for a extension
+    maxextensions: 3		# maximum number of times a user can ask for an extension
     spaces: [/tmp/ws/ws1]	# paths where workspaces are created, this is a list and path is picked randomly or based on uid or guid
 ```
 
@@ -253,7 +253,7 @@ to use a dedicated GID or a GID of another daemon.
 
 #### `admins`
 
-A list of of users who can see any workspace when calling ```ws_list```, not 
+A list of users who can see any workspace when calling ```ws_list```, not
 just their own.
 
 
@@ -436,7 +436,7 @@ systems where the compute nodes do not have all libraries available.
 
 ### CHECK_ALL_GROUPS
 
-Disabled by default. Checks secondary groups as well when going though 
+Disabled by default. Checks secondary groups as well when going through
 `group_acl` and `groupdefault` lists.
 
 ### LUACALLOUT
@@ -444,7 +444,7 @@ Disabled by default. Checks secondary groups as well when going though
 **Caution:** does not work fully. Do not use for productive setups!
 
 Disabled by default. Allows calling a LUA script to change the path in 
-```ws_allocate```. This allows  inserting components into the path, like 
+```ws_allocate```. This allows inserting components into the path, like
 putting all users into a common directory for a group. There are some issues 
 with this option with most tools.
 
@@ -524,13 +524,13 @@ It is the task of the cleaner, a part of the `ws_expirer` script, to iterate
 through the spaces to find if there is anything looking like a workspace not 
 having a valid DB entry, and iterate through the deleted workspaces to check 
 how old they are, and whether they should still be kept or be deleted. 
-Furthermore it checks the DB entries if any of them are expired, and moves the 
+Furthermore, it checks the DB entries if any of them are expired, and moves the
 entry and the directory to the deleted directory if needed. The cleaner is only 
 enabled if the `--cleaner` (or `-c`) option is specified when calling 
 `ws_expirer`.
 
 Some filesystems like NEC ScaTeFS or Lustre with DNE can cause the Python 
-builtin ```os.rename()``` to fail. Therefore all the tools fall back from 
+builtin ```os.rename()``` to fail. Therefore, all the tools fall back from
 ```os.rename()``` to the Linux command `mv` if needed, and can operate across 
 filesystem-boundaries, but this is of course a lot slower and should be avoided.
 

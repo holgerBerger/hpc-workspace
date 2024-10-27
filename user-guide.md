@@ -51,7 +51,7 @@ choose the filesystem using ```ws_allocate -F <location> <ID> <DURATION>```.
 
 **Important:** Creating a workspace a second time with any of above lines
 is a no-operation, it always returns the same path, so it is safe and encourage
-to use such a line in batch jobs which are part of a series of jobs working
+to use such a line in batch jobs, which are part of a series of jobs working
 on the same data, no matter if the job was running before or not.
 
 You can use ```ws_find <ID>``` instead as well, if you feel more comfortable.
@@ -112,7 +112,7 @@ and is group readable.
 When it is created with ```-G <groupname>``` the workspace gets writable as well, and gets group sticky bit. The group can be specified in
 the ~/.ws_user.conf file as well.
 
-With ```ws_share``` you can share workspaces with users outside of your group, using ACLs (if supported by underlaying filesystem, since 1.3.7)
+With ```ws_share``` you can share workspaces with users outside your group, using ACLs (if supported by underlaying filesystem, since 1.3.7)
 
 ```ws_share share <workspace> <user>``` gives read access to the specified user, ```ws_share unshare <workspace> <user>``` removes the access.
 
