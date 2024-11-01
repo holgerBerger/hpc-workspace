@@ -143,7 +143,7 @@ for ws in workspaces:
         sys.exit(1)
     try:
         print(" spaceselection :", config["workspaces"][ws]["spaceselection"])
-        if config["workspaces"][ws]["spaceselection"] not in ["random", "uid", "gid"]:
+        if config["workspaces"][ws]["spaceselection"] not in ["random", "uid", "gid", "mostspace"]:
             print(" WARNING: unkown spaceselection, default `random` will be used")
     except:
         pass
