@@ -59,6 +59,7 @@ def read_python_conf():
                     print("Warning: Invalid pythonpath in ws.conf", file=sys.stderr)
 
 
+# read config first as it might change python path
 read_python_conf()
 import yaml
 
@@ -430,6 +431,21 @@ for fs in fslist:
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     workspacedelprefix = config["workspaces"][fs]["deleted"]
     dbdir = config["workspaces"][fs]["database"]
+
+    # check for magic in DB entry, to avoid that DB is not existing and all workspaces get wiped by accident, e.g. due to mouting problems if DB is not 
+    # in same FS.
+    try:
+        with open(os.path.join(dbdir, ".ws_db_magic")) as dbmagic:
+            magic=dbmagic.readline().strip()
+            if magic != fs:
+                print("DB directory {0} does not contain .ws_db_magic with workspace name in it, skipping to avoid data loss. Please check!".format(dbdir), file=sys.stderr)
+                senderrormail("DB directory {0} does not contain .ws_db_magic with workspace name in it, skipping to avoid data loss. Please check!".format(dbdir))
+                continue
+    except FileNotFoundError:
+        print("DB directory {0} does not contain .ws_db_magic, skipping to avoid data loss. Please check!".format(dbdir), file=sys.stderr)
+        senderrormail("DB directory {0} does not contain .ws_db_magic, skipping to avoid data loss. Please check!".format(dbdir))
+        continue
+
     print("PHASE: checking for workspaces to be expired for", fs, dbdir, spaces)
     for dbentryfilename in glob.glob(os.path.join(dbdir, "*-*")):
         reminder = 0
@@ -547,6 +563,21 @@ for fs in fslist:
         print("  FAILED to access", fs, "in config file")
         continue
     dbdir = config["workspaces"][fs]["database"]
+
+    # check for magic in DB entry, to avoid that DB is not existing and all workspaces get wiped by accident, e.g. due to mouting problems if DB is not 
+    # in same FS.
+    try:
+        with open(os.path.join(dbdir, ".ws_db_magic")) as dbmagic:
+            magic=dbmagic.readline().strip()
+            if magic != fs:
+                print("DB directory {0} does not contain .ws_db_magic with workspace name in it, skipping to avoid data loss. Please check!".format(dbdir), file=sys.stderr)
+                senderrormail("DB directory {0} does not contain .ws_db_magic with workspace name in it, skipping to avoid data loss. Please check!".format(dbdir))
+                continue
+    except FileNotFoundError:
+        print("DB directory {0} does not contain .ws_db_magic, skipping to avoid data loss. Please check!".format(dbdir), file=sys.stderr)
+        senderrormail("DB directory {0} does not contain .ws_db_magic, skipping to avoid data loss. Please check!".format(dbdir))
+        continue
+
     print("PHASE: checking for expired workspaces for", fs, dbdir, spaces)
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     keeptime = config["workspaces"][fs]["keeptime"]
