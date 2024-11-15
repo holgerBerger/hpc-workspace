@@ -286,7 +286,9 @@ or fileservers or metadata domains like DNE in Lustre.
 
 ### `spaceselection`
 
-can be `random` which is default, or `uid` or `gid` to select space based on modulo operation with uid or gid.
+can be `random` which is default, or `uid` or `gid` to select space based on
+modulo operation with uid or gid, or `mostspace` to choose the filesystem with
+most available space
 
 #### `deleted`
 

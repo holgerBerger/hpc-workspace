@@ -18,7 +18,7 @@ workspaces:                     # now the list of the workspaces
   lustre:                       # name of workspace as shown with ws_list -l
     keeptime: 1                 # mandatory, time in days to keep workspaces after they expired
     spaces: [/lustre1/ws, /lustre2/ws]  # mandatory, list of directories
-    spaceselection: random      # "random" (default), "uid" (uid%#spaces), "gid" (gid%#spaces)
+    spaceselection: random      # "random" (default), "uid" (uid%#spaces), "gid" (gid%#spaces), "mostspace"
     deleted: .removed           # mandatory, will be appended to spaces and database 
                                 # to move deleted files to
     database: /lustre-db        # mandatory, the DB directory, this is where DB files will end

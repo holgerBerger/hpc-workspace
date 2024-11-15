@@ -39,6 +39,7 @@
 #include <grp.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/vfs.h>
 #include <time.h>
 #include <pwd.h>
 #include <sys/wait.h>
@@ -339,6 +340,19 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 		if(config["workspaces"][filesystem]["spaceselection"]) {
 			if(config["workspaces"][filesystem]["spaceselection"].as<string>() == "uid") spaceid = getuid() % spaces.size();
 			if(config["workspaces"][filesystem]["spaceselection"].as<string>() == "gid") spaceid = getgid() % spaces.size();
+			if(config["workspaces"][filesystem]["spaceselection"].as<string>() == "mostspace") {
+				spaceid = 0;
+				fsblkcnt_t max_free_bytes = 0;
+				for (size_t i = 0; i < spaces.size(); ++i) {
+					struct statfs sfs;
+					statfs(spaces[i].c_str(), &sfs);
+					fsblkcnt_t free_bytes = sfs.f_bsize * sfs.f_bfree;
+					if (free_bytes > max_free_bytes) {
+						max_free_bytes = free_bytes;
+						spaceid = i;
+					}
+				}
+			}
 		}
 		if (opt.count("debug")) {
 			cerr << "Info: spaceid=" << spaceid << endl;
