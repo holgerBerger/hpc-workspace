@@ -285,7 +285,7 @@ int main(int argc, char **argv) {
     reminderdefault = config["reminderdefault"].as<int>(0);
     durationdefault = config["durationdefault"].as<int>(1);
 
-    int db_uid = config["dbuid"].as<int>();
+    // int db_uid = config["dbuid"].as<int>();  // not needed anymore since bc0e79a3
 
     // read user config before dropping privileges to DB user
     //
