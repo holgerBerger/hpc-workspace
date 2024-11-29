@@ -159,6 +159,9 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         searchlist.push_back(opt["filesystem"].as<string>());
     } else {
         searchlist = get_valid_fslist();
+			if (opt.count("debug")) {
+				cerr << "debug: moved default filesystem to front:" << filesystem << endl;
+			}
 		auto df = find(searchlist.begin(), searchlist.end(), filesystem);
         if(df!=searchlist.end()) {
 			auto tmp=searchlist[0];
@@ -735,7 +738,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
     } else {
         // no filesystem specified, figure out which to use
         if (opt.count("debug")) {
-            cerr << "debug: no filesystem given, searching..." << endl;
+            cerr << "debug: validate: no filesystem given, searching..." << endl;
         }
         map<string, string>groups_defaults;
         map<string, string>user_defaults;
@@ -1268,6 +1271,11 @@ std::vector<string> Workspace::get_valid_fslist() {
               cerr << "debug: find_valid_fs, denied" << endl;
           }
       }
+  }
+  if opt.count("debug") {
+	  cerr << "debug: find_valid_fs, return [ ";
+	  for(auto &f: fslist ) cerr << f << " ";
+	  cerr << " ] " << endl;
   }
   return fslist;
 }
