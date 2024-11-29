@@ -737,6 +737,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         }
     } else {
         // no filesystem specified, figure out which to use
+		//  FIXME this is broken, it can return a filesystem with no permission, user default ignores ACLs
         if (opt.count("debug")) {
             cerr << "debug: validate: no filesystem given, searching..." << endl;
         }
