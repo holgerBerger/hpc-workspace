@@ -34,13 +34,10 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 // Posix
-#include <sys/types.h>
-#include <pwd.h>
 #include <unistd.h>
-#include <grp.h>
-#include <time.h>
 #include <sys/stat.h>
 #include <signal.h>
 

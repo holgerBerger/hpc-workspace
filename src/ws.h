@@ -44,8 +44,6 @@
 #include <boost/program_options.hpp>
 #include <boost/smart_ptr.hpp>
 
-#include "wsdb.h"
-
 #ifndef SETUID
 #include <sys/capability.h>
 #else
