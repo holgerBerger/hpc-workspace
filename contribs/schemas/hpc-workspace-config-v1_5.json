@@ -1,0 +1,160 @@
+{
+  "$id": "https://github.com/holgerBerger/hpc-workspace/tree/master/contribs/schemas/hpc-workspace-config-v1_5.json",
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "title": "hpc-workspace-config",
+  "type": "object",
+  "properties": {
+    "clustername": {
+      "type": "string",
+      "description": "Name of the cluster, shows up in some outputs and in email warning before expiration."
+    },
+    "smtphost": {
+      "type": "string",
+      "description": "FQDN of SMTP server (no authentification supported), this is used to send reminder mails for expiring workspaces and to send calendar entries.",
+      "minimum": 0
+    },
+    "mail_from": {
+      "type": "string",
+      "description": "Used as sender in any mail, should be of the form 'user@domain'."
+    },
+    "default": {
+      "type": "string",
+      "description": "Important option, this determines which workspace location to use if not otherwise specified."
+    },
+    "duration": {
+      "type": "integer",
+      "description": "Maximum lifetime in days of a workspace, can be overwritten in each workspace location specific section."
+    },
+    "durationdefault": {
+      "type": "integer",
+      "description": "Lifetimes in days attached to a workspace if user does not specify it. Defaults to 1 day."
+    },
+    "maxextensions": {
+      "type": "integer",
+      "description": "Maximum number of times a user can extend a workspace, can be overwritten in each workspace location specific section."
+    },
+    "pythonpath": {
+      "type":"string",
+      "description": "This is a path that is prepended to the PYTHONPATH for the Python tools. Some of the workspace tools are written in Python and use the PyYAML package. This path is appended to the Python module search path before 'yaml' is imported. To read this line, a very simple YAML parser is embedded to find this line, and the real YAML parser reads the rest of the file.\n This option is handy in case your YAML installation is not in the default location."
+    },
+    "dbuid": {
+      "type": "integer",
+      "description": "GID of the database directory, and the GID that will be used by all setuid tools (as long as GID 0 is not required). Can be a shared GID, but be aware users assigned to that GID can mess with the DB. It is strongly suggested to use a dedicated GID or a GID of another daemon."
+    },
+    "dbgid": {
+      "type": "integer",
+      "description": "UID of the database directory, and the UID that will be used by all setuid tools (as long as UID 0 is not required). Can be a shared UID, but be aware the user using that UID can mess with the DB. It is strongly suggested to use a dedicated UID or an UID of another daemon."
+    },
+    "admins": {
+      "type": "array",
+      "description": "A list of users who can see any workspace when calling 'ws_list', not just their own.",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "adminmail": {
+      "type": "array",
+      "description": "A list of email addresses to inform when a bad condition is discovered by ws_expirer which needs intervention.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "workspaces": {
+      "type": "object",
+      "description": "In the config entry 'workspaces', multiple workspace location entries may be specified, each with its own set of options. The following options may be specified on a per-workspace-location basis:",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "keeptime": {
+            "type": "integer",
+            "description": "Time in days to keep data after it was expired. This is an option for the cleaner. The cleaner will move the expired workspace to a hidden location (specified by the 'deleted' entry below), but does not delete it immediately. Users or administrators can still recover the data. After 'keeptime' days, it will be removed and can not be recovered anymore."
+          },
+          "spaces": {
+            "type": "array",
+            "description": "A list of directories that make up the workspace location. The directory for new workspaces will be picked randomly from the directories in this list by default, see 'spaceselection'.\nThis can be used to distribute load and storage space over several filesystems or fileservers or metadata domains like DNE in Lustre.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "spaceselection": {
+            "type": "array",
+            "description": "can be 'random' which is default, or 'uid' or 'gid' to select space based on modulo operation with uid or gid, or 'mostspace' to choose the filesystem with most available space",
+            "enum": ["gid", "mostspace", "random", "uid"]
+          },
+          "deleted": {
+            "type": "string",
+            "description": "The name of the subdirectory, both inside the workspace location and inside the DB directory, where the expired data is kept. This is always inside the space to prevent copies of the data, but to allow rename operation to succeed for most filesystems in most cases."
+          },
+          "database": {
+            "type": "string",
+            "description": "The directory where the DB is stored. The DB is simply a directory having one YAML file per workspace.\n This directory should be owned by 'dbuid' and 'dbgid', see the corresponding entries in the global configuration.\n If your filesystem is slow for metadata, it might make sense to put the DB on e.g. a NFS filesystem, but the DB is not accessed without any reason and should not be performance-relevant, only 'ws_list' might feel faster if the filesystem with the DB is fast in terms of iops"
+          },
+          "duration": {
+            "type": "integer",
+            "description": "Maximum allowed lifetime of a workspace in days. User may not specify a longer duration for his workspaces than this value."
+          },
+          "groupdefault": {
+            "type": "array",
+            "description": "Lists which groups use this location by default. Any user that is a member of one of the groups in this list will have their workspaces allocated in this workspace location. This overrides the `default` in the global config. A user may still manually pick a different workspace location with the ```ws_allocate -F``` option.\n **Caution:** if a group is listed in the `groupdefault` list of several workspace locations, this results in undefined behavior. This condition is not tested for, the administrator has to ensure that this does not happen.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "userdefault": {
+            "type": "array",
+            "description": "Lists users which use this location by default. Any user in this list will have their workspaces allocated in this workspace location. This overrides the `default` in the global config. A user may still manually pick a different workspace location with the ```ws_allocate -F``` option.\n **Caution:** if a user is listed in the `userdefault` list of several workspace locations, this results in undefined behavior. This condition is not tested for, the administrator has to ensure that this does not happen.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "user_acl": {
+            "type": "array",
+            "description": "List of users who are allowed to choose this workspace location. If this list and `group_acl` are both empty, all users may choose this location.\n As soon as the list exists and is not empty, this list joined with `group_acl` is matched against the user and his group. If the user is not in either of the two lists, he may not create a workspace in this location.\n **Caution:** the global `default` workspace can be used by any user, this overrides any ACL! It is possible to have no global `default` directive, but in that case the administrator needs to ensure that every user shows up in the `userdefault` or `group default` list of exactly one workspace!\n**Hint**: To enable access control, at least one of `user_acl` or `group_acl` has to be existing and non-empty! An invalid entry can be used to enable access control, like a non-existing user or group. An empty list does not enable access control, the workspace can still be accessed with an empty list by all users!",
+            "items": {
+              "type": "string"
+            }
+          },
+          "group_acl": {
+            "type": "array",
+            "description": "List of groups who are allowed to choose this workspace location.  If this list and `user_acl` are both empty, all users may choose this location.\n See `user_acl` for further logic.\n If the compile option `CHECK_ALL_GROUPS` is enabled, secondary groups are checked as well. By default, only the primary group is considered.\n **Caution:** if the global `default` option is set, the location specified there may be used by any user, this overrides any ACL! Also, if no global `default` directive is set, then the administrator **has to** ensure that every user show up in the `userdefault` or `group default` list of exactly one workspace!\n **Hint**: to enable access control, at least one of `user_acl` or `group_acl` has to be existing and non-empty! An invalid entry can be used to enable access control, like a non-existing user or group. An empty list does not enable access control, the workspace can still be accessed with an empty list by all users!",
+            "items": {
+              "type": "string"
+            }
+          },
+          "maxextensions": {
+            "type": "integer",
+            "description": "This specifies how often a user can extend a workspace, either with ```ws_extend``` or ```ws_allocate -x```. An extension is consumed if the new duration ends later than the current duration (in other words, you can shorten the lifetime even if you have no extensions left) and if the user is not root. Root can always extend any workspace."
+          },
+          "allocatable": {
+            "type": "array",
+            "description": "Default is ```yes```. If set to ```no```, the location is non-allocatable, meaning no new workspaces can be created in this location.\n This option, together with the `extendable` and `restorable` options below, is intended to facilitate migration and maintenance, i.e. to phase out a workspace, or when moving the default of users, e.g. to another filesystem.",
+            "enum": ["no", "yes"]
+          },
+          "extendable": {
+            "type": "array",
+            "description": "Analog to `allocatable` option above. If set to `no`, existing workspaces in this location cannot be extended anymore.",
+            "enum": ["no", "yes"]
+          },
+          "restorable": {
+            "type": "array",
+            "description": "Analog to `allocatable` option above. If set to `no`, workspaces cannot be restored to this location anymore.",
+            "enum": ["no", "yes"]            
+          }
+        },
+        "required": ["database", "spaces", "deleted", "keeptime"]
+      }
+    }
+  },
+  "required": [
+    "workspaces",
+    "clustername",
+    "smtphost",
+    "default",
+    "dbuid",
+    "dbgid",
+    "duration",
+    "maxextensions",
+    "adminmail"
+  ]
+}
