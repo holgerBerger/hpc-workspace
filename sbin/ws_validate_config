@@ -150,6 +150,7 @@ for ws in workspaces:
     for sp in config["workspaces"][ws]["spaces"]:
         if not config["workspaces"][ws]["deleted"]:
             print(" ERROR: no target for deletion defined in workspace", ws)
+            sys.exit(1)
         if not os.path.exists(sp):
             print(" WARNING: workspace directory <%s> does not exist!" % sp)
         if not os.path.exists(os.path.join(sp, config["workspaces"][ws]["deleted"])):
