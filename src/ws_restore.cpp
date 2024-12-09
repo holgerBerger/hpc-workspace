@@ -35,11 +35,13 @@
 #include <unistd.h>
 #include <grp.h>
 #include <sys/types.h>
-#include <time.h>
 #include <syslog.h>
 
+#include <algorithm>
+#include <ctime>
 #include <iostream>
 #include <string>
+#include <vector>
 #ifdef USE_BOOST_REGEXP
     #include <boost/regex.hpp>
     #define REGEX boost::regex
