@@ -363,7 +363,8 @@ int main(int argc, char **argv) {
                     std::vector<std::string> splitted;
                     boost::split(splitted, dn, boost::is_any_of("-"));
                     time_t t = atol(splitted[splitted.size()-1].c_str());
-                    cout << "\tunavailable since " << std::ctime(&t);
+                    char buffer[26];
+                    cout << "\tunavailable since " << std::ctime_r(&t, buffer);
                 }
             }
 
