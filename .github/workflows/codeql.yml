@@ -27,8 +27,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - language: c-cpp
+        - language: cpp
           build-mode: manual
+        - language: python
 
     steps:
     - name: Install OS package dependencies
