@@ -13,7 +13,7 @@
 #   A workaround to update permissions is to unshare and re-share the workspace
 #   with the users.
 #
-# Copyright(c) 2021      Christoph Niethammer <niethammer@hlrs.de>
+# Copyright(c) 2021-2024 Christoph Niethammer <niethammer@hlrs.de>
 #
 
 progname=$(basename $0)
@@ -26,6 +26,10 @@ if [[ $? -ne 4 ]]; then
     echo "Error: $progname needs an enhaced getopt to work."
     exit 1
 fi
+
+function print_version() {
+    echo "workspace version 1.5.0"
+}
 
 function usage() {
 cat <<EOF
@@ -44,6 +48,7 @@ Users that were granted read access to a workspace (WS_NAME) can be listed with
 options:
    -F, --filesystem  ws filesystem
    -h, --help        show this help
+       --version     show version information and exit
 
 EOF
 }
@@ -51,7 +56,7 @@ EOF
 
 # parse command line, based on example provided by util-linux
 OPTIONS=F:h
-LONG_OPTIONS=filesystem:,help
+LONG_OPTIONS=filesystem:,help,version
 PARSED=$(getopt --options=$OPTIONS --longoptions=$LONG_OPTIONS --name "$0" -- "$@")
 if [[ $? -ne 0 ]]; then
     echo "Error: Command line error"
@@ -71,6 +76,10 @@ while true; do
         -F|--filesystem)
             FILESYSTEM="$2"
             shift 2
+            ;;
+        --version)
+            print_version
+            exit 0
             ;;
         --)
             shift

@@ -15,6 +15,7 @@
             + list expired/moved workspaces
 
     (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
+    (c) Christoph Niethammer 2024
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
 
@@ -78,7 +79,7 @@ config = yaml.safe_load(open("/etc/ws.conf"))
 usage = "Usage: ws_find [options] [workspacename]"
 
 # option configuration
-parser = OptionParser(usage=usage)
+parser = OptionParser(usage=usage, version="workspace version 1.5.0")
 parser.add_option("-F", "--filesystem", dest="filesystem", help="filesystem to search workspace in")
 parser.add_option("-l", "--list", action="store_true", dest="list", default=False, help="list valid filesystem names")
 (options, args) = parser.parse_args()
