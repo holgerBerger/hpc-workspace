@@ -349,7 +349,7 @@ for fs in fslist:
     except KeyError:
         print("  FAILED to access", fs, "in config file")
         continue
-    spaces = config["workspaces"][fs]["spaces"]
+    spaces = config["workspaces"][fs]["spaces"].copy()
     # avoid datarace, fetch directories first and db entries second (1),
     # so entries created during this run of expirer will be ignored
     #  this eats memory, but... generators from python3 pathlib.Path.glob
@@ -445,7 +445,9 @@ for fs in fslist:
 # this searches over DB, nothing not in DB will be touched
 for fs in fslist:
     try:
-        spaces = config["workspaces"][fs]["spaces"]
+        print("test")
+        spaces = config["workspaces"][fs]["spaces"].copy()
+        print(config["workspaces"][fs]["spaces"])
     except KeyError:
         print("  FAILED to access", fs, "in config file")
         continue
@@ -586,7 +588,7 @@ for fs in fslist:
 # this searches over DB
 for fs in fslist:
     try:
-        spaces = config["workspaces"][fs]["spaces"]
+        spaces = config["workspaces"][fs]["spaces"].copy()
     except KeyError:
         print("  FAILED to access", fs, "in config file")
         continue
