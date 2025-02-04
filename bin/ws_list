@@ -279,7 +279,7 @@ for fs in legal:
                 try:
                     entry.expiration = int(content["expiration"])
                     entry.extensions = content["extensions"]
-                    entry.acctcode = content["acctcode"]
+                    #entry.acctcode = content["acctcode"]
                     entry.workspace = content["workspace"]
                     entry.reminder = int(content["reminder"])
                     entry.mailaddress = content["mailaddress"]

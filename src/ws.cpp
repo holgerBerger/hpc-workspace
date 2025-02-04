@@ -274,7 +274,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
               } else {
                 dbentry.use_extension(-1, newmail, reminder, comment);
               }
-              extension = dbentry.getextension();
+              extension = dbentry.getextension();  // for output at end of function
           } else {
               cerr << "Info: reusing workspace." << endl;
               syslog(LOG_INFO, "reusing DB <%s> for user <%s>.", dbfilename.c_str(), username.c_str());
@@ -1273,7 +1273,7 @@ std::vector<string> Workspace::get_valid_fslist() {
           }
       }
   }
-  if opt.count("debug") {
+  if (opt.count("debug")) {
 	  cerr << "debug: find_valid_fs, return [ ";
 	  for(auto &f: fslist ) cerr << f << " ";
 	  cerr << " ] " << endl;
