@@ -1,0 +1,14 @@
+# cmake build system
+# (from https://github.com/github/gitignore/blob/077ec2d64ed63f9db51bba853ac9f1cd51654da1/CMake.gitignore)
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+CMakeUserPresets.json

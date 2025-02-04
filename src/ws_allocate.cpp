@@ -285,8 +285,6 @@ int main(int argc, char **argv) {
     reminderdefault = config["reminderdefault"].as<int>(0);
     durationdefault = config["durationdefault"].as<int>(1);
 
-    // int db_uid = config["dbuid"].as<int>();  // not needed anymore since bc0e79a3
-
     // read user config before dropping privileges to DB user
     //
     // get user first, so user config is read as owner
@@ -302,13 +300,6 @@ int main(int argc, char **argv) {
         cerr << "Error: ~/.ws_user.conf can not be symlink!" << endl;
         exit(-1);
     }
-
-    /*
-    Workspace::raise_cap(CAP_DAC_OVERRIDE);
-
-    // lower capabilities to minimum
-    Workspace::drop_cap(CAP_DAC_OVERRIDE, db_uid);
-    */
 
     // check commandline, get flags which are used to create ws object or for workspace allocation
     commandline(opt, name, duration, durationdefault , filesystem, extensionflag, 
