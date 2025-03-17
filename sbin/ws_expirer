@@ -264,6 +264,15 @@ def processOpts():
         default=False,
         help="enable cleanup run (default is dry run)",
     )
+    parser.add_option(
+        "-s",
+        "--space",
+        action="callback",
+        dest="single_space",
+        callback=vararg_callback,
+        default="",
+        help="pass a single space (inside a workspace) to clean up"
+    )
     (options, args) = parser.parse_args()
     if not options:
         print("*** FATAL: No options defined. ***")
@@ -309,6 +318,13 @@ if not opts.fslist:
 else:
     fslist = opts.fslist
 
+single_space = ""
+try:
+    single_space = opts.single_space[0]
+    print(single_space)
+except IndexError:
+    single_space = ""
+
 if fslist == []:
     print("Error: no workspace defined")
     sys.exit(2)
@@ -333,7 +349,7 @@ for fs in fslist:
     except KeyError:
         print("  FAILED to access", fs, "in config file")
         continue
-    spaces = config["workspaces"][fs]["spaces"]
+    spaces = config["workspaces"][fs]["spaces"].copy()
     # avoid datarace, fetch directories first and db entries second (1),
     # so entries created during this run of expirer will be ignored
     #  this eats memory, but... generators from python3 pathlib.Path.glob
@@ -361,7 +377,12 @@ for fs in fslist:
     dbentriesws = get_dbentriesws(dbentries)
     dbentryworkspaces = list(map(os.path.basename, dbentriesws))
     workspacedelprefix = config["workspaces"][fs]["deleted"]
-    print("PHASE: checking for stray workspaces for", fs, dbdir, spaces)
+    if single_space != "":
+        spaces.remove(single_space)
+        print("PHASE: checking for stray workspaces for", fs, dbdir, single_space, ", ignoring ", spaces)
+        spaces = [single_space]
+    else:
+        print("PHASE: checking for stray workspaces for", fs, dbdir, spaces)
     for space in spaces:
         for ws in workspaces[space]:  # (2) for for #87
             if os.path.basename(ws) not in dbentryworkspaces:
@@ -424,7 +445,9 @@ for fs in fslist:
 # this searches over DB, nothing not in DB will be touched
 for fs in fslist:
     try:
-        spaces = config["workspaces"][fs]["spaces"]
+        print("test")
+        spaces = config["workspaces"][fs]["spaces"].copy()
+        print(config["workspaces"][fs]["spaces"])
     except KeyError:
         print("  FAILED to access", fs, "in config file")
         continue
@@ -446,7 +469,12 @@ for fs in fslist:
         senderrormail("DB directory {0} does not contain .ws_db_magic, skipping to avoid data loss. Please check!".format(dbdir))
         continue
 
-    print("PHASE: checking for workspaces to be expired for", fs, dbdir, spaces)
+    if single_space != "":
+        spaces.remove(single_space)
+        print("checking for workspaces to be expired for", fs, dbdir, single_space, ", ignoring ", spaces)
+        spaces = [single_space]
+    else:
+        print("PHASE: checking for workspaces to be expired for", fs, dbdir, spaces)
     for dbentryfilename in glob.glob(os.path.join(dbdir, "*-*")):
         reminder = 0
         mailaddress = ""
@@ -483,6 +511,8 @@ for fs in fslist:
         workspace = dbentry["workspace"]
         if workspace == "" or expiration == 0:
             print("  FAILED to parse DB for", dbentryfilename)
+            continue
+        if single_space != "" and single_space not in workspace:
             continue
         if time.time() > expiration:
             print("  expiring", dbentryfilename, "  (expired", time.ctime(expiration), ")")
@@ -558,7 +588,7 @@ for fs in fslist:
 # this searches over DB
 for fs in fslist:
     try:
-        spaces = config["workspaces"][fs]["spaces"]
+        spaces = config["workspaces"][fs]["spaces"].copy()
     except KeyError:
         print("  FAILED to access", fs, "in config file")
         continue
@@ -578,7 +608,12 @@ for fs in fslist:
         senderrormail("DB directory {0} does not contain .ws_db_magic, skipping to avoid data loss. Please check!".format(dbdir))
         continue
 
-    print("PHASE: checking for expired workspaces for", fs, dbdir, spaces)
+    if single_space != "":
+        spaces.remove(single_space)
+        print("PHASE: checking for expired workspaces for", fs, dbdir, single_space, ", ignoring ", spaces)
+        spaces = [single_space]
+    else:
+        print("PHASE: checking for expired workspaces for", fs, dbdir, spaces)
     dbdeldir = os.path.join(config["workspaces"][fs]["database"], config["workspaces"][fs]["deleted"])
     keeptime = config["workspaces"][fs]["keeptime"]
     print("  keeptime:", keeptime)
@@ -599,6 +634,8 @@ for fs in fslist:
                 print("  ERROR: could not read db entry, ", e)
         if workspace == "" or expiration == 0:
             print("  FAILED to parse DB for", dbentryfilename)
+            continue
+        if single_space != "" and single_space not in workspace:
             continue
         # take time of release from filename
         released = dbentryfilename.split("-")[-1]
