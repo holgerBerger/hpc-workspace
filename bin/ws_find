@@ -36,7 +36,7 @@
 
 from __future__ import print_function
 
-import os, os.path, pwd, grp, sys
+import os, os.path, pwd, grp, sys, yaml
 from optparse import OptionParser
 
 
@@ -55,8 +55,6 @@ def read_python_conf():
 
 
 read_python_conf()
-
-import yaml
 
 # who are we?
 uid = os.getuid()
@@ -90,7 +88,7 @@ if options.filesystem:
     if options.filesystem in config["workspaces"]:
         filesystems = [options.filesystem]
     else:
-        print("Error: no such filesystem.")
+        print("Error: no such filesystem.", file=sys.stderr)
         sys.exit(-1)
 else:
     filesystems = config["workspaces"].keys()
@@ -122,10 +120,12 @@ if options.list:
         print(i)
     sys.exit(0)
 
+# Print usage, if no argument provided
 if len(args) == 0:
     print(usage, file=sys.stderr)
     sys.exit(-1)
 
+# Retrieve ws name as first argument
 wsname = args[0]
 
 # main loop
