@@ -37,15 +37,20 @@ if options.setuid:
 
 if options.capabilities:
     if os.path.exists("./bin/ws_allocate"):
-        os.system("setcap 'CAP_DAC_OVERRIDE=p CAP_CHOWN=p' ./bin/ws_allocate")
+        os.system("setcap 'CAP_DAC_OVERRIDE=p CAP_CHOWN=p CAP_FOWNER=p' ./bin/ws_allocate")
         print("INFO: capability was set on ws_allocate.")
     else:
         print("WARNING: ws_allocate was not found. Could not set capability on ws_allocate.")
     if os.path.exists("./bin/ws_release"):
-        os.system("setcap 'CAP_DAC_OVERRIDE=p' ./bin/ws_release")
+        os.system("setcap 'CAP_DAC_OVERRIDE=p CAP_CHOWN=p CAP_FOWNER=p' ./bin/ws_release")
         print("INFO: capability was set on ws_release.")
     else:
         print("WARNING: ws_release was not found. Could not set capability on ws_release.")
+    if os.path.exists("./bin/ws_restore"):
+        os.system("setcap 'CAP_DAC_OVERRIDE=p CAP_DAC_READ_SEARCH=p' ./bin/ws_restore")
+        print("INFO: capability was set on ws_restore.")
+    else:
+        print("WARNING: ws_restore was not found. Could not set capability on ws_restore.")
 
 if os.path.exists(filename):
     config = yaml.safe_load(open(filename))
