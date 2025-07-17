@@ -5,16 +5,16 @@
  *
  *  c++ version of workspace utility
  *  a workspace is a temporary directory created in behalf of a user with a limited lifetime.
- *  This version is not DB and configuration compatible with the older version, the DB and 
+ *  This version is not DB and configuration compatible with the older version, the DB and
  *  configuration was changed to YAML files.
  *  This version works without setuid bit, but capabilities need to be used.
- * 
+ *
  *  differences to old workspace version
  *    - usage of YAML file format
  *    - always moves released workspace away (this change is affecting the user!)
  *
  *  (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024
- * 
+ *
  *  workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
  *
  *  workspace++ is free software: you can redistribute it and/or modify
@@ -57,7 +57,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 
-#define BOOST_FILESYSTEM_VERSION 3 
+#define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_NO_DEPRECATED
 #include <boost/filesystem.hpp>
 
@@ -149,7 +149,7 @@ void commandline(po::variables_map &opt, string &name, string &target,
             cout << cmd_options << "\n";
             exit(1);
         }
-        // validate workspace name against nasty characters    
+        // validate workspace name against nasty characters
         // static const std::regex e("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$"); // #77
 		static const REGEX e1("^[[:alnum:]][[:alnum:]_.-]*$");
 		if (!regex_match(name.substr(0,2) , e1)) {
@@ -318,6 +318,9 @@ vector<string> getRestorable(string filesystem, string username)
     return namelist;
 }
 
+// y in x
+template <typename T1, typename T2> bool canFind(T1 x, T2 y) { return (std::find(x.begin(), x.end(), y) != x.end()); }
+
 int main(int argc, char **argv) {
     po::variables_map opt;
     string name, target, filesystem, acctcode, username;
@@ -354,8 +357,17 @@ int main(int argc, char **argv) {
     openlog("ws_restore", 0, LOG_USER); // SYSLOG
 
     if (listflag) {
-        
-        for(string fs: get_valid_fslist()) {
+
+        vector<string> fslist;
+        auto validfs = get_valid_fslist();
+
+        if (filesystem.size() > 0) {
+            if (canFind(validfs, filesystem)) fslist.push_back(filesystem);
+        } else {
+            fslist = validfs;
+        }
+
+        for(string fs: fslist) {
             std::cout << fs << ":" << std::endl;
 
             // construct db-entry username  name
