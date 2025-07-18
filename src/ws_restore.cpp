@@ -174,31 +174,18 @@ void commandline(po::variables_map &opt, string &name, string &target,
  * check that either username matches the name of the workspace, or we are root
  */
 bool check_name(const string name, const string username, const string real_username) {
-    // split the name in username, name and timestamp
-    // as username can contain -, splitting is not good here
+    // as username and id can contain -, splitting is not good here
     //  name has shape:    username-id-timestamp
     //                             ^ search for this
-    auto lpos = name.rfind("-");
-    if (lpos==string::npos) {
-	    cerr << "Error: unexpected error in check_name, no - in name" << endl;
-	    exit(-1);
-    }
-    auto pos = name.rfind("-", lpos-1);
-    if (pos==string::npos) {
-	    cerr << "Error: unexpected error in check_name, no second - in name" << endl;
-	    exit(-1);
-    }
-    auto foundname = name.substr(0, pos);
-
-    // we checked already that only root can use another username with -u, so here
-    // we know we are either root or username == real_username
-    if ((username != foundname) && (real_username != "root")) {
-        cerr << "Error: only root can do this, or invalid workspace name! " << username << "," << foundname << endl;
+    // as id can contain - as well, let's compare username with start of name
+    if ((real_username != "root") && (name.rfind(real_username+"-", 0) != 0)) {
+        cerr << "Error: only root can do this, or invalid workspace name!" << endl;
         return false;
     } else {
         return true;
     }
 }
+
 
 // get list of valid filesystems for current user
 std::vector<string> get_valid_fslist() {
