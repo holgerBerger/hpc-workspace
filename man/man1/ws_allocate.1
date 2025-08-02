@@ -103,8 +103,12 @@ and the workspace itself is created group readable.
 .TP
 \-G GROUPNAME
 use the GROUPNAME as group for the workspace, make the workspace group writable and set the group sticky bit.
-Writable group workspaces can be seen by other group members as well with ```ws_list -g``` and be as well extended
-by grou members with ```ws_allocate -x -u <username> <workspace id> <days>```.
+Writable group workspaces can be seen by other group members as well with 
+.B ws_list -g 
+and be as well extended
+by grou members with 
+-B ws_allocate -x -u <username> <workspace id> <days>
+in behalf of owner.
 
 .SH EXAMPLES
 .TP

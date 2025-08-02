@@ -53,7 +53,10 @@ list the available filesystems, only filesystems the user has access to will be 
 select the filesystem to list the workspaces from.
 .TP
 \-g
-show group-workspaces visible for current group in addition to own workspaces
+show group-workspaces visible for current group in addition to own workspaces.
+Group writable workspaces can also be extended in behalf of owner, see
+.B ws_allocate -x 
+for details.
 .TP
 \-s
 short listing, only workspace names will be listed.
