@@ -112,6 +112,10 @@ and is group readable.
 When it is created with ```-G <groupname>``` the workspace gets writable as well, and gets group sticky bit. The group can be specified in
 the ~/.ws_user.conf file as well.
 
+A writable workspace can also be extended by other members of the group, they can list it with ```ws_list -g``` and can extend
+it with ```ws_allocate -x -u <username> <workspace id> <days>```, this is usefull if the owner is absent.
+
+
 With ```ws_share``` you can share workspaces with users outside your group, using ACLs (if supported by underlaying filesystem, since 1.3.7)
 
 ```ws_share share <workspace> <user>``` gives read access to the specified user, ```ws_share unshare <workspace> <user>``` removes the access.
