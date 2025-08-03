@@ -93,11 +93,16 @@ def printentry(entry, admin, terse, verbose):
         for s in spaces:
             if entry.workspace.startswith(s):
                 print(4 * " ", "filesystem name      :", space2fs[s])
+        if entry.group != '':
+            print(4 * " ", "group                :", entry.group)
     print(4 * " ", "available extensions :", entry.extensions)
     if verbose:
+        if entry.group != '':
+            print(4 * " ", "group                :", entry.group)
         print(4 * " ", "acctcode             :", entry.acctcode)
         print(4 * " ", "reminder             :", time.ctime(entry.expiration - entry.reminder * (24 * 3600)))
-        print(4 * " ", "mailaddress          :", entry.mailaddress)
+        if entry.mailaddress != '':
+            print(4 * " ", "mailaddress          :", entry.mailaddress)
 
 
 # we have to find out if the calling user is admin before we can process commandline,
@@ -288,6 +293,10 @@ for fs in legal:
                         entry.comment = content["comment"]
                     except:
                         entry.comment = ""
+                    try:
+                        entry.group = content["group"]
+                    except:
+                        entry.group = ""
                 except TypeError:
                     # fallback to old file format
                     f = open(ws)
