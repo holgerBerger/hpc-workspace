@@ -178,7 +178,7 @@ bool check_name(const string name, const string username, const string real_user
     //  name has shape:    username-id-timestamp
     //                             ^ search for this
     // as id can contain - as well, let's compare username with start of name
-    if ((real_username != "root") && (name.rfind(real_username+"-", 0) != 0)) {
+    if ((real_username != "root") && (name.find(real_username+"-", 0) != 0)) {
         cerr << "Error: only root can do this, or invalid workspace name!" << endl;
         return false;
     } else {
