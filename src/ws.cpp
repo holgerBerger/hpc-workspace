@@ -950,8 +950,11 @@ void Workspace::restore(const string name, const string target, const string use
         raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
         raise_cap(CAP_DAC_READ_SEARCH, __LINE__, __FILE__);
 
-        // int ret = mv(wssourcename.c_str(), targetwsdir.c_str()); // does not work with capabilities
 	int ret = rename(wssourcename.c_str(), targetpathname.c_str());
+	if (ret == -1 && errno == EXDEV) {
+		// #133 for WEKA
+        	ret = mv(wssourcename.c_str(), targetwsdir.c_str()); // does not work with capabilities ?? this needs checking if that comment holds still true
+	}
 #ifdef SETUID
         // get db user to be able to unlink db entry from root_squash filesystems
         if(setegid(config["dbgid"].as<int>()) || seteuid(config["dbuid"].as<int>())) {
