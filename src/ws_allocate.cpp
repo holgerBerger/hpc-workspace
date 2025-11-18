@@ -194,7 +194,7 @@ void commandline(po::variables_map &opt, string &name, int &duration, const int 
     if(reminder!=0) {
         if (!opt.count("mailaddress")) {
             // check if file looks like yaml
-            if (firstline.find(":",0) != string::npos) {
+            if (firstline.find(":",0) != string::npos || firstline[0]=='#') {
                 try {
                     mailaddress = user_home_config["mail"].as<std::string>();
                 } catch (...) {
