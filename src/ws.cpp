@@ -563,7 +563,7 @@ void Workspace::release(string name) {
 
 		// wipe the data if the user wants that
 		if(opt.count("delete-data")) {
-			cerr << "Info: deleting files workspace as --delete-data was given" << endl;
+			cerr << "Info: deleting files in workspace as --delete-data was given" << endl;
 			cerr << "Info: you have 5 seconds to interrupt with CTRL-C to prevent deletion" << endl;
 			sleep(5);
 
