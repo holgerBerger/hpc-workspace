@@ -591,7 +591,7 @@ void Workspace::release(string name) {
         	lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
 		
 			// remove what is left as DB user (could be done by ws_expirer)
-			fs::remove_all(fs::path(wstargetname), ec);
+			filecount += fs::remove_all(fs::path(wstargetname), ec);
 
 			cerr << "Info: deleted " << filecount << " files" << endl;
         	syslog(LOG_INFO, "delete-data for user <%s> from <%s> removed %ld files." , username.c_str(), wstargetname.c_str(), filecount);
