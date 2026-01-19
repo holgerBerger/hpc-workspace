@@ -289,17 +289,23 @@ vector<string> getRestorable(string filesystem, string username)
 
     vector<string> namelist;
 
-    fs::directory_iterator end;
-    for (fs::directory_iterator it(dbprefix); it!=end; ++it) {
-#if BOOST_VERSION < 105000
-        if (boost::starts_with(it->path().filename(), username + "-" )) {
-            namelist.push_back(it->path().filename());
+    try {
+        fs::directory_iterator end;
+        for (fs::directory_iterator it(dbprefix); it!=end; ++it) {
+    #if BOOST_VERSION < 105000
+            if (boost::starts_with(it->path().filename(), username + "-" )) {
+                namelist.push_back(it->path().filename());
+            }
+    #else
+            if (boost::starts_with(it->path().filename().string(), username + "-" )) {
+                namelist.push_back(it->path().filename().string());
+            }
+    #endif
         }
-#else
-        if (boost::starts_with(it->path().filename().string(), username + "-" )) {
-            namelist.push_back(it->path().filename().string());
-        }
-#endif
+    } catch (const fs::filesystem_error& e) {
+        // If filesystem is not mounted or accessible, return empty list
+        // This prevents the tool from crashing when -l is used with non-mounted filesystems
+        return namelist;
     }
 
     return namelist;
