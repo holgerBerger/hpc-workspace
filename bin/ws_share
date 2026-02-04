@@ -93,6 +93,12 @@ while true; do
     esac
 done
 
+if [[ $# -lt 2 ]]; then
+    echo "Error: missing action or workspace name"
+    usage
+    exit 1
+fi
+
 ACTION="$1"
 shift
 WS_NAME="$1"
