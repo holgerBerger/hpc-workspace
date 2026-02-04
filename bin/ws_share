@@ -16,7 +16,7 @@
 # Copyright(c) 2021-2024 Christoph Niethammer <niethammer@hlrs.de>
 #
 
-progname=$(basename $0)
+progname=$(basename "$0")
 
 # Test for compatible getopt version.
 # The parser needs an enhanced version of getopt.
@@ -57,7 +57,7 @@ EOF
 # parse command line, based on example provided by util-linux
 OPTIONS=F:h
 LONG_OPTIONS=filesystem:,help,version
-PARSED=$(getopt --options=$OPTIONS --longoptions=$LONG_OPTIONS --name "$0" -- "$@")
+PARSED=$(getopt --options="$OPTIONS" --longoptions="$LONG_OPTIONS" --name "$0" -- "$@")
 if [[ $? -ne 0 ]]; then
     echo "Error: Command line error"
     usage
@@ -106,7 +106,7 @@ if [[ -z "$WS_NAME" ]]; then
     echo "Error: workspace name missing"
     exit 1
 fi
-WS_PATH=$(ws_find ${FILESYSTEM:+-F $FILESYSTEM} $WS_NAME)
+WS_PATH=$(ws_find ${FILESYSTEM:+-F $FILESYSTEM} "$WS_NAME")
 if [[ $? -ne 0 || -z "$WS_PATH" ]]; then
     echo "Error: Invalid workspace name."
     exit 1
