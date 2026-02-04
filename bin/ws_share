@@ -117,7 +117,7 @@ case $ACTION in
         getfacl -ap --omit-header "$WS_PATH" | grep user | cut -d : -f 2 | grep -v '^$'
         ;;
     share)
-        USERS="$@"
+        USERS=$@
         MACL=""
         for user in $USERS; do
             id "$user" >/dev/null 2>&1
@@ -136,7 +136,7 @@ case $ACTION in
         setfacl -R -m "$MACL" "$WS_PATH"
         ;;
     unshare)
-        USERS="$@"
+        USERS=$@
         XACL=""
         for user in $USERS; do
             id "$user" >/dev/null 2>&1
