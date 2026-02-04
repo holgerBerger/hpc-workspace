@@ -16,14 +16,14 @@
 # Copyright(c) 2021-2024 Christoph Niethammer <niethammer@hlrs.de>
 #
 
-progname=$(basename $0)
+progname=$(basename "$0")
 
 # Test for compatible getopt version.
 # The parser needs an enhanced version of getopt.
 # See man page of getopt for this test.
 getopt --test
 if [[ $? -ne 4 ]]; then
-    echo "Error: $progname needs an enhaced getopt to work."
+    echo "Error: $progname needs an enhanced getopt to work."
     exit 1
 fi
 
@@ -57,7 +57,7 @@ EOF
 # parse command line, based on example provided by util-linux
 OPTIONS=F:h
 LONG_OPTIONS=filesystem:,help,version
-PARSED=$(getopt --options=$OPTIONS --longoptions=$LONG_OPTIONS --name "$0" -- "$@")
+PARSED=$(getopt --options="$OPTIONS" --longoptions="$LONG_OPTIONS" --name "$0" -- "$@")
 if [[ $? -ne 0 ]]; then
     echo "Error: Command line error"
     usage
@@ -93,6 +93,12 @@ while true; do
     esac
 done
 
+if [[ $# -lt 2 ]]; then
+    echo "Error: missing action or workspace name"
+    usage
+    exit 1
+fi
+
 ACTION="$1"
 shift
 WS_NAME="$1"
@@ -106,7 +112,7 @@ if [[ -z "$WS_NAME" ]]; then
     echo "Error: workspace name missing"
     exit 1
 fi
-WS_PATH=$(ws_find ${FILESYSTEM:+-F $FILESYSTEM} $WS_NAME)
+WS_PATH=$(ws_find ${FILESYSTEM:+-F $FILESYSTEM} "$WS_NAME")
 if [[ $? -ne 0 || -z "$WS_PATH" ]]; then
     echo "Error: Invalid workspace name."
     exit 1
@@ -114,14 +120,15 @@ fi
 
 case $ACTION in
     list)
-        getfacl -ap --omit-header "$WS_PATH" | grep user | cut -d : -f 2 | grep -v '^$'
+        getfacl -ap --omit-header "$WS_PATH" \
+            | awk -F: '/^user:/ && $2 != "" {print $2}' \
+            | sort -u
         ;;
     share)
-        USERS="$@"
+        USERS=$@
         MACL=""
         for user in $USERS; do
-            id "$user" >/dev/null 2>&1
-            if [[ $? -ne 0 ]]; then
+            if ! id "$user" >/dev/null 2>&1; then
                 echo "Error: User $user unknown"
                 exit 1
             fi
@@ -136,11 +143,10 @@ case $ACTION in
         setfacl -R -m "$MACL" "$WS_PATH"
         ;;
     unshare)
-        USERS="$@"
+        USERS=$@
         XACL=""
         for user in $USERS; do
-            id "$user" >/dev/null 2>&1
-            if [[ $? -ne 0 ]]; then
+            if ! id "$user" >/dev/null 2>&1; then
                 echo "Error: User $user unknown"
                 exit 1
             fi
