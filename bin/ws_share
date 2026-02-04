@@ -23,7 +23,7 @@ progname=$(basename $0)
 # See man page of getopt for this test.
 getopt --test
 if [[ $? -ne 4 ]]; then
-    echo "Error: $progname needs an enhaced getopt to work."
+    echo "Error: $progname needs an enhanced getopt to work."
     exit 1
 fi
 
