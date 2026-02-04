@@ -128,8 +128,7 @@ case $ACTION in
         USERS=$@
         MACL=""
         for user in $USERS; do
-            id "$user" >/dev/null 2>&1
-            if [[ $? -ne 0 ]]; then
+            if ! id "$user" >/dev/null 2>&1; then
                 echo "Error: User $user unknown"
                 exit 1
             fi
@@ -147,8 +146,7 @@ case $ACTION in
         USERS=$@
         XACL=""
         for user in $USERS; do
-            id "$user" >/dev/null 2>&1
-            if [[ $? -ne 0 ]]; then
+            if ! id "$user" >/dev/null 2>&1; then
                 echo "Error: User $user unknown"
                 exit 1
             fi
