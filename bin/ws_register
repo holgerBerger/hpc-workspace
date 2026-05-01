@@ -16,7 +16,7 @@
     - more options for administrator (configured and root)
             + list expired/moved workspaces
 
-    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
+    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020,2026
     (c) Bernd Krisckok 2017
     (c) Christoph Niethammer 2021-2022,2024
 
@@ -73,7 +73,7 @@ username = pwd.getpwuid(uid).pw_name
 config = yaml.safe_load(open("/etc/ws.conf"))
 
 parser = argparse.ArgumentParser(description="Creates/updates symbolic links to workspaces in a directory")
-parser.add_argument("--version", action='version', version='workspace version 1.5.0')
+parser.add_argument("--version", action='version', version='workspace version 1.6.0')
 parser.add_argument(
     "directory", metavar="directory", type=pathlib.Path, help="directory in which links shall be created/updated"
 )

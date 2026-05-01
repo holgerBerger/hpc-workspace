@@ -16,7 +16,7 @@
     - more options for administrator (configured and root)
         + list expired/moved workspaces
 
-    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024
+    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2026
     (c) Christoph Niethammer 2024
 
     workspace++ is based on workspace by Holger Berger, Thomas Beisel and Martin Hecht
@@ -137,7 +137,7 @@ if os.geteuid() == 0 or os.getuid() == 0:
     admin = True
 
 # option configuration
-parser = OptionParser(usage="Usage: %prog [options] [pattern]", version="workspace version 1.5.0")
+parser = OptionParser(usage="Usage: %prog [options] [pattern]", version="workspace version 1.6.0")
 parser.add_option("-F", "--filesystem", dest="filesystem", help="filesystem to list workspaces from")
 parser.add_option("-g", action="store_true", dest="groupws", default=False, help="also list group workspaces")
 parser.add_option("-l", action="store_true", dest="filesystemlist", default=False, help="list available filesystems")

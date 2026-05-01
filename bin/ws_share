@@ -56,13 +56,14 @@ options:
    -h, --help        show this help
        --readwrite   grant read/write instead of read-only access
        --config      config file
+       --version
 
 EOF
 }
 
 # parse command line
 OPTIONS=F:h
-LONG_OPTIONS=filesystem:,help,readwrite,config:,yes
+LONG_OPTIONS=filesystem:,help,readwrite,config:,yes,version
 PARSED=$(getopt --options=$OPTIONS --longoptions=$LONG_OPTIONS --name "$0" -- "$@")
 if [[ $? -ne 0 ]]; then
     echo "Error: Command line error"
@@ -96,6 +97,10 @@ while true; do
 	--yes)
 	    YES="YES"
 	    shift
+	    ;;
+	--version)
+            echo "workspace version 1.6.0"
+	    exit 0
 	    ;;
         --)
             shift
