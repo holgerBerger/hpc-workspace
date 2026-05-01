@@ -10,7 +10,7 @@
     to be called from a cronjob to expire workspaces, does delete the data as well
     Reads new YAML configuration files and new YAML workspace database.
 
-    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2022, 2023, 2024
+    (c) Holger Berger 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2022, 2023, 2024, 2026
     (c) Bernd Krischok 2017, 2020
     (c) Christoph Niethammer 2020
     (c) Michael Mueller, Martin Schroschk 2023, 2024
@@ -358,7 +358,7 @@ for fs in fslist:
     for space in spaces:
         workspaces[space] = glob.glob(os.path.join(space, "*-*"))
 
-    # check for magic in DB entry, to avoid that DB is not existing and all workspaces get wiped by accident, e.g. due to mouting problems if DB is not 
+    # check for magic in DB entry, to avoid that DB is not existing and all workspaces get wiped by accident, e.g. due to mouting problems if DB is not
     # in same FS.
     try:
         with open(os.path.join(dbdir, ".ws_db_magic")) as dbmagic:
@@ -385,7 +385,7 @@ for fs in fslist:
         print("PHASE: checking for stray workspaces for", fs, dbdir, spaces)
     for space in spaces:
         for ws in workspaces[space]:  # (2) for for #87
-            if os.path.basename(ws) not in dbentryworkspaces:
+            if os.path.basename(ws) not in dbentryworkspaces and os.path.basename(ws) not in dbentrynames:  # added for #139
                 print("  stray workspace", ws)
                 # FIXME: this could fail on scatefs, should fallback to 'mv'. Lustre DNE2 cross MDT renames work well meanwhile
                 # FIXME: a stray workspace will be moved to deleted here, and will be deleted in
@@ -445,9 +445,7 @@ for fs in fslist:
 # this searches over DB, nothing not in DB will be touched
 for fs in fslist:
     try:
-        print("test")
         spaces = config["workspaces"][fs]["spaces"].copy()
-        print(config["workspaces"][fs]["spaces"])
     except KeyError:
         print("  FAILED to access", fs, "in config file")
         continue
@@ -455,7 +453,7 @@ for fs in fslist:
     workspacedelprefix = config["workspaces"][fs]["deleted"]
     dbdir = config["workspaces"][fs]["database"]
 
-    # check for magic in DB entry, to avoid that DB is not existing and all workspaces get wiped by accident, e.g. due to mouting problems if DB is not 
+    # check for magic in DB entry, to avoid that DB is not existing and all workspaces get wiped by accident, e.g. due to mouting problems if DB is not
     # in same FS.
     try:
         with open(os.path.join(dbdir, ".ws_db_magic")) as dbmagic:
@@ -594,7 +592,7 @@ for fs in fslist:
         continue
     dbdir = config["workspaces"][fs]["database"]
 
-    # check for magic in DB entry, to avoid that DB is not existing and all workspaces get wiped by accident, e.g. due to mouting problems if DB is not 
+    # check for magic in DB entry, to avoid that DB is not existing and all workspaces get wiped by accident, e.g. due to mouting problems if DB is not
     # in same FS.
     try:
         with open(os.path.join(dbdir, ".ws_db_magic")) as dbmagic:
