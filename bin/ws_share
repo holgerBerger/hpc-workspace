@@ -1,7 +1,8 @@
 #!/bin/bash
 #
-# ws_share is a helper script that can be used to grant quickly read access for
-# a workspace to other users based on UNIX ACLs.
+# ws_share is a helper script that can be used to grant quickly read or
+# read-write access for a workspace to other users or groups based on UNIX ACLs.
+
 # See ws_share --help to get usage information.
 #
 # Known issues:
@@ -14,49 +15,54 @@
 #   with the users.
 #
 # Copyright(c) 2021-2024 Christoph Niethammer <niethammer@hlrs.de>
+#          (c) Holger Berger 2026
 #
 
 progname=$(basename $0)
+maxmembers=100 # do not share with a group with more than $maxmembers members
 
 # Test for compatible getopt version.
 # The parser needs an enhanced version of getopt.
 # See man page of getopt for this test.
 getopt --test
 if [[ $? -ne 4 ]]; then
-    echo "Error: $progname needs an enhaced getopt to work."
+    echo "Error: $progname needs an enhanced getopt to work."
     exit 1
 fi
 
-function print_version() {
-    echo "workspace version 1.5.0"
-}
 
 function usage() {
 cat <<EOF
-$progname allows to share an existing workspace with other users.
+$progname allows to share an existing workspace with other users or groups.
 
 usage:
 
 The following commands share / unshare a workspace (WS_NAME) with users:
- $progname share [-F FILESYSTEM] WS_NAME USER [USER...]
- $progname unshare [-F FILESYSTEM] WS_NAME USER [USER...]
- $progname unshare-all [-F FILESYSTEM] WS_NAME
+ $progname [--readwrite] share [--config CONFIG] [-F FILESYSTEM] WS_NAME USER [USER...]
+ $progname [--readwrite] unshare [--config CONFIG] [-F FILESYSTEM] WS_NAME USER [USER...]
 
-Users that were granted read access to a workspace (WS_NAME) can be listed with
- $progname list WS_NAME
+With groups:
+ $progname [--readwrite] sharegroup [--config CONFIG] [-F FILESYSTEM] WS_NAME GROUP [GROUP...]
+ $progname [--readwrite] unsharegroup [--config CONFIG] [-F FILESYSTEM] WS_NAME GROUP [GROUP...]
+
+Remove all ACLs from a workspace:
+ $progname unshare-all [--config CONFIG] [-F FILESYSTEM] WS_NAME
+
+List users/groups with ACL entries:
+ $progname list [--config CONFIG] WS_NAME
 
 options:
    -F, --filesystem  ws filesystem
    -h, --help        show this help
-       --version     show version information and exit
+       --readwrite   grant read/write instead of read-only access
+       --config      config file
 
 EOF
 }
 
-
-# parse command line, based on example provided by util-linux
+# parse command line
 OPTIONS=F:h
-LONG_OPTIONS=filesystem:,help,version
+LONG_OPTIONS=filesystem:,help,readwrite,config:,yes
 PARSED=$(getopt --options=$OPTIONS --longoptions=$LONG_OPTIONS --name "$0" -- "$@")
 if [[ $? -ne 0 ]]; then
     echo "Error: Command line error"
@@ -66,6 +72,8 @@ fi
 eval set -- "$PARSED"
 unset PARSED
 
+YES="NO"
+ACCESS="rX"  # default: read-only
 # parse options
 while true; do
     case "$1" in
@@ -77,10 +85,18 @@ while true; do
             FILESYSTEM="$2"
             shift 2
             ;;
-        --version)
-            print_version
-            exit 0
+        --config)
+            CONFIG="$2"
+            shift 2
             ;;
+        --readwrite)
+            ACCESS="rwX"
+            shift
+            ;;
+	--yes)
+	    YES="YES"
+	    shift
+	    ;;
         --)
             shift
             break
@@ -106,7 +122,8 @@ if [[ -z "$WS_NAME" ]]; then
     echo "Error: workspace name missing"
     exit 1
 fi
-WS_PATH=$(ws_find ${FILESYSTEM:+-F $FILESYSTEM} $WS_NAME)
+
+WS_PATH=$(ws_find ${CONFIG:+--config $CONFIG} ${CONFIG_FILE:+--config $CONFIG_FILE} ${FILESYSTEM:+-F $FILESYSTEM} $WS_NAME)
 if [[ $? -ne 0 || -z "$WS_PATH" ]]; then
     echo "Error: Invalid workspace name."
     exit 1
@@ -114,33 +131,30 @@ fi
 
 case $ACTION in
     list)
-        getfacl -ap --omit-header "$WS_PATH" | grep user | cut -d : -f 2 | grep -v '^$'
+        getfacl -apt "$WS_PATH" | awk '/user|group|USER|GROUP/&&!/---/{gsub("rw.","readwrite");gsub("r-.","read");print}'
         ;;
     share)
         USERS="$@"
         MACL=""
         for user in $USERS; do
-            id "$user" >/dev/null 2>&1
-            if [[ $? -ne 0 ]]; then
+            if ! id "$user" >/dev/null 2>&1; then
                 echo "Error: User $user unknown"
                 exit 1
             fi
-            echo "Granting access for $user ..."
-            MACL+="user:$user:rX,"
-            MACL+="default:user:$user:rX,"
+            echo "Granting $ACCESS access for user $user ..."
+            MACL+="user:$user:$ACCESS,"
+            MACL+="default:user:$user:$ACCESS,"
         done
         if [[ -z "$MACL" ]]; then
-            # nothing to do
             exit 0
         fi
-        setfacl -R -m "$MACL" "$WS_PATH"
+        setfacl -R -m "${MACL%,}" "$WS_PATH"
         ;;
     unshare)
         USERS="$@"
         XACL=""
         for user in $USERS; do
-            id "$user" >/dev/null 2>&1
-            if [[ $? -ne 0 ]]; then
+            if ! id "$user" >/dev/null 2>&1; then
                 echo "Error: User $user unknown"
                 exit 1
             fi
@@ -149,12 +163,62 @@ case $ACTION in
             XACL+="default:user:$user,"
         done
         if [[ -z "$XACL" ]]; then
-            # nothing to do
             exit 0
         fi
-        setfacl -R -x "$XACL" "$WS_PATH"
+        setfacl -R -x "${XACL%,}" "$WS_PATH"
+        ;;
+    sharegroup)
+        GROUPARG="$@"
+        MACL=""
+        for group in $GROUPARG; do
+            line=$(getent group "$group")
+            if [[ -z "$line" ]]; then
+                echo "Error: Group $group unknown"
+                exit 1
+            fi
+            if [[ $(echo "$line" | awk -F "," '{print NF-1}') -gt $maxmembers ]] ; then
+                echo "Too many members in group, please do not share worldwide"
+                exit 1
+            fi
+            echo "Granting $ACCESS access for group $group ..."
+            MACL+="group:$group:$ACCESS,"
+            MACL+="default:group:$group:$ACCESS,"
+        done
+        if [[ -n "$MACL" ]]; then
+          if [[ "$ACCESS" == "rwX" ]] ; then
+              echo "Warning: giving write access to your group may:"
+              echo "  * allow immediate workspace deletion"
+              echo "  * interfere with your quota (depending on system setup)"
+	      if [[ "$YES" != "YES" ]]; then
+		      read -p "Continue (y/N)? " answer
+			case "$answer" in
+			    [yY]*) ;;
+			    *) echo "Aborted."; exit 1 ;;
+			esac
+	      fi
+          fi
+          setfacl -R -m "${MACL%,}" "$WS_PATH"
+        fi
+        ;;
+    unsharegroup)
+        GROUPARG="$@"
+        XACL=""
+        for group in $GROUPARG; do
+            if ! getent group "$group" >/dev/null; then
+                echo "Error: Group $group unknown"
+                exit 1
+            fi
+            echo "Removing access for group $group"
+            echo "Warning: will produce errors on files not owned by you"
+            sleep 3;
+            XACL+="group:$group,"
+            XACL+="default:group:$group,"
+        done
+        [[ -n "$XACL" ]] && setfacl -R -x "${XACL%,}" "$WS_PATH"
         ;;
     unshare-all)
+        echo "Warning: will produce errors on files not owned by you"
+        sleep 3;
         setfacl -R -b "$WS_PATH"
         ;;
     check)
@@ -164,4 +228,3 @@ case $ACTION in
         usage
         exit 1
 esac
-

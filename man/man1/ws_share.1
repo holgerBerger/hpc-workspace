@@ -1,81 +1,138 @@
-.TH WS_SHARE 1 "January 2022" "USER COMMANDS"
+.TH WS_SHARE 1 "April 2026" "USER COMMANDS"
+
 .SH NAME
-ws_share \- allows to share an owned workspace with other users
+ws_share \- share an owned workspace with other users or groups via ACLs
+
 .SH SYNOPSIS
-.B ws_share [\-h] [\-F FILESYSTEM] <command> [<args>]
+.B ws_share
+[\-h] [\-\-readwrite] [\-F FILESYSTEM] [\-\-config CONFIGFILE] <command> [<args>]
+
 .SH DESCRIPTION
-The ws_share tool allows a user to manage read access permissions for his
-workspaces.  It can be used to quickly grant, remove, and list
-read access to other users for a workspace that the calling user owns.
-Different commands are provided therefore that are described in the COMMANDS section.
+The ws_share tool allows a user to manage access permissions for workspaces they own.
+It can be used to grant, remove, and list access for other users and groups using
+UNIX ACLs. The access is applied recursively to all files and directories in the workspace.
+
+By default access is read-only. Use
+.B \-\-readwrite
+before the command to grant read-write access instead.
+
+.B Note:
+UNIX ACL support of the filesystem storing the workspaces is required for
+.B ws_share
+to work.
+
+.B Note:
+Changing file or directory permissions with standard UNIX tools (e.g.
+.B chmod
+) after sharing will not update the ACL entries appropriately.
+A workaround is to unshare and re-share the workspace.
+
+.B Note:
+Sharing workspaces with groups larger than 100 members is not allowed.
+
 .PP
+
 .SH OPTIONS
 .TP
 \-h, \-\-help
 display usage help text
 .TP
-\-F, \-\-filesystem
-select the workspace filesystem to work on
+\-F, \-\-filesystem FILESYSTEM
+select the workspace filesystem to work on.
+See
+.B ws_list \-l
+for a list of available filesystems.
+.TP
+\-\-readwrite
+grant read-write access instead of the default read-only access.
+When granting write access to a group, a confirmation prompt will be shown
+as this may allow immediate workspace deletion and interfere with quota.
+.TP
+\-\-config CONFIGFILE
+path to configfile, for root only or for unprivileged installations.
+
 .SH COMMANDS
 .PP
 .B share
 .RS 4
-Grant read access to WORKSPACE for USER
+Grant read-only (or read-write with \-\-readwrite) access to WORKSPACE for one or more users.
 .sp
-ws_share share [\-F FILESYSTEM] WORKSPACE USER
+ws_share [\-\-readwrite] share [\-F FILESYSTEM] WORKSPACE USER [USER...]
 .RE
+
 .PP
 .B unshare
 .RS 4
-Remove access to WORKSPACE for USER
+Remove access to WORKSPACE for one or more users.
 .sp
-ws_share unshare [\-F FILESYSTEM] WORKSPACE USER
+ws_share unshare [\-F FILESYSTEM] WORKSPACE USER [USER...]
 .RE
+
+.PP
+.B sharegroup
+.RS 4
+Grant read-only (or read-write with \-\-readwrite) access to WORKSPACE for one or more groups.
+When granting read-write access, a warning is shown as this may allow immediate workspace
+deletion and may interfere with quota.
+.sp
+ws_share [\-\-readwrite] sharegroup [\-F FILESYSTEM] WORKSPACE GROUP [GROUP...]
+.RE
+
+.PP
+.B unsharegroup
+.RS 4
+Remove access to WORKSPACE for one or more groups.
+May produce errors on files not owned by the calling user.
+.sp
+ws_share unsharegroup [\-F FILESYSTEM] WORKSPACE GROUP [GROUP...]
+.RE
+
 .PP
 .B unshare-all
 .RS 4
-Remove access to WORKSPACE for all users
+Remove all ACL entries from WORKSPACE for all users and groups.
+May produce errors on files not owned by the calling user.
 .sp
 ws_share unshare-all [\-F FILESYSTEM] WORKSPACE
 .RE
+
 .PP
 .B list
 .RS 4
-List users with access to WORKSPACE
+List all users and groups that have ACL entries for WORKSPACE.
 .sp
-ws_share list [\-F FILESYSTEM] WORKSPACE
+ws_share list WORKSPACE
 .RE
-.SH NOTES
-UNIX ACL support of the filesystem storing the workspaces is necessary for
-ws_share to work.
+
 .SH EXAMPLES
 .TP
-In the following the users alice and bob are granted read access to a workspace named my_workspace:
+grant read-only access to alice and bob:
 .RS 4
-$ ws_share share my_workspace alice
-.sp 0
-$ ws_share share my_workspace bob
+$ ws_share share my_workspace alice bob
 .RE
 .TP
-To check which users have access to the workspace my_workspace
+grant read-write access to alice:
+.RS 4
+$ ws_share --readwrite share my_workspace alice
+.RE
+.TP
+list users and groups with access to a workspace:
 .RS 4
 $ ws_share list my_workspace
-.sp 0
-> alice
-.sp 0
-> bob
 .RE
 .TP
-To revoke/remove access for bob
+revoke access for bob:
 .RS 4
 $ ws_share unshare my_workspace bob
 .RE
 .TP
-To remove access for all
+remove all ACL entries from a workspace:
 .RS 4
 $ ws_share unshare-all my_workspace
 .RE
+
 .SH AUTHOR
-Written by Christoph Niethammer
+Written by Christoph Niethammer and Holger Berger
+
 .SH SEE ALSO
-.BR ws_allocate "(1), " ws_release "(1), " ws_list "(1), " ws_restore "(1), " ws_find "(1), " acl "(5)
+.BR ws_allocate "(1), " ws_release "(1), " ws_list "(1), " ws_restore "(1), " ws_find "(1), " acl "(5)"
