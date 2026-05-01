@@ -4,4 +4,11 @@ target-version = ['py37']
 include = '\.pyi?$'
 skip-magic-trailing-comma = true
 
-
+[tool.ruff.format]
+skip-magic-trailing-comma = true
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+[tool.ruff.lint]
+ignore = [
+    "COM812", # missing-trailing-comma
+]
