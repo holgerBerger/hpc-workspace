@@ -98,13 +98,13 @@ Workspace::Workspace(const whichclient clientcode, const po::variables_map _opt,
     db_uid = config["dbuid"].as<int>();
     db_gid = config["dbgid"].as<int>();
 
-    /*  seems redundant 
+    /*  seems redundant
     // lower capabilities to minimum
     if (clientcode == WS_Allocate)
     	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid, __LINE__, __FILE__);
-    if (clientcode == WS_Release ) 
+    if (clientcode == WS_Release )
     	drop_cap(CAP_DAC_OVERRIDE, CAP_CHOWN, CAP_FOWNER, db_uid, __LINE__, __FILE__);
-    if (clientcode == WS_Restore ) 
+    if (clientcode == WS_Restore )
     	drop_cap(CAP_DAC_OVERRIDE, CAP_DAC_READ_SEARCH, db_uid);
     */
 
@@ -188,10 +188,10 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
               exit(-1);
 			  // FIXME looks wrong? exit in loops?
           }
-      } else { 
+      } else {
           if(user_option.length()>0 && (getuid()==0)) {
               dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+user_option+"-"+name;
-          } else { 
+          } else {
               dbfilename=config["workspaces"][cfilesystem]["database"].as<string>() + "/"+username+"-"+name;
           }
       }
@@ -236,7 +236,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 				  if (oldmail != "") {
 					  newmail = oldmail;
 					  cerr << "Info: reused mail address " << newmail <<  endl;
-				  } 
+				  }
 			  }
 
               if(reminder!=0) {
@@ -497,117 +497,126 @@ void Workspace::release(string name) {
     	dbentry.setreleased(time(NULL));
         dbentry.write_dbfile();
 
-        string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" +
-                              config["workspaces"][filesystem]["deleted"].as<string>() +
-                              "/" + userprefix + name + "-" + timestamp;
-        // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
-        raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
-        raise_cap(CAP_FOWNER, __LINE__, __FILE__);
-#ifdef SETUID
-        // for filesystem with root_squash, we need to be DB user here
-        if(setegid(dbgid) || seteuid(dbuid)) {
-			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
-			exit(-1);
-		}
-#endif
-        if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
-            // cerr << "rename " << dbfilename.c_str() << " -> " << dbtargetname.c_str() << " failed" << endl;
-            lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-            lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
-            cerr << "Error: database entry could not be deleted." << endl;
-            exit(-1);
-        }
-        if (opt.count("debug")) {
-            cerr << "Debug: lower cap after db rename" << endl;
-        }
-        lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-        lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
-
-        // rational: we move the workspace into deleted directory and append a timestamp to name
-        // as a new workspace could have same name and releasing the new one would lead to a name
-        // collision, so the timestamp is kind of generation label attached to a workspace
-
-
-        string wstargetname = fs::path(wsdir).parent_path().string() + "/" +
-                              config["workspaces"][filesystem]["deleted"].as<string>() +
-                              "/" + userprefix + name + "-" + timestamp;
-       
-        // FIXME when a prefix is used, this is the wrong place!!!
-        // may be check in case of prefix callout .. and ../.. for config["workspaces"][filesystem]["deleted"] ??
-
-/*
-		cout << "RELEASE:" <<
-			"\n  filesystem:" << filesystem <<
-			"\n  wstargetname:" << wstargetname << endl;
-*/
-
-        // cout << wsdir.c_str() << " - " << wstargetname.c_str() << endl;
-        raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
-        if(rename(wsdir.c_str(), wstargetname.c_str())) {
-            // cerr << "rename " << wsdir.c_str() << " -> " << wstargetname.c_str() << " failed " << geteuid() << " " << getuid() << endl;
-
-            // fallback to mv for filesystems where rename() of directories returns EXDEV
-            int r = mv(wsdir.c_str(), wstargetname.c_str());
-            if(r!=0) {
-                lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-                cerr << "Error: could not remove workspace!" << endl;
-                exit(-1);
-            }
-        }
-        if (opt.count("debug")) {
-            cerr << "Debug: lower cap after rename" << endl;
-        }
-        lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-
-        syslog(LOG_INFO, "release for user <%s> from <%s> to <%s> done, moved DB entry from <%s> to <%s>.", username.c_str(), wsdir.c_str(), wstargetname.c_str(), dbfilename.c_str(), dbtargetname.c_str());
-
-		// wipe the data if the user wants that
+        // wipe the data if the user wants that
+        // we need to do that before moving, as we have no permissions to do so after
 		if(opt.count("delete-data")) {
 			cerr << "Info: deleting files in workspace as --delete-data was given" << endl;
 			cerr << "Info: you have 5 seconds to interrupt with CTRL-C to prevent deletion" << endl;
 			sleep(5);
 
-        	raise_cap(CAP_FOWNER, __LINE__, __FILE__);
-#ifdef SETUID
+            raise_cap(CAP_FOWNER, __LINE__, __FILE__);
+      #ifdef SETUID
 			// get process owner, to be allowd to delete files
 			if(seteuid(getuid())) {
-				cerr << "Error: can not setuid, ad installation?" << endl;
+				cerr << "Error: can not setuid, bad installation?" << endl;
 			}
-#endif
-			boost::system::error_code ec;	
-			auto filecount = fs::remove_all(fs::path(wstargetname), ec);
-			
+      #endif
+			boost::system::error_code ec;
+			auto filecount = fs::remove_all(fs::path(wsdir), ec);
+			// we ignore filecount hereafter as we expect an error and it will be -1 anyway
+
 			// we expect an error 13 for the topmost directory
 			if (ec.value() != 13) {
 				cerr << "Error: unexpected error " << ec << endl;
 			}
 
-#ifdef SETUID
+      #ifdef SETUID
 			// get root so we can drop again
 			if(seteuid(0)) {
-				cerr << "Error: can not setuid, ad installation?" << endl;
+				cerr << "Error: can not setuid, bad installation?" << endl;
 			}
-#endif
-        	lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
-		
-			// remove what is left as DB user (could be done by ws_expirer)
-			filecount += fs::remove_all(fs::path(wstargetname), ec);
+      #endif
+            lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
 
-			cerr << "Info: deleted " << filecount << " files" << endl;
-        	syslog(LOG_INFO, "delete-data for user <%s> from <%s> removed %ld files." , username.c_str(), wstargetname.c_str(), filecount);
+			// remove what is left as DB user (could be done by ws_expirer)
+			filecount += fs::remove(fs::path(wsdir), ec);
+
+			if (ec.value() != 0) {
+				cerr << "Error: remove failed: " << ec << endl;
+			}
+
+			cerr << "Info: deleted files" << endl;
+              	syslog(LOG_INFO, "delete-data for user <%s> from <%s>." , username.c_str(), wsdir.c_str());
 
 			// delete DB entry as last step
 			raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
-#ifdef SETUID
+      #ifdef SETUID
 			// for filesystem with root_squash, we need to be DB user here
 			if (setegid(dbgid) || seteuid(dbuid)) {
-				cerr << "Error: can not setuid, ad installation?" << endl;
+				cerr << "Error: can not setuid, bad installation?" << endl;
 			}
-#endif
-			fs::remove(fs::path(dbtargetname.c_str()));
-        	lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
-        	syslog(LOG_INFO, "removed db entry <%s> for user <%s>." , dbtargetname.c_str(), username.c_str());
-        }
+      #endif
+			fs::remove(fs::path(dbfilename.c_str()));
+			lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+            syslog(LOG_INFO, "removed db entry <%s> for user <%s>." , dbfilename.c_str(), username.c_str());
+
+		} else { // delete vs rename
+
+            string dbtargetname = fs::path(dbfilename).parent_path().string() + "/" +
+                                config["workspaces"][filesystem]["deleted"].as<string>() +
+                                "/" + userprefix + name + "-" + timestamp;
+            // cout << dbfilename.c_str() << "-" << dbtargetname.c_str() << endl;
+            raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
+            raise_cap(CAP_FOWNER, __LINE__, __FILE__);
+    #ifdef SETUID
+            // for filesystem with root_squash, we need to be DB user here
+            if(setegid(dbgid) || seteuid(dbuid)) {
+    			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
+    			exit(-1);
+    		}
+    #endif
+            if(rename(dbfilename.c_str(), dbtargetname.c_str())) {
+                // cerr << "rename " << dbfilename.c_str() << " -> " << dbtargetname.c_str() << " failed" << endl;
+                lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+                lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
+                cerr << "Error: database entry could not be deleted." << endl;
+                exit(-1);
+            }
+            if (opt.count("debug")) {
+                cerr << "Debug: lower cap after db rename" << endl;
+            }
+            lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+            lower_cap(CAP_FOWNER, config["dbuid"].as<int>());
+
+            // rational: we move the workspace into deleted directory and append a timestamp to name
+            // as a new workspace could have same name and releasing the new one would lead to a name
+            // collision, so the timestamp is kind of generation label attached to a workspace
+
+
+            string wstargetname = fs::path(wsdir).parent_path().string() + "/" +
+                                config["workspaces"][filesystem]["deleted"].as<string>() +
+                                "/" + userprefix + name + "-" + timestamp;
+
+            // FIXME when a prefix is used, this is the wrong place!!!
+            // may be check in case of prefix callout .. and ../.. for config["workspaces"][filesystem]["deleted"] ??
+
+    /*
+    		cout << "RELEASE:" <<
+    			"\n  filesystem:" << filesystem <<
+    			"\n  wstargetname:" << wstargetname << endl;
+    */
+
+            // cout << wsdir.c_str() << " - " << wstargetname.c_str() << endl;
+            raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
+            if(rename(wsdir.c_str(), wstargetname.c_str())) {
+                // cerr << "rename " << wsdir.c_str() << " -> " << wstargetname.c_str() << " failed " << geteuid() << " " << getuid() << endl;
+
+                // fallback to mv for filesystems where rename() of directories returns EXDEV
+                int r = mv(wsdir.c_str(), wstargetname.c_str());
+                if(r!=0) {
+                    lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+                    cerr << "Error: could not remove workspace!" << endl;
+                    exit(-1);
+                }
+            }
+            if (opt.count("debug")) {
+                cerr << "Debug: lower cap after rename" << endl;
+            }
+            lower_cap(CAP_DAC_OVERRIDE, config["dbuid"].as<int>());
+
+            syslog(LOG_INFO, "release for user <%s> from <%s> to <%s> done, moved DB entry from <%s> to <%s>.", username.c_str(), wsdir.c_str(), wstargetname.c_str(), dbfilename.c_str(), dbtargetname.c_str());
+
+		}
 
     } else {
         cerr << "Error: workspace does not exist!" << endl;
@@ -643,7 +652,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         if(grp) {
 			groupnames.push_back(string(grp->gr_name));
 			if (opt.count("debug")) {
-				cerr << "debug: secondary group " << string(grp->gr_name) << endl; 
+				cerr << "debug: secondary group " << string(grp->gr_name) << endl;
 			}
 		}
     }
@@ -672,7 +681,7 @@ void Workspace::validate(const whichclient wc, YAML::Node &config, YAML::Node &u
         if (opt.count("debug")) {
             cerr << "debug: filesystem given: " << opt["filesystem"].as<string>() << endl;
         }
-        
+
         // check ACLs
         vector<string>user_acl;
         vector<string>group_acl;
