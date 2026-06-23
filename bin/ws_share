@@ -99,7 +99,7 @@ while true; do
 	    shift
 	    ;;
 	--version)
-            echo "workspace version 1.6.0"
+            echo "workspace version 1.6.1"
 	    exit 0
 	    ;;
         --)
