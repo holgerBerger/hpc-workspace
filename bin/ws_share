@@ -140,6 +140,10 @@ case $ACTION in
         ;;
     share)
         USERS="$@"
+        if [[ -z "$USERS" ]]; then
+            echo "Error: No user specified"
+            exit 1
+        fi
         MACL=""
         for user in $USERS; do
             if ! id "$user" >/dev/null 2>&1; then
@@ -157,6 +161,10 @@ case $ACTION in
         ;;
     unshare)
         USERS="$@"
+        if [[ -z "$USERS" ]]; then
+            echo "Error: No user specified"
+            exit 1
+        fi
         XACL=""
         for user in $USERS; do
             if ! id "$user" >/dev/null 2>&1; then
@@ -174,6 +182,10 @@ case $ACTION in
         ;;
     sharegroup)
         GROUPARG="$@"
+        if [[ -z "$GROUPARG" ]]; then
+            echo "Error: No group specified"
+            exit 1
+        fi
         MACL=""
         for group in $GROUPARG; do
             line=$(getent group "$group")
@@ -207,6 +219,10 @@ case $ACTION in
         ;;
     unsharegroup)
         GROUPARG="$@"
+        if [[ -z "$GROUPARG" ]]; then
+            echo "Error: No group specified"
+            exit 1
+        fi
         XACL=""
         for group in $GROUPARG; do
             if ! getent group "$group" >/dev/null; then
