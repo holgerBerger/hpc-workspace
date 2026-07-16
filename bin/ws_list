@@ -137,7 +137,7 @@ if os.geteuid() == 0 or os.getuid() == 0:
     admin = True
 
 # option configuration
-parser = OptionParser(usage="Usage: %prog [options] [pattern]", version="workspace version 1.6.2")
+parser = OptionParser(usage="Usage: %prog [options] [pattern]", version="workspace version 1.6.3")
 parser.add_option("-F", "--filesystem", dest="filesystem", help="filesystem to list workspaces from")
 parser.add_option("-g", action="store_true", dest="groupws", default=False, help="also list group workspaces")
 parser.add_option("-l", action="store_true", dest="filesystemlist", default=False, help="list available filesystems")
@@ -266,7 +266,10 @@ for fs in legal:
                         content = yaml.safe_load(open(ws))
                     except IOError:
                         continue
-                    wsgroup = content["group"]
+                    try:
+                        wsgroup = content["group"]
+                    except:
+                        continue
                     if wsgroup not in groups:
                         continue
 

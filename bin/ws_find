@@ -79,7 +79,7 @@ config = yaml.safe_load(open("/etc/ws.conf"))
 usage = "Usage: ws_find [options] [workspacename]"
 
 # option configuration
-parser = OptionParser(usage=usage, version="workspace version 1.6.2")
+parser = OptionParser(usage=usage, version="workspace version 1.6.3")
 parser.add_option("-F", "--filesystem", dest="filesystem", help="filesystem to search workspace in")
 parser.add_option("-l", "--list", action="store_true", dest="list", default=False, help="list valid filesystem names")
 (options, args) = parser.parse_args()

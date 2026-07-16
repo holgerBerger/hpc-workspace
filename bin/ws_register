@@ -73,7 +73,7 @@ username = pwd.getpwuid(uid).pw_name
 config = yaml.safe_load(open("/etc/ws.conf"))
 
 parser = argparse.ArgumentParser(description="Creates/updates symbolic links to workspaces in a directory")
-parser.add_argument("--version", action='version', version='workspace version 1.6.2')
+parser.add_argument("--version", action='version', version='workspace version 1.6.3')
 parser.add_argument(
     "directory", metavar="directory", type=pathlib.Path, help="directory in which links shall be created/updated"
 )
