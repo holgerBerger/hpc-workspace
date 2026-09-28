@@ -119,14 +119,35 @@ shift
 WS_NAME="$1"
 shift
 
+CALLER_USER=$(id -un)
+if [[ "$ACCESS" == "rwX" ]]; then
+    ACCESS_STR="readwrite"
+else
+    ACCESS_STR="read-only"
+fi
+
 if [[ -z "$ACTION" ]]; then
     echo "Error: no action specified"
+    usage
     exit 1
 fi
 if [[ -z "$WS_NAME" ]]; then
     echo "Error: workspace name missing"
+    usage
     exit 1
 fi
+
+# Validate the action before resolving the workspace so that mistakes like
+#   ws_share -F gpfs WS usera   (the action was forgotten)
+# report the real problem instead of a misleading "Invalid workspace name".
+case $ACTION in
+    list | share | unshare | sharegroup | unsharegroup | unshare-all | check) ;;
+    *)
+        echo "Error: Invalid action '$ACTION'. Did you forget to specify an action?"
+        usage
+        exit 1
+        ;;
+esac
 
 WS_PATH=$(ws_find ${CONFIG:+--config $CONFIG} ${CONFIG_FILE:+--config $CONFIG_FILE} ${FILESYSTEM:+-F $FILESYSTEM} $WS_NAME)
 if [[ $? -ne 0 || -z "$WS_PATH" ]]; then
@@ -158,6 +179,14 @@ case $ACTION in
             exit 0
         fi
         setfacl -R -m "${MACL%,}" "$WS_PATH"
+        if [[ $? -eq 0 ]]; then
+            for user in $USERS; do
+                logger -t ws_share -p user.info "Granted $ACCESS_STR access to user <$user> for workspace <$WS_NAME> ($WS_PATH) by <$CALLER_USER>"
+            done
+        else
+            echo "Error: Failed to set ACLs"
+            exit 1
+        fi
         ;;
     unshare)
         USERS="$@"
@@ -179,6 +208,14 @@ case $ACTION in
             exit 0
         fi
         setfacl -R -x "${XACL%,}" "$WS_PATH"
+        if [[ $? -eq 0 ]]; then
+            for user in $USERS; do
+                logger -t ws_share -p user.info "Removed access for user <$user> from workspace <$WS_NAME> ($WS_PATH) by <$CALLER_USER>"
+            done
+        else
+            echo "Error: Failed to remove ACLs"
+            exit 1
+        fi
         ;;
     sharegroup)
         GROUPARG="$@"
@@ -215,6 +252,14 @@ case $ACTION in
 	      fi
           fi
           setfacl -R -m "${MACL%,}" "$WS_PATH"
+          if [[ $? -eq 0 ]]; then
+              for group in $GROUPARG; do
+                  logger -t ws_share -p user.info "Granted $ACCESS_STR access to group <$group> for workspace <$WS_NAME> ($WS_PATH) by <$CALLER_USER>"
+              done
+          else
+              echo "Error: Failed to set ACLs"
+              exit 1
+          fi
         fi
         ;;
     unsharegroup)
@@ -235,12 +280,28 @@ case $ACTION in
             XACL+="group:$group,"
             XACL+="default:group:$group,"
         done
-        [[ -n "$XACL" ]] && setfacl -R -x "${XACL%,}" "$WS_PATH"
+        if [[ -n "$XACL" ]]; then
+            setfacl -R -x "${XACL%,}" "$WS_PATH"
+            if [[ $? -eq 0 ]]; then
+                for group in $GROUPARG; do
+                    logger -t ws_share -p user.info "Removed access for group <$group> from workspace <$WS_NAME> ($WS_PATH) by <$CALLER_USER>"
+                done
+            else
+                echo "Error: Failed to remove ACLs"
+                exit 1
+            fi
+        fi
         ;;
     unshare-all)
         echo "Warning: will produce errors on files not owned by you"
         sleep 3;
         setfacl -R -b "$WS_PATH"
+        if [[ $? -eq 0 ]]; then
+            logger -t ws_share -p user.info "Removed all shared access from workspace <$WS_NAME> ($WS_PATH) by <$CALLER_USER>"
+        else
+            echo "Error: Failed to remove all ACLs"
+            exit 1
+        fi
         ;;
     check)
         ;;
