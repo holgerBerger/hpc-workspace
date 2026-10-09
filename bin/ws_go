@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if [ "$#" -eq 0 ]; then
+   echo "Usage: ws_go workspace [file-system]"
+   return
+fi
+
+WS_OPT=
+if [ "$#" -lt 2 ]; then
+   NUMWS=`ws_find $1 | wc -l`
+   if [[ ${NUMWS} -gt 1 ]]; then
+      NUMFS=`ws_list | grep "^     filesystem name      : " | cut -d ":" -f2 | cut -d" " -f2 | sort -h | uniq | wc -l`
+      FSNAMES=`ws_list | grep "^     filesystem name      : " | cut -d ":" -f2 | cut -d" " -f2 | sort -h | uniq | tr '\n' ' '`
+      echo ${NUMFS} "filesystems are available:" ${FSNAMES}
+      echo "Please run this command with the file-system name"
+      return;
+   fi
+else
+  WS_OPT+=" -F "
+  WS_OPT+=`echo ${2}`
+fi
+
+if ws_list ${WS_OPT} | grep "^id: " | cut -d":" -f2 | cut -d" " -f2 | grep -q $1; then
+  cd `ws_find ${WS_OPT} $1`
+else
+  echo "Workspace $1 not found! Available workspaces are:"
+  ws_list ${WS_OPT} | grep "^id: " | cut -d":" -f2
+fi
