@@ -864,7 +864,9 @@ int Workspace::mv(const char * source, const char *target) {
     int status;
     pid = fork();
     if (pid==0) {
-        execl("/bin/mv", "mv", source, target, NULL);
+        static char *const envp[] = {(char *)"PATH=/usr/bin:/bin", (char *)"LC_ALL=C", NULL};
+        execle("/bin/mv", "mv", source, target, (char *)NULL, envp);
+        _exit(127);  // never continue as a second process after a failed exec
     } else if (pid<0) {
         //
     } else {
