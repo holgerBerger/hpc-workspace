@@ -980,7 +980,7 @@ void Workspace::restore(const string name, const string target, const string use
             cerr << "Error: moving data failed, database entry kept! " <<  ret << endl;
         }
 #ifdef SETUID
-        if(seteuid(0)||setegid(0)) {
+        if(seteuid(0)||setegid(getgid())) {
 			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
 			exit(-1);
 		}
