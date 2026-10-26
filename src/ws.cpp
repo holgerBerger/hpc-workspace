@@ -43,6 +43,7 @@
 #include <time.h>
 #include <pwd.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include <syslog.h>
 
 
@@ -405,6 +406,17 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 			}
 		}
 
+        // F3: open the new directory without following a symlink and act on the descriptor, so the
+        // path cannot be swapped between the check and chown/chmod (spaces writable by users)
+        raise_cap(CAP_DAC_OVERRIDE, __LINE__, __FILE__);
+        int wsfd = open(wsdir.c_str(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW);
+        lower_cap(CAP_DAC_OVERRIDE, db_uid);
+        struct stat wsstat;
+        if (wsfd < 0 || fstat(wsfd, &wsstat) != 0 || !S_ISDIR(wsstat.st_mode) || wsstat.st_uid != 0) {
+            cerr << "Error: workspace path <" << wsdir << "> is not a directory created by this tool, refusing!" << endl;
+            exit(-1);
+        }
+
         raise_cap(CAP_CHOWN, __LINE__, __FILE__);
         /*
         // removed 3.6.2020, what was it good for??
@@ -413,7 +425,7 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
         }
         */
 
-        if(chown(wsdir.c_str(), tuid, tgid)) {
+        if(fchown(wsfd, tuid, tgid)) {
             lower_cap(CAP_CHOWN, db_uid);
             cerr << "Error: could not change owner of workspace!" << endl;
             unlink(wsdir.c_str());
@@ -430,13 +442,14 @@ void Workspace::allocate(const string name, const bool extensionflag, const int 
 		if (groupname!="") {
 			mode |= S_IWGRP | S_ISGID;
 		}
-        if(chmod(wsdir.c_str(), mode)) {
+        if(fchmod(wsfd, mode)) {
             lower_cap(CAP_FOWNER, db_uid);
             cerr << "Error: could not change permissions of workspace!" << endl;
             unlink(wsdir.c_str());
             exit(-1);
         }
         lower_cap(CAP_FOWNER, db_uid);
+        close(wsfd);
 
         extension = maxextensions;
         expiration = time(NULL)+duration*24*3600;
@@ -864,7 +877,9 @@ int Workspace::mv(const char * source, const char *target) {
     int status;
     pid = fork();
     if (pid==0) {
-        execl("/bin/mv", "mv", source, target, NULL);
+        static char *const envp[] = {(char *)"PATH=/usr/bin:/bin", (char *)"LC_ALL=C", NULL};
+        execle("/bin/mv", "mv", source, target, (char *)NULL, envp);
+        _exit(127);  // never continue as a second process after a failed exec
     } else if (pid<0) {
         //
     } else {
@@ -980,7 +995,7 @@ void Workspace::restore(const string name, const string target, const string use
             cerr << "Error: moving data failed, database entry kept! " <<  ret << endl;
         }
 #ifdef SETUID
-        if(seteuid(0)||setegid(0)) {
+        if(seteuid(0)||setegid(getgid())) {
 			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
 			exit(-1);
 		}

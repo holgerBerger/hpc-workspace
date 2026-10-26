@@ -143,7 +143,7 @@ void WsDB::write_dbfile()
     }
     Workspace::lower_cap(CAP_FOWNER, dbuid);
 #ifdef SETUID
-    if(seteuid(0)|| setegid(0)) {
+    if(seteuid(0)|| setegid(getgid())) {
 			cerr << "Error: can not seteuid or setgid. Bad installation?" << endl;
 			exit(-1);
 	}
